@@ -68,7 +68,7 @@ void MX_ThreadX_Init(void);
 /* USER CODE END EFP */
 
 /* USER CODE BEGIN 1 */
-
+extern TX_EVENT_FLAGS_GROUP app_events;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

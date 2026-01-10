@@ -64,7 +64,7 @@ VOID USBD_CDC_ACM_ParameterChange(VOID *cdc_acm_instance);
 /* USER CODE END PD */
 
 /* USER CODE BEGIN 1 */
-
+extern UX_SLAVE_CLASS_CDC_ACM *cdc_acm;
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
