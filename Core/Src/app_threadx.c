@@ -66,9 +66,9 @@ VOID app_thread_entry(ULONG _a);
 UINT App_ThreadX_Init(VOID *memory_ptr)
 {
   UINT ret = TX_SUCCESS;
+  /* USER CODE BEGIN App_ThreadX_MEM_POOL */
   UCHAR *pStack;
 
-  /* USER CODE BEGIN App_ThreadX_MEM_POOL */
   tx_byte_pool_create(&app_pool, "application pool", app_pool_data, APP_POOL_SIZE);
 
   tx_byte_allocate(&app_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);

@@ -115,7 +115,7 @@
 USBPD_StatusTypeDef USBPD_PWR_IF_Init(void)
 {
 /* USER CODE BEGIN USBPD_PWR_IF_Init */
-  return USBPD_ERROR;
+  return USBPD_OK;
 /* USER CODE END USBPD_PWR_IF_Init */
 }
 

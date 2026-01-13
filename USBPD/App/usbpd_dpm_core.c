@@ -156,6 +156,9 @@ USBPD_StatusTypeDef USBPD_DPM_InitCore(void)
   /* done to avoid warning */
   (void)stack_dynamemsize;
 
+  /* Initialise the TRACE */
+  USBPD_TRACE_Init();
+
   for (uint8_t _port_index = 0; _port_index < USBPD_PORT_COUNT; ++_port_index)
   {
     /* Variable to be sure that DPM is correctly initialized */
@@ -348,6 +351,7 @@ DEF_TASK_FUNCTION(USBPD_CAD_Task)
   */
 void USBPD_DPM_CADCallback(uint8_t PortNum, USBPD_CAD_EVENT State, CCxPin_TypeDef Cc)
 {
+  USBPD_TRACE_Add(USBPD_TRACE_CADEVENT, PortNum, (uint8_t)State, NULL, 0);
  /* _TRACE */
   (void)(Cc);
   switch (State)

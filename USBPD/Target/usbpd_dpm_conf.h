@@ -37,8 +37,8 @@
 
 /* Define   ------------------------------------------------------------------*/
 /* Define VID, PID,... manufacturer parameters */
-#define USBPD_VID (0x0483u)     /*!< Vendor ID (assigned by the USB-IF)                     */
-#define USBPD_PID (0x0002u)     /*!< Product ID (assigned by the manufacturer)              */
+#define USBPD_VID (1155u)     /*!< Vendor ID (assigned by the USB-IF)                     */
+#define USBPD_PID (22288u)     /*!< Product ID (assigned by the manufacturer)              */
 #define USBPD_XID (0xF0000003u) /*!< Value provided by the USB-IF assigned to the product   */
 
 /* USER CODE BEGIN Define */
@@ -72,7 +72,7 @@ USBPD_SettingsTypeDef       DPM_Settings[USBPD_PORT_COUNT] =
     .PE_CapscounterSupport = USBPD_FALSE,       /* support caps counter                                    */
     .CAD_RoleToggle = USBPD_FALSE,               /* CAD role toggle                                         */
     .CAD_TryFeature = 0,              /* CAD try feature                                         */
-    .CAD_AccesorySupport = USBPD_FALSE,         /* CAD accessory support                                   */
+    .CAD_AccesorySupport = USBPD_TRUE,         /* CAD accessory support                                   */
     .PE_PD3_Support.d =                           /*!< PD3 SUPPORT FEATURE                                              */
     {
       .PE_UnchunkSupport                = USBPD_FALSE,  /* support Unchunked mode (valid only spec revision 3.0)   */

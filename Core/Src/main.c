@@ -21,6 +21,7 @@
 #include "main.h"
 #include "dcache.h"
 #include "gpdma.h"
+#include "i2c.h"
 #include "icache.h"
 #include "spi.h"
 #include "ucpd.h"
@@ -102,6 +103,7 @@ int main(void)
   MX_USB_PCD_Init();
   MX_DCACHE1_Init();
   MX_ICACHE_Init();
+  MX_I2C4_Init();
   /* Call PreOsInit function */
   USBPD_PreInitOs();
   /* USER CODE BEGIN 2 */
