@@ -545,8 +545,8 @@ USBPD_StatusTypeDef USBPD_DPM_RequestMessageRequest(uint8_t PortNum, uint8_t Ind
   /*       _status = USBPD_PE_Send_Request(PortNum, rdo.d32, pdo_object);*/
   DPM_USER_DEBUG_TRACE(PortNum, "ADVICE: update USBPD_DPM_RequestMessageRequest");
 /* USER CODE END USBPD_DPM_RequestMessageRequest */
-  DPM_USER_ERROR_TRACE(PortNum, _status, "REQUEST not accepted by the stack");
-  return _status;
+
+return _status;
 }
 
 /**

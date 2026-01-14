@@ -138,7 +138,9 @@ VOID console_tx_thread_entry(ULONG _a) {
     pcur = buf;
 
     while (n) {
-      result = ux_device_class_cdc_acm_write(cdc_acm, pcur, n, &tx_len);
+      do {
+        result = ux_device_class_cdc_acm_write(cdc_acm, pcur, n, &tx_len);
+      } while(result = UX_TRANSFER_BUS_RESET);
 
       if (result != TX_SUCCESS) {
         while(1);

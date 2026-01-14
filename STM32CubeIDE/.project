@@ -59,6 +59,16 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_adc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_adc.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_adc_ex.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_adc_ex.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_cortex.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_cortex.c</locationURI>
@@ -264,9 +274,19 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USBPD_Library/Core/src/usbpd_trace.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/Core/adc.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/adc.c</locationURI>
+		</link>
+		<link>
 			<name>Application/User/Core/app_threadx.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/app_threadx.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/Core/custom_bus.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/custom_bus.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core/dcache.c</name>
@@ -282,11 +302,6 @@
 			<name>Application/User/Core/gpio.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/gpio.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/Core/i2c.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/i2c.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core/icache.c</name>
@@ -337,6 +352,16 @@
 			<name>Application/User/Core/usb.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/usb.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/BSP/Components/tcpp0203.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/BSP/Components/tcpp0203/tcpp0203.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/BSP/Components/tcpp0203_reg.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/BSP/Components/tcpp0203/tcpp0203_reg.c</locationURI>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/tx_block_allocate.c</name>
@@ -1792,6 +1817,26 @@
 			<name>Application/User/AZURE_RTOS/App/app_azure_rtos.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/AZURE_RTOS/App/app_azure_rtos.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/TCPP/App/app_tcpp.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/TCPP/App/app_tcpp.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/TCPP/Target/custom_board_usbpd_pwr.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/custom_board_usbpd_pwr.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/TCPP/Target/usbpd_ADC.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/usbpd_ADC.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/TCPP/Target/usbpd_GPIO.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/usbpd_GPIO.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/USBPD/App/usbpd.c</name>

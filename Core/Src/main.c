@@ -19,15 +19,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 #include "main.h"
+#include "adc.h"
 #include "dcache.h"
 #include "gpdma.h"
-#include "i2c.h"
 #include "icache.h"
 #include "spi.h"
 #include "ucpd.h"
 #include "usart.h"
 #include "usb.h"
 #include "gpio.h"
+#include "app_tcpp.h"
 #include "usbpd.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -103,7 +104,7 @@ int main(void)
   MX_USB_PCD_Init();
   MX_DCACHE1_Init();
   MX_ICACHE_Init();
-  MX_I2C4_Init();
+  MX_ADC1_Init();
   /* Call PreOsInit function */
   USBPD_PreInitOs();
   /* USER CODE BEGIN 2 */
