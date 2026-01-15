@@ -75,12 +75,15 @@ def trace_usbpd(serial_port):
         print(f"Trace: type: {trace_types[trace_type]} time: {time} port: {port} sop: {sop} size2: {size2}")
 
         if size2 > 0:
-            s = data[9:9+size2].decode('utf-8')
+            try:
+                s = data[9:9+size2].decode('utf-8')
 
-            if s[-1] == '\n':
-                s = s[:-1]
+                if s[-1] == '\n':
+                    s = s[:-1]
         
-            print(s)
+                print(s)
+            except:
+                print(f"Failed to decode: {s}")
     
         for _ in range(4):
             eof = get_ch()

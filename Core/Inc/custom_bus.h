@@ -113,6 +113,8 @@ int32_t BSP_I2C4_SendRecv(uint16_t DevAddr, uint8_t *pTxdata, uint8_t *pRxdata, 
 int32_t BSP_I2C4_RegisterDefaultMspCallbacks (void);
 int32_t BSP_I2C4_RegisterMspCallbacks (BSP_I2C_Cb_t *Callbacks);
 #endif /* (USE_HAL_I2C_REGISTER_CALLBACKS == 1U) */
+int32_t BSP_I2C4_Send_DMA(uint16_t DevAddr, uint8_t *pData, uint16_t Length);
+int32_t BSP_I2C4_Recv_DMA(uint16_t DevAddr, uint8_t *pData, uint16_t Length);
 
 int32_t BSP_GetTick(void);
 

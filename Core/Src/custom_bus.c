@@ -34,6 +34,8 @@ __weak HAL_StatusTypeDef MX_I2C4_Init(I2C_HandleTypeDef* hi2c);
   * @{
   */
 
+extern void Error_Handler(void);
+
 /** @defgroup CUSTOM_BUS_Exported_Variables BUS Exported Variables
   * @{
   */
@@ -331,6 +333,39 @@ int32_t BSP_I2C4_Recv(uint16_t DevAddr, uint8_t *pData, uint16_t Length) {
   return ret;
 }
 
+/**
+  * @brief  Write Data through I2C BUS with DMA.
+  * @param  pData: Pointer to data buffer to send
+  * @param  Length: Length of data in byte
+  * @retval BSP status
+  */
+int32_t BSP_I2C4_Send_DMA(uint16_t DevAddr, uint8_t *pData, uint16_t Length)
+{
+  int32_t ret = BSP_ERROR_NONE;
+
+  if(HAL_I2C_Master_Transmit_DMA(&hi2c4, DevAddr, pData, Length) != HAL_OK)
+  {
+      ret = BSP_ERROR_UNKNOWN_FAILURE;
+  }
+  return ret;
+}
+/**
+  * @brief  Receive Data from I2C BUS with DMA
+  * @param  pData: Pointer to data buffer to receive
+  * @param  Length: Length of data in byte
+  * @retval BSP status
+  */
+int32_t  BSP_I2C4_Recv_DMA(uint16_t DevAddr, uint8_t *pData, uint16_t Length)
+{
+  int32_t ret = BSP_ERROR_NONE;
+
+  if(HAL_I2C_Master_Receive_DMA(&hi2c4, DevAddr, pData, Length) != HAL_OK)
+  {
+      ret = BSP_ERROR_UNKNOWN_FAILURE;
+  }
+  return ret;
+}
+
 #if (USE_HAL_I2C_REGISTER_CALLBACKS == 1U)
 /**
   * @brief Register Default BSP I2C4 Bus Msp Callbacks
@@ -425,6 +460,8 @@ __weak HAL_StatusTypeDef MX_I2C4_Init(I2C_HandleTypeDef* hi2c)
 
   return ret;
 }
+DMA_HandleTypeDef handle_GPDMA1_Channel3;
+DMA_HandleTypeDef handle_GPDMA1_Channel2;
 
 static void I2C4_MspInit(I2C_HandleTypeDef* i2cHandle)
 {
@@ -461,6 +498,49 @@ static void I2C4_MspInit(I2C_HandleTypeDef* i2cHandle)
 
     /* Peripheral clock enable */
     __HAL_RCC_I2C4_CLK_ENABLE();
+
+    /* Peripheral DMA init*/
+
+    handle_GPDMA1_Channel3.Instance = GPDMA1_Channel3;
+    handle_GPDMA1_Channel3.Init.Request = GPDMA1_REQUEST_I2C4_TX;
+    handle_GPDMA1_Channel3.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    handle_GPDMA1_Channel3.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    handle_GPDMA1_Channel3.Init.SrcInc = DMA_SINC_FIXED;
+    handle_GPDMA1_Channel3.Init.DestInc = DMA_DINC_FIXED;
+    handle_GPDMA1_Channel3.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel3.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel3.Init.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
+    handle_GPDMA1_Channel3.Init.SrcBurstLength = 1;
+    handle_GPDMA1_Channel3.Init.DestBurstLength = 1;
+    handle_GPDMA1_Channel3.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0|DMA_DEST_ALLOCATED_PORT0;
+    handle_GPDMA1_Channel3.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    handle_GPDMA1_Channel3.Init.Mode = DMA_NORMAL;
+    HAL_DMA_Init(&handle_GPDMA1_Channel3);
+
+    __HAL_LINKDMA(i2cHandle, hdmatx, handle_GPDMA1_Channel3);
+
+    HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel3, DMA_CHANNEL_NPRIV);
+
+    handle_GPDMA1_Channel2.Instance = GPDMA1_Channel2;
+    handle_GPDMA1_Channel2.Init.Request = GPDMA1_REQUEST_I2C4_RX;
+    handle_GPDMA1_Channel2.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    handle_GPDMA1_Channel2.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    handle_GPDMA1_Channel2.Init.SrcInc = DMA_SINC_FIXED;
+    handle_GPDMA1_Channel2.Init.DestInc = DMA_DINC_FIXED;
+    handle_GPDMA1_Channel2.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel2.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel2.Init.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
+    handle_GPDMA1_Channel2.Init.SrcBurstLength = 1;
+    handle_GPDMA1_Channel2.Init.DestBurstLength = 1;
+    handle_GPDMA1_Channel2.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0|DMA_DEST_ALLOCATED_PORT0;
+    handle_GPDMA1_Channel2.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    handle_GPDMA1_Channel2.Init.Mode = DMA_NORMAL;
+    HAL_DMA_Init(&handle_GPDMA1_Channel2);
+
+    __HAL_LINKDMA(i2cHandle, hdmarx, handle_GPDMA1_Channel2);
+
+    HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel2, DMA_CHANNEL_NPRIV);
+
   /* USER CODE BEGIN I2C4_MspInit 1 */
 
   /* USER CODE END I2C4_MspInit 1 */
@@ -482,6 +562,9 @@ static void I2C4_MspDeInit(I2C_HandleTypeDef* i2cHandle)
 
     HAL_GPIO_DeInit(BUS_I2C4_SDA_GPIO_PORT, BUS_I2C4_SDA_GPIO_PIN);
 
+    /* Peripheral DMA DeInit*/
+    HAL_DMA_DeInit(i2cHandle->hdmatx);
+    HAL_DMA_DeInit(i2cHandle->hdmarx);
   /* USER CODE BEGIN I2C4_MspDeInit 1 */
 
   /* USER CODE END I2C4_MspDeInit 1 */

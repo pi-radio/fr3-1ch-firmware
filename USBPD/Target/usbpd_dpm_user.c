@@ -154,7 +154,7 @@ USBPD_StatusTypeDef USBPD_DPM_UserInit(void)
   }
 
   return USBPD_OK;
-  /* USER CODE END USBPD_DPM_UserInit */
+/* USER CODE END USBPD_DPM_UserInit */
 }
 
 /**

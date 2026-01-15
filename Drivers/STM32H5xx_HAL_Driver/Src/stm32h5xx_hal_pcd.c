@@ -1844,9 +1844,6 @@ __weak void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
 __weak void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 {
   /* Prevent unused argument(s) compilation warning */
-  int a = 5;
-  a++;
-
   UNUSED(hpcd);
 
   /* NOTE : This function should not be modified, when the callback is needed,

@@ -30,8 +30,8 @@
 #define ADC_DIFF_CAPABLE
 
 /* ADC Vbus is defined */
-#define	VISENSE_ADC_INSTANCE                        ADC1
-#define ADC_VBUS_CHANNEL                            ADC_CHANNEL_1
+#define	VISENSE_ADC_INSTANCE                        ADC2
+#define ADC_VBUS_CHANNEL                            ADC_CHANNEL_6
 extern ADC_HandleTypeDef                            hadc1;
 
 /* ADC Isense not used */
