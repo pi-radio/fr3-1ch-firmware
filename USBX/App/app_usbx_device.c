@@ -29,6 +29,7 @@
 
 #include "ux_dcd_stm32.h"
 
+#include "app_threadx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -235,7 +236,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DEVICE_REMOVED:
 
       /* USER CODE BEGIN UX_DEVICE_REMOVED */
-
+      tx_event_flags_set(&app_events, ~1, TX_AND);
       /* USER CODE END UX_DEVICE_REMOVED */
 
       break;
@@ -251,7 +252,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_DISCONNECTED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_DISCONNECTED */
-
+      tx_event_flags_set(&app_events, ~1, TX_AND);
       /* USER CODE END UX_DCD_STM32_DEVICE_DISCONNECTED */
 
       break;
@@ -259,7 +260,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_SUSPENDED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_SUSPENDED */
-
+      tx_event_flags_set(&app_events, ~1, TX_AND);
       /* USER CODE END UX_DCD_STM32_DEVICE_SUSPENDED */
 
       break;

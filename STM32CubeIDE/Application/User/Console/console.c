@@ -93,11 +93,16 @@ VOID console_vcp_rx_thread_entry(ULONG _a) {
   ULONG e;
   ULONG len;
   UINT status;
+  ULONG flags;
 
   wait_usb();
 
   while(1) {
-    status = ux_device_class_cdc_acm_read(cdc_acm, &c, 1, &len);
+    do {
+      tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
+
+      status = ux_device_class_cdc_acm_read(cdc_acm, &c, 1, &len);
+    } while(status == UX_TRANSFER_BUS_RESET);
 
     if ((status == TX_SUCCESS) && (len == 1)) {
       e = c;
@@ -113,6 +118,7 @@ VOID console_tx_thread_entry(ULONG _a) {
   ULONG tx_len;
   UCHAR buf[TX_BUF_LEN];
   UCHAR *pcur;
+  ULONG flags;
 
   wait_usb();
 
@@ -139,8 +145,10 @@ VOID console_tx_thread_entry(ULONG _a) {
 
     while (n) {
       do {
+        tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
+
         result = ux_device_class_cdc_acm_write(cdc_acm, pcur, n, &tx_len);
-      } while(result = UX_TRANSFER_BUS_RESET);
+      } while(result == UX_TRANSFER_BUS_RESET);
 
       if (result != TX_SUCCESS) {
         while(1);

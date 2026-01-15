@@ -344,11 +344,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/ucpd.c</locationURI>
 		</link>
 		<link>
-			<name>Application/User/Core/usart.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/usart.c</locationURI>
-		</link>
-		<link>
 			<name>Application/User/Core/usb.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/usb.c</locationURI>
@@ -1837,6 +1832,11 @@
 			<name>Application/User/TCPP/Target/usbpd_GPIO.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/usbpd_GPIO.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/USBPD/App/usart.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/usart.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/USBPD/App/usbpd.c</name>

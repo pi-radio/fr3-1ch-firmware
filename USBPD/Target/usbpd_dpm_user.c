@@ -144,8 +144,17 @@
 USBPD_StatusTypeDef USBPD_DPM_UserInit(void)
 {
 /* USER CODE BEGIN USBPD_DPM_UserInit */
+  char a[] = "\n\n\nRestart";
+
+  USBPD_TRACE_Add(USBPD_TRACE_DEBUG, 0, 0, "\n\n\nRestart", sizeof(a));
+
+  if(USBPD_OK !=  USBPD_PWR_IF_Init())
+  {
+    return USBPD_ERROR;
+  }
+
   return USBPD_OK;
-/* USER CODE END USBPD_DPM_UserInit */
+  /* USER CODE END USBPD_DPM_UserInit */
 }
 
 /**

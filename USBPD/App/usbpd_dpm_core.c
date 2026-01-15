@@ -35,6 +35,8 @@
 #include "usbpd_lowpower.h"
 #endif /* _LOW_POWER */
 
+#include "app_threadx.h"
+
 /* Private definition -------------------------------------------------------*/
 /* function import prototypes -----------------------------------------------*/
 /* Generic STM32 prototypes */
@@ -375,6 +377,10 @@ void USBPD_DPM_CADCallback(uint8_t PortNum, USBPD_CAD_EVENT State, CCxPin_TypeDe
     {
       /* Terminate PE task */
       uint8_t _timeout = 0;
+
+      // Halt the console
+      tx_event_flags_set(&app_events, ~1, TX_AND);
+
 #ifdef _LOW_POWER
       UTIL_LPM_SetStopMode(0 == PortNum ? LPM_PE_0 : LPM_PE_1, UTIL_LPM_ENABLE);
       UTIL_LPM_SetOffMode(0 == PortNum ? LPM_PE_0 : LPM_PE_1, UTIL_LPM_ENABLE);
