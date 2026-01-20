@@ -1,14 +1,17 @@
 #include "ux_device_cdc_acm.h"
 
 #include "console.h"
+#include "lexer.h"
+#include "terminal.h"
 #include "app_threadx.h"
+#include "main.h"
 
 #define TX_BUF_LEN 128
 
 #define TX_QUEUE_LEN 1024
 #define RX_QUEUE_LEN 1024
 
-TX_QUEUE console_tx_queue, console_rx_queue;
+TX_QUEUE console_rx_queue;
 
 static ULONG tx_queue_data[TX_QUEUE_LEN];
 static ULONG rx_queue_data[RX_QUEUE_LEN];
@@ -30,157 +33,54 @@ void console_init(void) {
   UINT result;
   UCHAR *pStack;
 
-  result = tx_queue_create(&console_tx_queue,
-      "console_tx_queue",
-      1,
-      tx_queue_data,
-      TX_QUEUE_LEN);
-
   result = tx_queue_create(&console_rx_queue,
       "console_rx_queue",
       1,
       rx_queue_data,
-      RX_QUEUE_LEN);
+      RX_QUEUE_LEN * sizeof(ULONG));
+
+  if (result != TX_SUCCESS) {
+    Error_Handler();
+  }
 
   tx_byte_pool_create(&console_pool, "console memory pool", console_pool_data, CONSOLE_POOL_SIZE);
 
   tx_byte_allocate(&console_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 
-  tx_thread_create(&console_tx_thread, "console_tx_thread_entry", console_tx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
-
-  tx_byte_allocate(&console_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
-
-  tx_thread_create(&console_vcp_rx_thread, "console_vcp_rx_thread_entry", console_vcp_rx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
-
-  tx_byte_allocate(&console_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
-
   tx_thread_create(&console_rx_thread, "console_rx_thread_entry", console_rx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+
+  terminal_init(&console_pool);
 }
 
-static void wait_usb(void) {
+
+void usb_connect(void) {
+  tx_event_flags_set(&app_events, USB_AVAILABLE_FLAG, TX_OR);
+}
+
+void usb_disconnect(void) {
+  tx_event_flags_set(&app_events, ~USB_AVAILABLE_FLAG, TX_AND);
+}
+
+void wait_usb(void) {
   ULONG flags;
 
-  tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
+  tx_event_flags_get(&app_events, USB_AVAILABLE_FLAG, TX_AND, &flags, TX_WAIT_FOREVER);
 }
+
+
 
 VOID console_rx_thread_entry(ULONG _a) {
-  ULONG last = 0;
+  token_t cur_tok;
+
+  int a = 0;
 
   while(1) {
-    ULONG c;
+    get_token(&cur_tok);
 
-    tx_queue_receive(&console_rx_queue, &c, TX_WAIT_FOREVER);
-
-    if ((last != '\r') && (c == '\n')) {
-      ULONG cc = '\r';
-      tx_queue_send(&console_tx_queue, &cc, TX_WAIT_FOREVER);
-    }
-
-    if ((last == '\r') && (c != '\n')) {
-      ULONG cc = '\n';
-      tx_queue_send(&console_tx_queue, &cc, TX_WAIT_FOREVER);
-    }
-
-
-    tx_queue_send(&console_tx_queue, &c, TX_WAIT_FOREVER);
-
-    last = c;
+    a++;
   }
 }
 
-VOID console_vcp_rx_thread_entry(ULONG _a) {
-  UCHAR c;
-  ULONG e;
-  ULONG len;
-  UINT status;
-  ULONG flags;
-
-  wait_usb();
-
-  while(1) {
-    do {
-      tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
-
-      status = ux_device_class_cdc_acm_read(cdc_acm, &c, 1, &len);
-    } while(status == UX_TRANSFER_BUS_RESET);
-
-    if ((status == TX_SUCCESS) && (len == 1)) {
-      e = c;
-
-      tx_queue_send(&console_rx_queue, &e, TX_WAIT_FOREVER);
-    }
-  }
-}
-
-VOID console_tx_thread_entry(ULONG _a) {
-  UINT result;
-  ULONG n, c;
-  ULONG tx_len;
-  UCHAR buf[TX_BUF_LEN];
-  UCHAR *pcur;
-  ULONG flags;
-
-  wait_usb();
-
-  while (1) {
-    n = 0;
-
-    pcur = buf;
-    result = tx_queue_receive(&console_tx_queue, &c, TX_WAIT_FOREVER);
-    *pcur++ = c;
-    n++;
-
-    while (n < TX_BUF_LEN) {
-      result = tx_queue_receive(&console_tx_queue, &c, 1);
-
-      if (result != TX_SUCCESS) {
-        break;
-      }
-
-      *pcur++ = c;
-      n++;
-    }
-
-    pcur = buf;
-
-    while (n) {
-      do {
-        tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
-
-        result = ux_device_class_cdc_acm_write(cdc_acm, pcur, n, &tx_len);
-      } while(result == UX_TRANSFER_BUS_RESET);
-
-      if (result != TX_SUCCESS) {
-        while(1);
-      }
-
-      pcur += tx_len;
-      n -= tx_len;
-    }
 
 
-  }
-}
-
-int _write(int file, char *ptr, int len)
-{
-  int retval = len;
-  int result;
-
-  while (len) {
-    ULONG c = *ptr;
-
-    if (c == '\n') {
-      c = '\r';
-      result = tx_queue_send(&console_tx_queue, &c, TX_WAIT_FOREVER);
-      c = '\n';
-    }
-
-    result = tx_queue_send(&console_tx_queue, &c, TX_WAIT_FOREVER);
-    ptr++;
-    len--;
-  }
-
-  return retval;
-}
 

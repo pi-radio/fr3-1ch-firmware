@@ -46,7 +46,9 @@ extern "C" {
 /* Private defines -----------------------------------------------------------*/
 
 /* USER CODE BEGIN PD */
-
+#define USB_AVAILABLE_FLAG    (1 << 0)
+#define DTR_HIGH_FLAG         (1 << 1)
+#define RTS_HIGH_FLAG         (1 << 2)
 /* USER CODE END PD */
 
 /* Main thread defines -------------------------------------------------------*/
@@ -64,11 +66,46 @@ UINT App_ThreadX_Init(VOID *memory_ptr);
 void MX_ThreadX_Init(void);
 
 /* USER CODE BEGIN EFP */
+extern void usb_connect(void);
+extern void usb_disconnect(void);
+extern void wait_usb(void);
+
+
+extern void dtr_high(void);
+extern void dtr_low(void);
+extern void wait_dtr(void);
+
+extern void rts_high(void);
+extern void rts_low(void);
+extern void wait_rts(void);
+
+
 
 /* USER CODE END EFP */
 
 /* USER CODE BEGIN 1 */
 extern TX_EVENT_FLAGS_GROUP app_events;
+
+extern int rx_cnt;
+
+static inline int dtr_is_set(void)
+{
+  ULONG flags;
+
+  tx_event_flags_get(&app_events, DTR_HIGH_FLAG, TX_AND, &flags, TX_NO_WAIT);
+
+  return (flags) ? 1 : 0;
+}
+
+static inline int rts_is_set(void)
+{
+  ULONG flags;
+
+  tx_event_flags_get(&app_events, RTS_HIGH_FLAG, TX_AND, &flags, TX_NO_WAIT);
+
+  return (flags) ? 1 : 0;
+}
+
 /* USER CODE END 1 */
 
 #ifdef __cplusplus

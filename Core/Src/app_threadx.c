@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "console.h"
+#include "terminal.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -79,7 +80,6 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 
   /* USER CODE END App_ThreadX_MEM_POOL */
   /* USER CODE BEGIN App_ThreadX_Init */
-  console_init();
 
   /* USER CODE END App_ThreadX_Init */
 
@@ -112,8 +112,7 @@ VOID app_thread_entry(ULONG _a)
   printf("FR3 1ch starting...\n");
 
   while(1) {
-    printf("Tick %d\n", i);
-    i++;
+    terminal_refresh();
     tx_thread_sleep(1000);
   }
 }

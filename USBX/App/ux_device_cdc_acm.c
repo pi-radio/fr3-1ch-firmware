@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_threadx.h"
+#include "terminal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,6 +45,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 UX_SLAVE_CLASS_CDC_ACM *cdc_acm;
+int parameter_calls = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,8 +68,7 @@ VOID USBD_CDC_ACM_Activate(VOID *cdc_acm_instance)
 {
   /* USER CODE BEGIN USBD_CDC_ACM_Activate */
   cdc_acm = (UX_SLAVE_CLASS_CDC_ACM *)cdc_acm_instance;
-  tx_event_flags_set(&app_events, 1, TX_OR);
-
+  usb_connect();
   /* USER CODE END USBD_CDC_ACM_Activate */
 
   return;
@@ -83,7 +84,7 @@ VOID USBD_CDC_ACM_Deactivate(VOID *cdc_acm_instance)
 {
   /* USER CODE BEGIN USBD_CDC_ACM_Deactivate */
   UX_PARAMETER_NOT_USED(cdc_acm_instance);
-  tx_event_flags_set(&app_events, ~1, TX_AND);
+  usb_disconnect();
   /* USER CODE END USBD_CDC_ACM_Deactivate */
 
   return;
@@ -98,16 +99,56 @@ VOID USBD_CDC_ACM_Deactivate(VOID *cdc_acm_instance)
 VOID USBD_CDC_ACM_ParameterChange(VOID *cdc_acm_instance)
 {
   /* USER CODE BEGIN USBD_CDC_ACM_ParameterChange */
-  int a;
 
-  a = 4;
-  a++;
   UX_PARAMETER_NOT_USED(cdc_acm_instance);
+
+  if (cdc_acm->ux_slave_class_cdc_acm_data_dtr_state) {
+    dtr_high();
+  } else {
+    dtr_low();
+  }
+
+  if (cdc_acm->ux_slave_class_cdc_acm_data_rts_state) {
+    rts_high();
+  } else {
+    rts_low();
+  }
+
+
+  parameter_calls++;
   /* USER CODE END USBD_CDC_ACM_ParameterChange */
 
   return;
 }
 
 /* USER CODE BEGIN 1 */
+
+void dtr_high(void) {
+  tx_event_flags_set(&app_events, DTR_HIGH_FLAG, TX_OR);
+}
+
+void dtr_low(void) {
+  tx_event_flags_set(&app_events, ~DTR_HIGH_FLAG, TX_AND);
+}
+
+void wait_dtr(void) {
+  ULONG flags;
+
+  tx_event_flags_get(&app_events, DTR_HIGH_FLAG, TX_AND, &flags, TX_WAIT_FOREVER);
+}
+
+void rts_high(void) {
+  tx_event_flags_set(&app_events, RTS_HIGH_FLAG, TX_OR);
+}
+
+void rts_low(void) {
+  tx_event_flags_set(&app_events, ~RTS_HIGH_FLAG, TX_AND);
+}
+
+void wait_rts(void) {
+  ULONG flags;
+
+  tx_event_flags_get(&app_events, RTS_HIGH_FLAG, TX_AND, &flags, TX_WAIT_FOREVER);
+}
 
 /* USER CODE END 1 */

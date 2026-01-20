@@ -184,7 +184,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
   }
 
   /* USER CODE BEGIN MX_USBX_Device_Init1 */
-
+  console_init();
   /* USER CODE END MX_USBX_Device_Init1 */
 
   return ret;
@@ -228,7 +228,6 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DEVICE_ATTACHED:
 
       /* USER CODE BEGIN UX_DEVICE_ATTACHED */
-
       /* USER CODE END UX_DEVICE_ATTACHED */
 
       break;
@@ -236,7 +235,6 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DEVICE_REMOVED:
 
       /* USER CODE BEGIN UX_DEVICE_REMOVED */
-      tx_event_flags_set(&app_events, ~1, TX_AND);
       /* USER CODE END UX_DEVICE_REMOVED */
 
       break;
@@ -244,7 +242,6 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_CONNECTED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_CONNECTED */
-
       /* USER CODE END UX_DCD_STM32_DEVICE_CONNECTED */
 
       break;
@@ -252,7 +249,6 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_DISCONNECTED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_DISCONNECTED */
-      tx_event_flags_set(&app_events, ~1, TX_AND);
       /* USER CODE END UX_DCD_STM32_DEVICE_DISCONNECTED */
 
       break;
@@ -260,7 +256,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_SUSPENDED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_SUSPENDED */
-      tx_event_flags_set(&app_events, ~1, TX_AND);
+      //usb_disconnect();
       /* USER CODE END UX_DCD_STM32_DEVICE_SUSPENDED */
 
       break;
@@ -268,7 +264,6 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_RESUMED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_RESUMED */
-
       /* USER CODE END UX_DCD_STM32_DEVICE_RESUMED */
 
       break;
