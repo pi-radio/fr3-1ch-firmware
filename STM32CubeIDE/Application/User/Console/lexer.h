@@ -1,17 +1,24 @@
 
 typedef enum {
-  TOK_ERROR = -1,
-  TOK_EOL = 0,
-  TOK_ID = 1,
-  TOK_INT = 2,
-  TOK_DOUBLE = 3,
-  TOK_STR = 4
+  TOK_NONE,
+  TOK_EOL,
+  TOK_ID,
+  TOK_INT,
+  TOK_DOUBLE,
+  TOK_STR,
+
+  TOK_SPIW,
+
+  TOK_ERROR
 } token_type_t;
 
 typedef struct {
   token_type_t token_type;
   union {
-    char str[128];
+    struct {
+      char str[128];
+      int len;
+    } s;
     int i;
     double d;
   };

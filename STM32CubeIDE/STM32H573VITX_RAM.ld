@@ -148,6 +148,8 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM
+  
+
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
@@ -175,6 +177,8 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
+
+  .config_data 0x09000000 : { _board_config_data = .; }
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

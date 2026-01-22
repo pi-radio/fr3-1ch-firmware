@@ -44,8 +44,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 640K
-  FLASH    (rx)    : ORIGIN = 0x08000000,   LENGTH = 2048K
+  RAM    (xrw)      : ORIGIN = 0x20000000,   LENGTH = 640K
+  FLASH    (rx)     : ORIGIN = 0x08000000,   LENGTH = 2048K
 }
 
 /* Sections */
@@ -148,6 +148,7 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
 
   } >RAM AT> FLASH
+ 
 
   /* Uninitialized data section into "RAM" Ram type memory */
   . = ALIGN(4);
@@ -175,6 +176,9 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
+
+  .config_data 0x09000000 : { _board_config_data = .; }
+
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

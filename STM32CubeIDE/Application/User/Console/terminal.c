@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include <config_data.h>
+
 #include "ux_device_cdc_acm.h"
 
 TX_QUEUE terminal_rx_queue;
@@ -149,16 +151,37 @@ void terminal_query_position() {
 }
 
 void terminal_refresh() {
+#if 0
   terminal_query_id();
+#endif
 
+#if 0
   terminal_reset();
+#endif
+
+#if 0
+  lock_tx();
+  txchar(0x05);
+  unlock_tx();
+
+  lock_tx();
+  txchar(0x1B); txchar('Z');
+  unlock_tx();
+#endif
 
   terminal_clear_screen();
 
+#if 1
   terminal_query_position();
+#endif
 
   terminal_move_to(5, 1);
-  printf("Status: RX: %d TX: %d CSI: %d Errors: %d", term.rx_count, term.tx_count, term.csi_count, term.error_count);
+  printf("Status: RX: %d TX: %d CSI: %d Errors: %d",
+      term.rx_count, term.tx_count, term.csi_count, term.error_count);
+  fflush(stdout);
+
+  terminal_move_to(6, 1);
+  printf("Ptr: 0x%8.8x 0x%8.8x", (VOID *)_board_config_data);
   fflush(stdout);
 }
 
@@ -481,14 +504,11 @@ VOID terminal_usb_tx_thread_entry(ULONG _a) {
 
     while (n) {
       do {
-        tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
+        wait_dtr();
+        //tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
 
         result = ux_device_class_cdc_acm_write(cdc_acm, pcur, n, &tx_len);
-      } while(result == UX_TRANSFER_BUS_RESET);
-
-      if (result != TX_SUCCESS) {
-        while(1);
-      }
+      } while(result != TX_SUCCESS);
 
       pcur += tx_len;
       n -= tx_len;
