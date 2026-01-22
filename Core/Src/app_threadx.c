@@ -25,6 +25,8 @@
 /* USER CODE BEGIN Includes */
 #include "console.h"
 #include "terminal.h"
+#include <config_data.h>
+
 #include <stdio.h>
 /* USER CODE END Includes */
 

@@ -61,6 +61,7 @@ struct terminal {
   int tx_count;
   int csi_count;
   int error_count;
+  int invalid_char;
 
   int error_char;
   terminal_state_t error_state;
@@ -181,7 +182,10 @@ void terminal_refresh() {
   fflush(stdout);
 
   terminal_move_to(6, 1);
-  printf("Ptr: 0x%8.8x 0x%8.8x", (VOID *)_board_config_data);
+  printf("Ptr: 0x%8p UID %s,%ld,%ld,%ld Flash Size: %d Package Code: %4.4x",
+      (VOID *)_board_config_data,
+      U_ID.lot_id, U_ID.wafer_no, U_ID.wafer_x, U_ID.wafer_y,
+      config_get_flash_size(), config_get_package_code());
   fflush(stdout);
 }
 
@@ -208,6 +212,7 @@ int rxchar_raw(void) {
 
   if ((c < 0x20 || c > 0x7F) && c != 0x0A && c != 0x0D && c != 0x09) {
     printf("Invalid character: %ld\n", c);
+    term.invalid_char++;
   }
 
   return c;
@@ -323,10 +328,13 @@ void terminal_handle_ground(struct terminal *term, int c)
     }
 
     // EOL callback?
-  } else if (c == 't') {
+  } else if (c == '\t') {
     // Check for tab callback
     // Absorb tab
-  } else if ((c >= 0x20 && c <= 0x7F) || c == '\r' || c == '\n') {
+  } else if (c == '\r') {
+    // Check for tab callback
+    // Absorb tab
+  } else if (c >= 0x20 && c <= 0x7F) {
     if (term->echo) {
       lock_tx();
       txchar(c);
@@ -477,7 +485,6 @@ VOID terminal_usb_tx_thread_entry(ULONG _a) {
   ULONG tx_len;
   UCHAR buf[TX_BUF_LEN];
   UCHAR *pcur;
-  ULONG flags;
 
   wait_usb();
 
