@@ -5,7 +5,9 @@ struct _uid U_ID;
 uint16_t flash_code = -1;
 uint16_t package_code = -1;
 
+
 extern char _system_ro_data[];
+extern const char _board_config_data[96 * 1024];
 
 void init_config_data(void) {
   int i;
@@ -36,6 +38,11 @@ void init_config_data(void) {
 
   flash_code = (*pu32) & 0xFFFF;
   package_code = (*pu32) >> 16;
+
+  uint16_t *pbcd = (uint16_t *)&_board_config_data;
+
+  uint16_t a = *pbcd;
+  a++;
 }
 
 uint16_t config_get_flash_code(void) {

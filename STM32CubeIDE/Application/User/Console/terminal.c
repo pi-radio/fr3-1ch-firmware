@@ -182,8 +182,7 @@ void terminal_refresh() {
   fflush(stdout);
 
   terminal_move_to(6, 1);
-  printf("Ptr: 0x%8p UID %s,%ld,%ld,%ld Flash Size: %d Package Code: %4.4x",
-      (VOID *)_board_config_data,
+  printf("UID %s,%ld,%ld,%ld Flash Size: %d Package Code: %4.4x",
       U_ID.lot_id, U_ID.wafer_no, U_ID.wafer_x, U_ID.wafer_y,
       config_get_flash_size(), config_get_package_code());
   fflush(stdout);

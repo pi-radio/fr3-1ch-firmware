@@ -294,6 +294,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/dcache.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/Core/flash.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/flash.c</locationURI>
+		</link>
+		<link>
 			<name>Application/User/Core/gpdma.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/gpdma.c</locationURI>

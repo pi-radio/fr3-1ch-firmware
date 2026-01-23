@@ -32,10 +32,6 @@ struct _uid {
 
 extern struct _uid U_ID;
 
-
-extern const char _board_config_data[96 * 1024];
-
-
 extern void init_config_data(void);
 extern uint16_t config_get_flash_code(void);
 extern uint16_t config_get_package_code(void);

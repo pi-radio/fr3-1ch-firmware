@@ -21,6 +21,7 @@
 #include "main.h"
 #include "adc.h"
 #include "dcache.h"
+#include "flash.h"
 #include "gpdma.h"
 #include "icache.h"
 #include "spi.h"
@@ -85,14 +86,14 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  init_config_data();
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  MX_FLASH_Init();
+  init_config_data();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
