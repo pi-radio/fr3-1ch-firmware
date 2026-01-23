@@ -179,7 +179,7 @@ SECTIONS
 
   .system_ro_data 0x8FFF800 : { _system_ro_data = .; }
   
-  .config_data 0x09000000 : { _board_config_data = .; }
+  .config_data    0x9000000 : { _board_config_data = .; }
 
 
 

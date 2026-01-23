@@ -50,7 +50,7 @@ void MX_FLASH_Init(void)
   }
   pOBInit.OptionType = OPTIONBYTE_EDATA;
   pOBInit.Banks = FLASH_BANK_BOTH;
-  pOBInit.EDATASize = 7;
+  pOBInit.EDATASize = 8;
   if (HAL_FLASHEx_OBProgram(&pOBInit) != HAL_OK)
   {
     Error_Handler();
