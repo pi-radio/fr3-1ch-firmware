@@ -3,7 +3,7 @@
 #include <main.h>
 #include <stdio.h>
 #include <stdarg.h>
-
+#include <termbuf.h>
 #include <config_data.h>
 
 #include "ux_device_cdc_acm.h"
@@ -25,8 +25,11 @@ static ULONG usb_tx_queue_data[USB_TX_QUEUE_LEN];
 static TX_MUTEX terminal_tx_mutex;
 
 static TX_THREAD terminal_tx_thread;
+static TX_THREAD terminal_refresh_thread;
 static TX_THREAD terminal_usb_tx_thread;
 static TX_THREAD terminal_rx_thread;
+
+int force_redraw;
 
 typedef enum {
   TERMINAL_STATE_GROUND,
@@ -45,6 +48,8 @@ typedef void (*terminal_handler_t)(struct terminal *, int);
 #define TERMINAL_MAX_CSI_INTERMEDIATES  16
 #define TERMINAL_MAX_CSI_PARAMETERS     16
 
+struct termbuf outbuf;
+
 struct csi {
   int command;
   int private_leader;
@@ -62,6 +67,10 @@ struct terminal {
   int csi_count;
   int error_count;
   int invalid_char;
+  int buffer_input;
+
+  char input_buf[128];
+  int input_len;
 
   int error_char;
   terminal_state_t error_state;
@@ -94,6 +103,42 @@ static inline void unlock_tx(void) {
 
 int _write(int file, char *ptr, int len);
 
+void terminal_strout(const char *s, int len)
+{
+  lock_tx();
+
+  while (len) {
+    txchar(*s++);
+
+    len--;
+  }
+
+  unlock_tx();
+}
+
+// Might be a good idea to write this
+int trprintf(const char *fmt, ...)
+{
+  int n;
+  char str[128];
+  va_list args;
+
+  va_start(args, fmt);
+
+  n = vsnprintf(str , sizeof(str) - 2, fmt, args);
+
+  va_end(args);
+
+  if (n > sizeof(str)) {
+    n = sizeof(str);
+  }
+
+  terminal_strout(str, n);
+
+  return n;
+}
+
+
 void terminal_cs(const char *fmt, ...)
 {
   int n;
@@ -115,8 +160,9 @@ void terminal_cs(const char *fmt, ...)
     n = sizeof(str);
   }
 
-  _write(0, str, n);
+  terminal_strout(str, n);
 }
+
 
 void terminal_reset() {
   terminal_cs("c");
@@ -151,41 +197,48 @@ void terminal_query_position() {
   terminal_cs("6n");
 }
 
-void terminal_refresh() {
-#if 0
-  terminal_query_id();
-#endif
 
-#if 0
-  terminal_reset();
-#endif
+void terminal_refresh_thread_entry(ULONG param) {
+  ULONG flags;
+  //struct terminal *term = (struct terminal *)param;
+  struct termbuf_update upd;
+  int dtr, last_dtr = 0;
 
-#if 0
-  lock_tx();
-  txchar(0x05);
-  unlock_tx();
+  while (1) {
+    tx_event_flags_get(&app_events,
+                       REFRESH_FLAG,
+                       TX_AND_CLEAR,
+                       &flags,
+                       40); // Default refresh period
 
-  lock_tx();
-  txchar(0x1B); txchar('Z');
-  unlock_tx();
-#endif
+    dtr = dtr_is_set();
 
-  terminal_clear_screen();
+    if (!last_dtr && dtr) force_redraw = 1;
 
-#if 1
-  terminal_query_position();
-#endif
+    last_dtr = dtr;
 
-  terminal_move_to(5, 1);
-  printf("Status: RX: %d TX: %d CSI: %d Errors: %d",
-      term.rx_count, term.tx_count, term.csi_count, term.error_count);
-  fflush(stdout);
+    if (force_redraw) {
+      int line;
 
-  terminal_move_to(6, 1);
-  printf("UID %s,%ld,%ld,%ld Flash Size: %d Package Code: %4.4x",
-      U_ID.lot_id, U_ID.wafer_no, U_ID.wafer_x, U_ID.wafer_y,
-      config_get_flash_size(), config_get_package_code());
-  fflush(stdout);
+      force_redraw = 0;
+
+      terminal_move_to(1,1);
+
+      for (line = 0; line < outbuf.rows; line++) {
+        terminal_move_to(line, 0);
+        terminal_strout(termbuf_getbufat(&outbuf, line, 0), outbuf.cols);
+      }
+    } else {
+      termbuf_update_start(&outbuf, &upd);
+
+      while (termbuf_update_next(&upd)) {
+        terminal_move_to(upd.line, upd.start);
+        terminal_strout(upd.s, upd.len);
+        termbuf_validate_line(&outbuf, upd.line);
+      }
+    }
+
+  }
 }
 
 // NO MUTEX
@@ -242,33 +295,6 @@ int rxchar(void) {
   return c;
 }
 
-
-
-int _write(int file, char *ptr, int len)
-{
-  // Set to finite timeout to
-  int retval = len;
-
-  lock_tx();
-
-  while (len) {
-    ULONG c = *ptr;
-
-    if (c == '\n') {
-      txchar('\r');
-    }
-
-    txchar(c);
-
-    ptr++;
-    len--;
-  }
-
-  unlock_tx();
-
-  return retval;
-}
-
 void terminal_reset_csi(struct csi *csi)
 {
   memset(csi, 0, sizeof(*csi));
@@ -307,9 +333,14 @@ void terminal_handle_csi(struct terminal *term) {
 
 }
 
+void terminal_send_rxchar(int c) {
+  tx_queue_send(&terminal_rx_queue, &c, TX_WAIT_FOREVER);
+}
 
 void terminal_handle_ground(struct terminal *term, int c)
 {
+  int i;
+
   if (c == 0x1B) {
     terminal_set_state(term, TERMINAL_STATE_ESC);
   } else if (c == 0x9B) {
@@ -326,18 +357,63 @@ void terminal_handle_ground(struct terminal *term, int c)
       unlock_tx();
     }
 
+    for (i = 0; i < term->input_len; i++) {
+      terminal_send_rxchar(term->input_buf[i]);
+    }
+
+    terminal_send_rxchar('\n');
+
+    term->input_len = 0;
+
     // EOL callback?
+  } else if (c == '\b') {
+    if (term->buffer_input && (term->input_len > 0)) {
+      term->input_len--;
+    }
+  } else if (c == 0x7F) {
+    // DELETE?
+    if (term->buffer_input && (term->input_len > 0)) {
+      term->input_len--;
+    }
   } else if (c == '\t') {
     // Check for tab callback
     // Absorb tab
   } else if (c == '\r') {
     // Check for tab callback
-    // Absorb tab
+    if (term->echo) {
+      lock_tx();
+
+      txchar('\r');
+      if (term->onlcr) {
+        txchar('\n');
+      }
+
+      unlock_tx();
+    }
+
+    for (i = 0; i < term->input_len; i++) {
+      terminal_send_rxchar(term->input_buf[i]);
+    }
+
+    // Assume translate
+    terminal_send_rxchar('\n');
+
+    term->input_len = 0;
   } else if (c >= 0x20 && c <= 0x7F) {
     if (term->echo) {
       lock_tx();
       txchar(c);
       unlock_tx();
+    }
+
+    if (!term->buffer_input) {
+      tx_queue_send(&terminal_rx_queue, &c, TX_WAIT_FOREVER);
+    } else {
+      if (term->input_len < sizeof(term->input_buf)) {
+        term->input_buf[term->input_len++] = c;
+      } else {
+        term->input_buf[sizeof(term->input_buf) - 1] = c;
+      }
     }
   } else {
     // Invalid char callback
@@ -433,7 +509,6 @@ VOID terminal_rx_process(struct terminal *term, int c)
 VOID terminal_rx_thread_entry(ULONG _a) {
   while(1) {
     UCHAR c;
-    ULONG e;
     ULONG len;
     UINT status;
 
@@ -447,13 +522,6 @@ VOID terminal_rx_thread_entry(ULONG _a) {
 
       if ((status == TX_SUCCESS) && (len == 1)) {
         terminal_rx_process(&term, c);
-        e = c;
-
-        if (term.echo) {
-          txchar(c);
-        }
-
-        tx_queue_send(&terminal_rx_queue, &e, TX_WAIT_FOREVER);
       }
     }
   }
@@ -522,11 +590,27 @@ VOID terminal_usb_tx_thread_entry(ULONG _a) {
   }
 }
 
+#define BUFFER_LINES  4
+#define LINE_WIDTH    80
+
+uint32_t cur_line, cur_col;
+char _output_buf[1024];
+char _output_dirty[1024/8];
+
+
+int _write(int file, char *ptr, int len)
+{
+  return wwrite(&output_win, ptr, len);
+}
+
+
+
 static inline void terminal_struct_init(terminal_t *term) {
   memset(term, 0, sizeof(*term));
 
   term->echo = 1;
   term->onlcr = 1;
+  term->buffer_input = 1;
 
   term->state = TERMINAL_STATE_GROUND;
 
@@ -537,10 +621,20 @@ static inline void terminal_struct_init(terminal_t *term) {
   term->handlers[TERMINAL_STATE_CSI_INTER] = terminal_handle_csi_inter;
 }
 
+struct window output_win;
+
+#define TERMINAL_POOL_SIZE 16384
+
+static UCHAR terminal_pool_data[TERMINAL_POOL_SIZE];
+static TX_BYTE_POOL terminal_pool;
 
 void terminal_init(TX_BYTE_POOL *pool) {
   int result;
   VOID *pStack;
+
+  tx_byte_pool_create(&terminal_pool, "terminal memory pool", terminal_pool_data, TERMINAL_POOL_SIZE);
+
+  termbuf_create(&outbuf, &terminal_pool, 40, 132);
 
   terminal_struct_init(&term);
 
@@ -577,15 +671,21 @@ void terminal_init(TX_BYTE_POOL *pool) {
 
   tx_mutex_create(&terminal_tx_mutex, "Terminal Transmit Mutex", TX_INHERIT);
 
-  tx_byte_allocate(pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
+  tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 
   tx_thread_create(&terminal_rx_thread, "terminal_rx_thread_entry", terminal_rx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-  tx_byte_allocate(pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
+  tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 
   tx_thread_create(&terminal_tx_thread, "terminal_tx_thread_entry", terminal_tx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-  tx_byte_allocate(pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
+  tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 
   tx_thread_create(&terminal_usb_tx_thread, "terminal_usb_thread_entry", terminal_usb_tx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+
+  tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
+
+  tx_thread_create(&terminal_refresh_thread, "terminal_refresh_thread_entry", terminal_refresh_thread_entry, (ULONG)&term, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+
+  termbuf_create_window(&outbuf, &output_win, 8, 0, 8, 132);
 }

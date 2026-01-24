@@ -1,3 +1,4 @@
+#include <main.h>
 #include <config_data.h>
 
 struct _uid U_ID;
@@ -52,6 +53,29 @@ uint16_t config_get_flash_code(void) {
 uint16_t config_get_package_code(void) {
   return package_code;
 }
+
+void erase_config_data(void) {
+  uint32_t bank;
+  uint32_t error;
+  FLASH_EraseInitTypeDef erase;
+
+  for (bank = 0; bank < 2; bank++) {
+    erase.TypeErase = FLASH_TYPEERASE_SECTORS;
+    erase.Banks = bank;
+    erase.Sector = FLASH_SECTOR_NB - FLASH_EDATA_SECTOR_NB;
+    erase.NbSectors = FLASH_EDATA_SECTOR_NB;
+
+    if (HAL_FLASHEx_Erase(&erase, &error) != HAL_OK) {
+      Error_Handler();
+    }
+  }
+}
+
+uint16_t config_read_word(uint32_t offset)
+{
+  return *((uint16_t *)_board_config_data + offset);
+}
+
 
 int is_fr3_1ch_board(void)
 {

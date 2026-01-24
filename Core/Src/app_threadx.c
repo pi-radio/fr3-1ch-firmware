@@ -109,12 +109,9 @@ void MX_ThreadX_Init(void)
 /* USER CODE BEGIN 1 */
 VOID app_thread_entry(ULONG _a)
 {
-  int i = 0;
-
   printf("FR3 1ch starting...\n");
 
   while(1) {
-    terminal_refresh();
     tx_thread_sleep(1000);
   }
 }

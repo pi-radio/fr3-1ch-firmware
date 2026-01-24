@@ -49,6 +49,7 @@ extern "C" {
 #define USB_AVAILABLE_FLAG    (1 << 0)
 #define DTR_HIGH_FLAG         (1 << 1)
 #define RTS_HIGH_FLAG         (1 << 2)
+#define REFRESH_FLAG          (1 << 3)
 /* USER CODE END PD */
 
 /* Main thread defines -------------------------------------------------------*/

@@ -36,10 +36,13 @@ extern void init_config_data(void);
 extern uint16_t config_get_flash_code(void);
 extern uint16_t config_get_package_code(void);
 
+extern void erase_config_data(void);
+
 static inline uint32_t config_get_flash_size(void) {
   return config_get_flash_code() * 1024UL;
 }
 
+extern uint16_t config_read_word(uint32_t offset);
 
 extern int is_fr3_1ch_board(void);
 

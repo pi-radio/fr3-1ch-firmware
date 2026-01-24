@@ -13,6 +13,10 @@ struct keyword {
 
 struct keyword keywords[] = {
     { "spiw", TOK_SPIW },
+    { "erase", TOK_ERASE },
+    { "config", TOK_CONFIG },
+    { "read", TOK_READ },
+    { "redraw", TOK_REDRAW },
     // End marker
     { NULL, 0 }
 };
@@ -113,6 +117,12 @@ void get_number(token_t *tok)
       } else if (c == '.') {
         get_float_fractional(tok, tok->i);
         return;
+      } else if (c == 'e') {
+        tok->d = tok->i;
+        get_float_exponent(tok);
+      } else {
+        tok->token_type = TOK_INT;
+        return;
       }
     }
   }
@@ -187,15 +197,14 @@ void _get_token(token_t *tok)
   if (peekchar() == '\n') {
     rxchar();
     tok->token_type = TOK_EOL;
-  }
-  else if (isalpha(peekchar()) || peekchar() == '_') {
+  } else if (peekchar() == '\r') {
+
+  } else if (isalpha(peekchar()) || peekchar() == '_') {
     get_id(tok);
-  /*
   } else if (isdigit(peekchar()) || peekchar() == '-') {
     get_number(tok);
   } else if (peekchar() == '"') {
     get_string(tok);
-  */
   } else {
     tok->s.str[0] = rxchar();
     tok->s.str[1] = 0;

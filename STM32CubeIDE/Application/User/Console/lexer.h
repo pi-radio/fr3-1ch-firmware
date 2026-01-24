@@ -8,6 +8,10 @@ typedef enum {
   TOK_STR,
 
   TOK_SPIW,
+  TOK_ERASE,
+  TOK_CONFIG,
+  TOK_READ,
+  TOK_REDRAW,
 
   TOK_ERROR
 } token_type_t;

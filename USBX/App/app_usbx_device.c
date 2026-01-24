@@ -73,7 +73,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State);
 
 UINT MX_USBX_Device_Init(VOID *memory_ptr)
 {
-   UINT ret = UX_SUCCESS;
+  UINT ret = UX_SUCCESS;
   UCHAR *device_framework_high_speed;
   UCHAR *device_framework_full_speed;
   ULONG device_framework_hs_length;
@@ -184,7 +184,6 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
   }
 
   /* USER CODE BEGIN MX_USBX_Device_Init1 */
-  console_init();
   /* USER CODE END MX_USBX_Device_Init1 */
 
   return ret;
