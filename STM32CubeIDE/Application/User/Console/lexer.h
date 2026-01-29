@@ -16,6 +16,7 @@ typedef enum {
   TOK_PROG,
   TOK_WRITE,
   TOK_REG,
+  TOK_BOOTLOADER,
 
   TOK_ERROR
 } token_type_t;

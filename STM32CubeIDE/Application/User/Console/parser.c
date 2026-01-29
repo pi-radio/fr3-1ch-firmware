@@ -4,6 +4,7 @@
  *  Created on: Jan 23, 2026
  *      Author: zapman
  */
+#include <app_azure_rtos.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -14,6 +15,7 @@
 #include <terminal.h>
 #include <lmx.h>
 #include <config_data.h>
+
 
 char parser_error[128];
 
@@ -207,6 +209,59 @@ static int parse_lmx_statement() {
   return syntax_error();
 }
 
+extern struct bootloader_vectable {
+  uint32_t msp;
+  void (*reset_handler)(void);
+} bootloader;
+
+static int parse_bootloader_statement() {
+  int i;
+  token_t cur_tok;
+  void (*SysMemBootJump)(void);
+
+  get_token(&cur_tok);
+
+  if (cur_tok.token_type != TOK_EOL) {
+    return syntax_error();
+  }
+
+#if 1
+  /* Disable all interrupts */
+  __disable_irq();
+
+  /* Disable Systick timer */
+  SysTick->CTRL = 0;
+
+  /* Set the clock to the default state */
+  HAL_RCC_DeInit();
+
+  /* Clear Interrupt Enable Register & Interrupt Pending Register */
+  for (i=0;i<5;i++)
+  {
+    NVIC->ICER[i]=0xFFFFFFFF;
+    NVIC->ICPR[i]=0xFFFFFFFF;
+  }
+
+  /* Re-enable all interrupts */
+  __enable_irq();
+
+  /* Set the main stack pointer to the boot loader stack */
+  __set_MSP(bootloader.msp);
+
+  /* Call the function to jump to boot loader location */
+  bootloader.reset_handler();
+
+
+  /* Jump is done successfully */
+  while (1)
+  {
+    /* Code should never reach this loop */
+  }
+#endif
+
+  printf("Bootloader MSP: %08x EP: %08x\n", bootloader.msp, bootloader.reset_handler);
+}
+
 int _parser_parse_statement()
 {
   token_t cur_tok;
@@ -229,6 +284,9 @@ int _parser_parse_statement()
     case TOK_REDRAW:
       force_redraw = 1;
       return parse_statement_end();
+
+    case TOK_BOOTLOADER:
+      return parse_bootloader_statement();
 
     default:
   }

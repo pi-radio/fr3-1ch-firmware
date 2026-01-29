@@ -182,6 +182,8 @@ SECTIONS
 
   .config_data    0x9000000 : { _board_config_data = .; }
   
+  .bootloader     0x0BF97000 : { bootloader = .; }  
+  
   /* Remove information from the compiler libraries */
   /DISCARD/ :
   {

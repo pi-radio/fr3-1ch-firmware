@@ -177,11 +177,11 @@ SECTIONS
     . = ALIGN(8);
   } >RAM
 
-  .system_ro_data 0x8FFF800 : { _system_ro_data = .; }
+  .system_ro_data 0x08FFF800 : { _system_ro_data = .; }
   
-  .config_data    0x9000000 : { _board_config_data = .; }
+  .config_data    0x09000000 : { _board_config_data = .; }
 
-
+  .bootloader     0x0BF97000 : { bootloader = .; }
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :
