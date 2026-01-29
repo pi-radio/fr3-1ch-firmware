@@ -215,8 +215,8 @@ int _parser_parse_statement()
 
   get_token(&cur_tok);
 
-  while (cur_tok.token_type == TOK_EOL) {
-    get_token(&cur_tok);
+  if (cur_tok.token_type == TOK_EOL) {
+    return PARSER_OK;
   }
 
   switch(cur_tok.token_type) {

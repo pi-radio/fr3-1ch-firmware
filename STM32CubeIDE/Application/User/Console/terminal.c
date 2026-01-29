@@ -14,6 +14,11 @@ TX_QUEUE terminal_rx_queue;
 TX_QUEUE terminal_tx_queue;
 TX_QUEUE terminal_usb_tx_queue;
 
+#define UP      0x80000000
+#define DOWN    0x80000001
+#define LEFT    0x80000002
+#define RIGHT   0x80000003
+
 #define RX_QUEUE_LEN 256
 #define TX_QUEUE_LEN 256
 #define USB_TX_QUEUE_LEN 256
@@ -28,7 +33,7 @@ static TX_MUTEX terminal_tx_mutex;
 
 static TX_THREAD terminal_tx_thread;
 static TX_THREAD terminal_refresh_thread;
-static TX_THREAD terminal_usb_tx_thread;
+//static TX_THREAD terminal_usb_tx_thread;
 static TX_THREAD terminal_rx_thread;
 
 int force_redraw;
@@ -73,6 +78,10 @@ struct terminal {
 
   char input_buf[128];
   int input_len;
+
+  uint8_t tx_buf[TX_BUF_LEN];
+  uint8_t *tx_cur;
+  uint32_t tx_len;
 
   int error_char;
   terminal_state_t error_state;
@@ -144,19 +153,19 @@ int trprintf(const char *fmt, ...)
 void terminal_cs(const char *fmt, ...)
 {
   int n;
+  const char prefix[] = { '\e', '[' };
   char str[128];
   va_list args;
 
   va_start(args, fmt);
 
-  str[0] = 0x1B;
-  str[1] = '[';
+  memcpy(str, prefix, sizeof(prefix));
 
-  n = vsnprintf(str + 2, sizeof(str) - 2, fmt, args);
+  n = vsnprintf(str + sizeof(prefix), sizeof(str) - sizeof(prefix), fmt, args);
 
   va_end(args);
 
-  n += 2;
+  n += sizeof(prefix);
 
   if (n > sizeof(str)) {
     n = sizeof(str);
@@ -231,6 +240,11 @@ void terminal_refresh_thread_entry(ULONG param) {
 
       force_redraw = 0;
 
+      txchar(0x1B); txchar('Z');
+      txflush();
+      terminal_query_position();
+
+
       //terminal_echo_off();
 
       terminal_move_to(0,0);
@@ -281,15 +295,8 @@ void terminal_refresh_thread_entry(ULONG param) {
 // NO MUTEX
 int txchar(int c) {
   int result;
-  ULONG flags;
 
-  tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_NO_WAIT);
-
-  if (dtr_is_set()) {
-    result = tx_queue_send(&terminal_tx_queue, &c, 1);
-  } else {
-    result = 1;
-  }
+  result = tx_queue_send(&terminal_tx_queue, &c, 1);
 
   return result;
 }
@@ -359,6 +366,10 @@ void terminal_handle_error(struct terminal *term, int c) {
   terminal_set_state(term, TERMINAL_STATE_GROUND);
 }
 
+void tsendc(int c) {
+  outbuf.focus->on_input(outbuf.focus, c);
+}
+
 void terminal_handle_csi(struct terminal *term) {
   terminal_set_state(term, TERMINAL_STATE_GROUND);
   term->csi_count++;
@@ -367,11 +378,33 @@ void terminal_handle_csi(struct terminal *term) {
     term->csi.n_parameters = 1; // Default 0 parameter
   }
 
+  switch (term->csi.command) {
+  case 'c':
+    printf("Terminal type: %d %d (%d %d)\n",
+        term->csi.parameters[0],
+        term->csi.parameters[1],
+        term->csi.n_parameters,
+        term->csi.n_intermediates);
+    break;
+  case 'R':
+    printf("Cursor is at %d, %d\n", term->csi.parameters[0], term->csi.parameters[1]);
+    break;
 
-}
-
-void terminal_send_rxchar(int c) {
-  tx_queue_send(&terminal_rx_queue, &c, TX_WAIT_FOREVER);
+  case 'A':
+    tsendc(UP);
+    break;
+  case 'B':
+    tsendc(DOWN);
+    break;
+  case 'C':
+    tsendc(RIGHT);
+    break;
+  case 'D':
+    tsendc(LEFT);
+    break;
+  default:
+    printf("CSI complete: %c n_p: %d\n", term->csi.command, term->csi.n_parameters);
+  }
 }
 
 void terminal_handle_ground(struct terminal *term, int c)
@@ -472,7 +505,8 @@ VOID terminal_rx_process(struct terminal *term, int c)
 
 VOID terminal_rx_thread_entry(ULONG _a) {
   while(1) {
-    UCHAR c;
+    UCHAR rxbuf[64];
+    UCHAR *p;
     ULONG len;
     UINT status;
 
@@ -480,79 +514,107 @@ VOID terminal_rx_thread_entry(ULONG _a) {
       do {
         wait_usb();
 
-        status = ux_device_class_cdc_acm_read(cdc_acm, &c, 1, &len);
+        status = ux_device_class_cdc_acm_read(cdc_acm, rxbuf, 64, &len);
       } while(status == UX_TRANSFER_BUS_RESET);
 
+      if (status != TX_SUCCESS) {
+        printf("Read status: %d\n", status);
+        continue;
+      }
 
-      if ((status == TX_SUCCESS) && (len == 1)) {
-        terminal_rx_process(&term, c);
+      p = rxbuf;
+
+      while(len--) {
+        terminal_rx_process(&term, *p++);
       }
     }
   }
 }
 
-void txchar_usb(ULONG c) {
-  term.tx_count++;
-  tx_queue_send(&terminal_usb_tx_queue, &c, TX_WAIT_FOREVER);
+#define TERMINAL_FLUSH  0xFFFF0000
+
+TX_SEMAPHORE flush_semaphore;
+
+void txflush(void) {
+  txchar(TERMINAL_FLUSH);
+
+  tx_semaphore_get(&flush_semaphore, TX_WAIT_FOREVER);
+}
+
+VOID usb_flush_buffer(struct terminal *term) {
+  int result;
+  ULONG tx_len;
+  UCHAR *p = term->tx_buf;
+  ULONG l = term->tx_len;
+
+  while (l) {
+    do {
+      wait_dtr();
+      //tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
+
+      result = ux_device_class_cdc_acm_write(cdc_acm, p, l, &tx_len);
+    } while(result != TX_SUCCESS);
+
+    l -= tx_len;
+    p += tx_len;
+  }
+
+  term->tx_cur = term->tx_buf;
+  term->tx_len = 0;
+}
+
+void usb_pushc(struct terminal *term, UCHAR c)
+{
+  *term->tx_cur++ = c;
+  term->tx_len++;
+
+  if (term->tx_len == TX_BUF_LEN) {
+    usb_flush_buffer(term);
+  }
 }
 
 VOID terminal_tx_thread_entry(ULONG _a) {
-  while(1) {
-    ULONG c;
-
-    tx_queue_receive(&terminal_tx_queue, &c, TX_WAIT_FOREVER);
-
-    if(term.onlcr && c == 0x0A) {
-      txchar_usb(0x0D);
-    }
-
-    txchar_usb(c);
-  }
-}
-
-VOID terminal_usb_tx_thread_entry(ULONG _a) {
-  UINT result;
-  ULONG n, c;
-  ULONG tx_len;
-  UCHAR buf[TX_BUF_LEN];
-  UCHAR *pcur;
+  int result;
+  struct terminal *term = (struct terminal *)_a;
+  ULONG c;
+  ULONG wait;
 
   wait_usb();
 
-  while (1) {
-    n = 0;
+  wait = TX_WAIT_FOREVER;
 
-    pcur = buf;
-    result = tx_queue_receive(&terminal_usb_tx_queue, &c, TX_WAIT_FOREVER);
-    *pcur++ = c;
-    n++;
+  while(1) {
+    result = tx_queue_receive(&terminal_tx_queue, &c, wait);
 
-    while (n < TX_BUF_LEN) {
-      result = tx_queue_receive(&terminal_usb_tx_queue, &c, 1);
-
-      if (result != TX_SUCCESS) {
-        break;
-      }
-
-      *pcur++ = c;
-      n++;
+    if (result == TX_QUEUE_EMPTY) {
+      usb_flush_buffer(term);
+      wait = TX_WAIT_FOREVER;
+      continue;
     }
 
-    pcur = buf;
-
-    while (n) {
-      do {
-        wait_dtr();
-        //tx_event_flags_get(&app_events, 1, TX_AND, &flags, TX_WAIT_FOREVER);
-
-        result = ux_device_class_cdc_acm_write(cdc_acm, pcur, n, &tx_len);
-      } while(result != TX_SUCCESS);
-
-      pcur += tx_len;
-      n -= tx_len;
+    if (result != TX_SUCCESS) {
+      Error_Handler();
     }
+
+    wait = 1;
+
+    if (c == TERMINAL_FLUSH) {
+      usb_flush_buffer(term);
+      tx_semaphore_put(&flush_semaphore);
+      wait = TX_WAIT_FOREVER;
+      continue;
+    }
+
+    term->tx_count++;
+
+    if(term->onlcr && c == 0x0A) {
+      usb_pushc(term, 0x0D);
+    }
+
+    usb_pushc(term, c);
   }
 }
+
 
 #define BUFFER_LINES  4
 #define LINE_WIDTH    80
@@ -575,6 +637,9 @@ static inline void terminal_struct_init(terminal_t *term) {
   term->echo = 0;
   term->onlcr = 1;
   term->buffer_input = 1;
+
+  term->tx_cur = term->tx_buf;
+  term->tx_len = 0;
 
   term->state = TERMINAL_STATE_GROUND;
 
@@ -666,11 +731,11 @@ void terminal_init(TX_BYTE_POOL *pool) {
 
   tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 
-  tx_thread_create(&terminal_tx_thread, "terminal_tx_thread_entry", terminal_tx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+  tx_thread_create(&terminal_tx_thread, "terminal_tx_thread_entry", terminal_tx_thread_entry, (ULONG)&term, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-  tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
+  //tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 
-  tx_thread_create(&terminal_usb_tx_thread, "terminal_usb_thread_entry", terminal_usb_tx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+  //tx_thread_create(&terminal_usb_tx_thread, "terminal_usb_thread_entry", terminal_usb_tx_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
   tx_byte_allocate(&terminal_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
 

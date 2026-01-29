@@ -108,6 +108,8 @@ int spi_transfer(int device, int lenb, uint32_t *v)
 
   hw_req_wait((hw_req_t *)req);
 
+  *v = req->data;
+
   return 0;
 }
 
@@ -158,7 +160,7 @@ static void handle_spi_cmd(spi_req_t *req)
     }
 
 
-    tx_event_flags_set(&hw_req_flags, ~(1 << hw_req_get_id((hw_req_t *)req)), TX_AND);
+    tx_event_flags_set(&hw_req_flags, (1 << hw_req_get_id((hw_req_t *)req)), TX_OR);
   } else {
     HAL_SPI_Transmit_IT(&hspi4, tx_buf, len);
   }

@@ -41,11 +41,15 @@ static inline void lmx_program_reg(int reg) {
 }
 
 int lmx_read_reg(int reg, uint16_t *val) {
+  int retval;
+
   uint32_t v = (reg << 16) | lmx_regs[reg];
 
-  spi_transfer(SPI_DEVICE_LMX, 3, &v);
+  retval = spi_transfer(SPI_DEVICE_LMX, 3, &v);
 
   *val = (v & 0xFFFF);
+
+  return retval;
 }
 
 void lmx_program(void)

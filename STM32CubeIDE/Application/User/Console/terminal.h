@@ -18,3 +18,5 @@ void terminal_cursor_move(int x, int y);
 void terminal_cursor_save();
 void terminal_cursor_restore();
 void terminal_clear_line();
+
+void txflush(void);

@@ -27,6 +27,10 @@ void console_init(void) {
       cmd_queue_data,
       CMD_QUEUE_LEN * sizeof(ULONG));
 
+  if (result != TX_SUCCESS) {
+    Error_Handler();
+  }
+
   tx_thread_create(&console_rx_thread, "console_rx_thread_entry", console_cmd_thread_entry, 1, console_stack, sizeof(console_stack), 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 }
 
@@ -48,9 +52,13 @@ void wait_usb(void) {
 void console_cmd_ready(void)
 {
   int result;
-  ULONG sul;
+  ULONG sul = 0;
 
   result = tx_queue_send(&console_cmd_queue, &sul, TX_WAIT_FOREVER);
+
+  if (result != TX_SUCCESS) {
+    printf("Console failure: %d\n", result);
+  }
 }
 
 
