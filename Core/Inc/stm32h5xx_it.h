@@ -60,8 +60,12 @@ void GPDMA1_Channel6_IRQHandler(void);
 void GPDMA1_Channel7_IRQHandler(void);
 void TIM1_UP_IRQHandler(void);
 void USART1_IRQHandler(void);
+void LPTIM1_IRQHandler(void);
 void USB_DRD_FS_IRQHandler(void);
 void UCPD1_IRQHandler(void);
+void SPI4_IRQHandler(void);
+void FPU_IRQHandler(void);
+void DTS_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

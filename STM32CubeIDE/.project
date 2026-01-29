@@ -89,6 +89,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_dma_ex.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_dts.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_dts.c</locationURI>
+		</link>
+		<link>
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_exti.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_exti.c</locationURI>
@@ -122,6 +127,11 @@
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_icache.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_icache.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_lptim.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_lptim.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_pcd.c</name>
@@ -294,6 +304,11 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/dcache.c</locationURI>
 		</link>
 		<link>
+			<name>Application/User/Core/dts.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/dts.c</locationURI>
+		</link>
+		<link>
 			<name>Application/User/Core/flash.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/flash.c</locationURI>
@@ -312,6 +327,11 @@
 			<name>Application/User/Core/icache.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/icache.c</locationURI>
+		</link>
+		<link>
+			<name>Application/User/Core/lptim.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/lptim.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core/main.c</name>

@@ -59,6 +59,9 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef handle_GPDMA1_Channel3;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel2;
+extern DTS_HandleTypeDef hdts;
+extern LPTIM_HandleTypeDef hlptim1;
+extern SPI_HandleTypeDef hspi4;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel1;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
 extern UART_HandleTypeDef huart1;
@@ -291,6 +294,20 @@ void USART1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles LPTIM1 global interrupt.
+  */
+void LPTIM1_IRQHandler(void)
+{
+  /* USER CODE BEGIN LPTIM1_IRQn 0 */
+
+  /* USER CODE END LPTIM1_IRQn 0 */
+  HAL_LPTIM_IRQHandler(&hlptim1);
+  /* USER CODE BEGIN LPTIM1_IRQn 1 */
+
+  /* USER CODE END LPTIM1_IRQn 1 */
+}
+
+/**
   * @brief This function handles USB FS global interrupt.
   */
 void USB_DRD_FS_IRQHandler(void)
@@ -317,6 +334,47 @@ void UCPD1_IRQHandler(void)
   /* USER CODE BEGIN UCPD1_IRQn 1 */
 
   /* USER CODE END UCPD1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI4 global interrupt.
+  */
+void SPI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI4_IRQn 0 */
+
+  /* USER CODE END SPI4_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi4);
+  /* USER CODE BEGIN SPI4_IRQn 1 */
+
+  /* USER CODE END SPI4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles FPU global interrupt.
+  */
+void FPU_IRQHandler(void)
+{
+  /* USER CODE BEGIN FPU_IRQn 0 */
+
+  /* USER CODE END FPU_IRQn 0 */
+  /* USER CODE BEGIN FPU_IRQn 1 */
+
+  /* USER CODE END FPU_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DTS global interrupt.
+  */
+void DTS_IRQHandler(void)
+{
+  /* USER CODE BEGIN DTS_IRQn 0 */
+
+  /* USER CODE END DTS_IRQn 0 */
+  HAL_DTS_IRQHandler(&hdts);
+  /* USER CODE BEGIN DTS_IRQn 1 */
+
+  /* USER CODE END DTS_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

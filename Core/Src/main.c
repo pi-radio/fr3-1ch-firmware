@@ -21,9 +21,11 @@
 #include "main.h"
 #include "adc.h"
 #include "dcache.h"
+#include "dts.h"
 #include "flash.h"
 #include "gpdma.h"
 #include "icache.h"
+#include "lptim.h"
 #include "spi.h"
 #include "ucpd.h"
 #include "usart.h"
@@ -83,6 +85,8 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
+  /* MPU Configuration--------------------------------------------------------*/
+  MPU_Config();
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -109,6 +113,9 @@ int main(void)
   MX_DCACHE1_Init();
   MX_ICACHE_Init();
   MX_ADC1_Init();
+  MX_FLASH_Init();
+  MX_DTS_Init();
+  MX_LPTIM1_Init();
   /* Call PreOsInit function */
   USBPD_PreInitOs();
   /* USER CODE BEGIN 2 */
@@ -195,11 +202,12 @@ void MPU_Config(void)
   HAL_MPU_Disable();
 
   /** Initializes and configures the Attribute 0 and the memory to be protected
-  */
+   */
   MPU_AttributesInit.Number = MPU_ATTRIBUTES_NUMBER0;
   MPU_AttributesInit.Attributes = 0;
 
   HAL_MPU_ConfigMemoryAttributes(&MPU_AttributesInit);
+
 
   /** Initializes and configures the Region 0 and the memory to be protected
   */
@@ -214,7 +222,13 @@ void MPU_Config(void)
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
+  /** Initializes and configures the Attribute 0 and the memory to be protected
+  */
+  MPU_AttributesInit.Number = MPU_ATTRIBUTES_NUMBER0;
+  MPU_AttributesInit.Attributes = INNER_OUTER(MPU_WRITE_THROUGH|MPU_TRANSIENT
+                              |MPU_NO_ALLOCATE);
 
+  HAL_MPU_ConfigMemoryAttributes(&MPU_AttributesInit);
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 
