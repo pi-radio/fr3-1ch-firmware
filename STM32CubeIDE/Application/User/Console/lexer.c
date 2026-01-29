@@ -17,9 +17,42 @@ struct keyword keywords[] = {
     { "config", TOK_CONFIG },
     { "read", TOK_READ },
     { "redraw", TOK_REDRAW },
+    { "lmx", TOK_LMX },
+    { "prog", TOK_PROG },
+    { "write", TOK_WRITE },
+    { "reg", TOK_REG },
     // End marker
     { NULL, 0 }
 };
+
+static char cur_line[132];
+static int cur_line_len = 0;
+static int pos;
+
+static int peekchar(void) {
+  if (pos >= cur_line_len) {
+    return 0;
+  }
+
+  return cur_line[pos];
+}
+
+static int rxchar(void) {
+  if (pos >= cur_line_len) {
+    return 0;
+  }
+
+  return cur_line[pos++];
+}
+
+
+void lexer_set_line(const char *s, int len)
+{
+  // TODO add lock
+  memcpy(cur_line, s, len);
+  pos = 0;
+  cur_line_len = len;
+}
 
 
 token_t _peek_token;
@@ -188,22 +221,31 @@ void get_string(token_t *tok)
 
 void _get_token(token_t *tok)
 {
+  int c = peekchar();
+
   memset(tok, 0, sizeof(*tok));
 
-  while (isspace(peekchar()) && peekchar() != '\n') {
+  while (isspace(c) && c != '\n' && c != '\r') {
     rxchar();
+
+    c = peekchar();
   }
 
-  if (peekchar() == '\n') {
+  if (c == '\n' || c == 0) {
     rxchar();
     tok->token_type = TOK_EOL;
-  } else if (peekchar() == '\r') {
+  } else if (c == '\r') {
+    rxchar();
+    tok->token_type = TOK_EOL;
 
-  } else if (isalpha(peekchar()) || peekchar() == '_') {
+    if (peekchar() == '\n') {
+      rxchar();
+    }
+  } else if (isalpha(c) || c == '_') {
     get_id(tok);
-  } else if (isdigit(peekchar()) || peekchar() == '-') {
+  } else if (isdigit(c) || c == '-') {
     get_number(tok);
-  } else if (peekchar() == '"') {
+  } else if (c == '"') {
     get_string(tok);
   } else {
     tok->s.str[0] = rxchar();

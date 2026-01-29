@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <termbuf.h>
 #include <config_data.h>
+#include <lexer.h>
+#include <parser.h>
 
 #include "ux_device_cdc_acm.h"
 
@@ -170,7 +172,15 @@ void terminal_reset() {
 
 void terminal_move_to(int y, int x)
 {
-  terminal_cs("%d;%dH", y, x);
+  terminal_cs("%d;%dH", y + 1, x + 1);
+}
+
+void terminal_echo_off() {
+  terminal_cs("12h");
+}
+
+void terminal_clear_line() {
+  terminal_cs("K");
 }
 
 void terminal_clear_screen() {
@@ -185,10 +195,6 @@ void terminal_cursor_restore() {
 
 }
 
-void terminal_clear_line() {
-
-}
-
 void terminal_query_id() {
   terminal_cs("c");
 }
@@ -197,6 +203,9 @@ void terminal_query_position() {
   terminal_cs("6n");
 }
 
+void terminal_erase_right(int n) {
+  terminal_cs("%dX", n);
+}
 
 void terminal_refresh_thread_entry(ULONG param) {
   ULONG flags;
@@ -222,18 +231,46 @@ void terminal_refresh_thread_entry(ULONG param) {
 
       force_redraw = 0;
 
-      terminal_move_to(1,1);
+      //terminal_echo_off();
+
+      terminal_move_to(0,0);
 
       for (line = 0; line < outbuf.rows; line++) {
         terminal_move_to(line, 0);
+        terminal_clear_line();
         terminal_strout(termbuf_getbufat(&outbuf, line, 0), outbuf.cols);
       }
     } else {
       termbuf_update_start(&outbuf, &upd);
 
       while (termbuf_update_next(&upd)) {
+        const char *pcur;
+        int l, cp, lp;
+
         terminal_move_to(upd.line, upd.start);
-        terminal_strout(upd.s, upd.len);
+        terminal_erase_right(upd.len);
+
+        pcur = upd.s;
+        l = upd.len;
+        cp = upd.start;
+        lp = upd.start - 1;
+
+        while (l) {
+          if (*pcur != 0) {
+            if (cp != lp + 1) {
+              terminal_move_to(upd.line, cp);
+            }
+
+            txchar(*pcur);
+
+            lp = cp;
+          }
+
+          cp++;
+          pcur++;
+          l--;
+        }
+
         termbuf_validate_line(&outbuf, upd.line);
       }
     }
@@ -339,85 +376,12 @@ void terminal_send_rxchar(int c) {
 
 void terminal_handle_ground(struct terminal *term, int c)
 {
-  int i;
-
   if (c == 0x1B) {
     terminal_set_state(term, TERMINAL_STATE_ESC);
   } else if (c == 0x9B) {
     terminal_set_state(term, TERMINAL_STATE_CSI_ENTRY);
-  } else if (c == '\n') {
-    if (term->echo) {
-      lock_tx();
-
-      if (term->onlcr) {
-        txchar('\r');
-      }
-      txchar('\n');
-
-      unlock_tx();
-    }
-
-    for (i = 0; i < term->input_len; i++) {
-      terminal_send_rxchar(term->input_buf[i]);
-    }
-
-    terminal_send_rxchar('\n');
-
-    term->input_len = 0;
-
-    // EOL callback?
-  } else if (c == '\b') {
-    if (term->buffer_input && (term->input_len > 0)) {
-      term->input_len--;
-    }
-  } else if (c == 0x7F) {
-    // DELETE?
-    if (term->buffer_input && (term->input_len > 0)) {
-      term->input_len--;
-    }
-  } else if (c == '\t') {
-    // Check for tab callback
-    // Absorb tab
-  } else if (c == '\r') {
-    // Check for tab callback
-    if (term->echo) {
-      lock_tx();
-
-      txchar('\r');
-      if (term->onlcr) {
-        txchar('\n');
-      }
-
-      unlock_tx();
-    }
-
-    for (i = 0; i < term->input_len; i++) {
-      terminal_send_rxchar(term->input_buf[i]);
-    }
-
-    // Assume translate
-    terminal_send_rxchar('\n');
-
-    term->input_len = 0;
-  } else if (c >= 0x20 && c <= 0x7F) {
-    if (term->echo) {
-      lock_tx();
-      txchar(c);
-      unlock_tx();
-    }
-
-    if (!term->buffer_input) {
-      tx_queue_send(&terminal_rx_queue, &c, TX_WAIT_FOREVER);
-    } else {
-      if (term->input_len < sizeof(term->input_buf)) {
-        term->input_buf[term->input_len++] = c;
-      } else {
-        term->input_buf[sizeof(term->input_buf) - 1] = c;
-      }
-    }
-  } else {
-    // Invalid char callback
-    terminal_handle_error(term, c);
+  } else if (outbuf.focus && outbuf.focus->on_input) {
+    outbuf.focus->on_input(outbuf.focus, c);
   }
 }
 
@@ -608,7 +572,7 @@ int _write(int file, char *ptr, int len)
 static inline void terminal_struct_init(terminal_t *term) {
   memset(term, 0, sizeof(*term));
 
-  term->echo = 1;
+  term->echo = 0;
   term->onlcr = 1;
   term->buffer_input = 1;
 
@@ -622,11 +586,36 @@ static inline void terminal_struct_init(terminal_t *term) {
 }
 
 struct window output_win;
+struct text_field input_win;
 
 #define TERMINAL_POOL_SIZE 16384
 
 static UCHAR terminal_pool_data[TERMINAL_POOL_SIZE];
 static TX_BYTE_POOL terminal_pool;
+
+int input_on_nl(struct text_field *tf, const char *s, int l)
+{
+  wprintf(&output_win, "%.*s\n", l, s);
+
+  lexer_set_line(s, l);
+
+  console_cmd_ready();
+
+  /*
+  int result = parser_parse_statement();
+
+  switch(result) {
+  case PARSER_OK:
+    printf("OK\n");
+    break;
+  case PARSER_SYNTAX_ERROR:
+    printf("Syntax Error\n");
+    break;
+  }
+  */
+
+  return 0;
+}
 
 void terminal_init(TX_BYTE_POOL *pool) {
   int result;
@@ -688,4 +677,11 @@ void terminal_init(TX_BYTE_POOL *pool) {
   tx_thread_create(&terminal_refresh_thread, "terminal_refresh_thread_entry", terminal_refresh_thread_entry, (ULONG)&term, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
   termbuf_create_window(&outbuf, &output_win, 8, 0, 8, 132);
+
+  text_field_create(&outbuf, &input_win, 17, 0, 1, 132);
+
+  termbuf_set_focus(&outbuf, &input_win.win);
+
+  input_win.on_nl = input_on_nl;
+  input_win.on_cr = input_on_nl;
 }

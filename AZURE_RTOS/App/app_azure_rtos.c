@@ -24,6 +24,8 @@
 /* USER CODE BEGIN Includes */
 #include <terminal.h>
 #include <console.h>
+#include <fr3_1ch_hw.h>
+#include <lmx.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -90,6 +92,10 @@ VOID tx_application_define(VOID *first_unused_memory)
   terminal_init();
 
   console_init();
+
+  fr3_1ch_hw_init();
+
+  lmx_init();
 
   /* USER CODE END  tx_application_define_1 */
 #if (USE_STATIC_ALLOCATION == 1)

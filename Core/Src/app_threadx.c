@@ -23,8 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "console.h"
-#include "terminal.h"
+#include <console.h>
+#include <terminal.h>
+#include <lmx.h>
 #include <config_data.h>
 
 #include <stdio.h>
@@ -110,6 +111,10 @@ void MX_ThreadX_Init(void)
 VOID app_thread_entry(ULONG _a)
 {
   printf("FR3 1ch starting...\n");
+
+  printf("Programming LMX...\n");
+
+  //lmx_program();
 
   while(1) {
     tx_thread_sleep(1000);

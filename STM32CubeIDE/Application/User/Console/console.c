@@ -7,22 +7,27 @@
 #include "main.h"
 #include "parser.h"
 
-#define TX_BUF_LEN 128
+#define CMD_QUEUE_LEN 16
 
-#define TX_QUEUE_LEN 1024
-#define RX_QUEUE_LEN 1024
+static ULONG cmd_queue_data[CMD_QUEUE_LEN];
 
 static TX_THREAD console_rx_thread;
+static TX_QUEUE console_cmd_queue;
 
-VOID console_tx_thread_entry(ULONG _a);
-VOID console_rx_thread_entry(ULONG _a);
-VOID console_vcp_rx_thread_entry(ULONG _a);
+VOID console_cmd_thread_entry(ULONG _a);
 
-char console_stack[1024];
+char console_stack[4096];
 
 void console_init(void) {
-  tx_thread_create(&console_rx_thread, "console_rx_thread_entry", console_rx_thread_entry, 1, console_stack, sizeof(console_stack), 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+  int result;
 
+  result = tx_queue_create(&console_cmd_queue,
+      "console_cmd_queue",
+      1,
+      cmd_queue_data,
+      CMD_QUEUE_LEN * sizeof(ULONG));
+
+  tx_thread_create(&console_rx_thread, "console_rx_thread_entry", console_cmd_thread_entry, 1, console_stack, sizeof(console_stack), 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 }
 
 
@@ -40,11 +45,23 @@ void wait_usb(void) {
   tx_event_flags_get(&app_events, USB_AVAILABLE_FLAG, TX_AND, &flags, TX_WAIT_FOREVER);
 }
 
+void console_cmd_ready(void)
+{
+  int result;
+  ULONG sul;
+
+  result = tx_queue_send(&console_cmd_queue, &sul, TX_WAIT_FOREVER);
+}
 
 
-VOID console_rx_thread_entry(ULONG _a) {
+void console_cmd_thread_entry(ULONG _a) {
   while(1) {
-    int result = parser_parse_statement();
+    int result;
+    ULONG c;
+
+    result = tx_queue_receive(&console_cmd_queue, &c, TX_WAIT_FOREVER);
+
+    result = parser_parse_statement();
 
     switch(result) {
     case PARSER_OK:

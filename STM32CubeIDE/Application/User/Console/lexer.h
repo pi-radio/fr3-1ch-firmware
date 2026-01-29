@@ -12,6 +12,10 @@ typedef enum {
   TOK_CONFIG,
   TOK_READ,
   TOK_REDRAW,
+  TOK_LMX,
+  TOK_PROG,
+  TOK_WRITE,
+  TOK_REG,
 
   TOK_ERROR
 } token_type_t;
@@ -29,3 +33,4 @@ typedef struct {
 } token_t;
 
 extern void get_token(token_t *);
+extern void lexer_set_line(const char *s, int len);

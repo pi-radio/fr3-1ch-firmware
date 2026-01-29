@@ -50,6 +50,7 @@ extern "C" {
 #define DTR_HIGH_FLAG         (1 << 1)
 #define RTS_HIGH_FLAG         (1 << 2)
 #define REFRESH_FLAG          (1 << 3)
+#define TERM_FLUSH_FLAG       (1 << 4)
 /* USER CODE END PD */
 
 /* Main thread defines -------------------------------------------------------*/
