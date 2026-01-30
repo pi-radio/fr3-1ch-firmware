@@ -3,10 +3,12 @@
 #include <main.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <termbuf.h>
+#include <window.h>
+#include <text_field.h>
 #include <config_data.h>
 #include <lexer.h>
 #include <parser.h>
+#include <dts.h>
 
 #include "ux_device_cdc_acm.h"
 
@@ -652,11 +654,30 @@ static inline void terminal_struct_init(terminal_t *term) {
 
 struct window output_win;
 struct text_field input_win;
+struct window status_win;
+
+static TX_TIMER status_timer;
 
 #define TERMINAL_POOL_SIZE 16384
 
 static UCHAR terminal_pool_data[TERMINAL_POOL_SIZE];
 static TX_BYTE_POOL terminal_pool;
+
+
+void status_update(ULONG a)
+{
+  struct window *win = (struct window *)a;
+  int result;
+  int32_t temp;
+
+  result = HAL_DTS_GetTemperature(&hdts, &temp);
+
+  if (result == TX_SUCCESS) {
+    wprintf(win, "Temp: %dC", temp);
+  } else {
+    wprintf(win, "Temp: ERROR");
+  }
+}
 
 int input_on_nl(struct text_field *tf, const char *s, int l)
 {
@@ -741,12 +762,22 @@ void terminal_init(TX_BYTE_POOL *pool) {
 
   tx_thread_create(&terminal_refresh_thread, "terminal_refresh_thread_entry", terminal_refresh_thread_entry, (ULONG)&term, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-  termbuf_create_window(&outbuf, &output_win, 8, 0, 8, 132);
 
-  text_field_create(&outbuf, &input_win, 17, 0, 1, 132);
+  window_create(&output_win, &outbuf, 8, 0, 8, 132);
+  window_create(&status_win, &outbuf, 20, 0, 1, 132);
+
+  text_field_create(&input_win, &outbuf, 17, 0, 1, 132);
 
   termbuf_set_focus(&outbuf, &input_win.win);
 
   input_win.on_nl = input_on_nl;
   input_win.on_cr = input_on_nl;
+
+  tx_timer_create(&status_timer,
+      "Status Timer",
+      status_update,
+      (ULONG)&status_win,
+      1000,
+      1000,
+      TX_AUTO_ACTIVATE);
 }

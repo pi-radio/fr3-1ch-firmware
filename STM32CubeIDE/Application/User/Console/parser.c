@@ -106,6 +106,17 @@ static int parse_config_statement()
   }
 }
 
+static int parse_lmx_prog() {
+  if (parse_statement_end() != PARSER_OK) {
+    return syntax_error();
+  }
+
+  lmx_program();
+
+  return PARSER_OK;
+}
+
+
 static int parse_lmx_read() {
   int reg, result;
   uint16_t val;
@@ -195,7 +206,7 @@ static int parse_lmx_statement() {
 
   switch (cur_tok.token_type) {
   case TOK_PROG:
-    return PARSER_SYNTAX_ERROR;
+    return parse_lmx_prog();
 
   case TOK_WRITE:
     return parse_lmx_write();

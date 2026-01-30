@@ -8,4 +8,6 @@ extern void lmx_program(void);
 
 extern int lmx_read_reg(int reg, uint16_t *val);
 
+extern int lmx_locked(void);
+
 #endif /* __LMX_H__ */

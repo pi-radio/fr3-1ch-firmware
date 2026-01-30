@@ -65,6 +65,34 @@ void lmx_program(void)
 
 
 
+int lmx_locked(void)
+{
+  uint16_t v;
+  int retval;
+
+  retval = lmx_read_reg(74, &v);
+
+  if (retval < 0) {
+    return retval;
+  }
+
+  v = (v >> 14) & 0x3;
+
+  switch (v) {
+  case 0:
+  case 1:
+    retval = 0;
+    break;
+  case 2:
+    retval = 1;
+    break;
+  default:
+    retval = -1;
+    break;
+  }
+
+  return retval;
+}
 
 void lmx_init(void)
 {
