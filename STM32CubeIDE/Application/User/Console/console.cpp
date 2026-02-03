@@ -1,15 +1,15 @@
+#include <terminal.hpp>
 #include "ux_device_cdc_acm.h"
 
 #include "console.h"
 #include "lexer.h"
-#include "terminal.h"
 #include "app_threadx.h"
 #include "main.h"
 #include "parser.h"
 
-#define CMD_QUEUE_LEN 16
+#define CONSOLE_CMD_QUEUE_LEN 16
 
-static ULONG cmd_queue_data[CMD_QUEUE_LEN];
+static ULONG cmd_queue_data[CONSOLE_CMD_QUEUE_LEN];
 
 static TX_THREAD console_rx_thread;
 static TX_QUEUE console_cmd_queue;
@@ -18,20 +18,20 @@ VOID console_cmd_thread_entry(ULONG _a);
 
 char console_stack[4096];
 
-void console_init(void) {
+extern "C" void console_init(void) {
   int result;
 
   result = tx_queue_create(&console_cmd_queue,
-      "console_cmd_queue",
+      (char *)"console_cmd_queue",
       1,
       cmd_queue_data,
-      CMD_QUEUE_LEN * sizeof(ULONG));
+      sizeof(cmd_queue_data));
 
   if (result != TX_SUCCESS) {
     Error_Handler();
   }
 
-  tx_thread_create(&console_rx_thread, "console_rx_thread_entry", console_cmd_thread_entry, 1, console_stack, sizeof(console_stack), 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+  tx_thread_create(&console_rx_thread, (char *)"console_rx_thread_entry", console_cmd_thread_entry, 1, console_stack, sizeof(console_stack), 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 }
 
 

@@ -22,10 +22,10 @@
 #include "app_azure_rtos.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <terminal.h>
 #include <console.h>
 #include <fr3_1ch_hw.h>
 #include <lmx.h>
+#include <terminal.hpp>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

@@ -22,6 +22,7 @@ struct keyword keywords[] = {
     { "write", TOK_WRITE },
     { "reg", TOK_REG },
     { "bootloader", TOK_BOOTLOADER },
+    { "clear", TOK_CLEAR },
     // End marker
     { NULL, 0 }
 };

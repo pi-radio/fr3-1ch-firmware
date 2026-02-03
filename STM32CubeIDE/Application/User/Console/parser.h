@@ -14,6 +14,10 @@
 
 extern const char *parser_get_error_string(void);
 
+#if defined(__cplusplus)
+extern "C" int parser_parse_statement(void);
+#else
 extern int parser_parse_statement(void);
+#endif
 
 #endif /* APPLICATION_USER_CONSOLE_PARSER_H_ */

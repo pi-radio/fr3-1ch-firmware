@@ -12,9 +12,9 @@
 
 #include <parser.h>
 #include <lexer.h>
-#include <terminal.h>
 #include <lmx.h>
 #include <config_data.h>
+#include <terminal.hpp>
 
 
 char parser_error[128];
@@ -228,7 +228,6 @@ extern struct bootloader_vectable {
 static int parse_bootloader_statement() {
   int i;
   token_t cur_tok;
-  void (*SysMemBootJump)(void);
 
   get_token(&cur_tok);
 
@@ -236,7 +235,6 @@ static int parse_bootloader_statement() {
     return syntax_error();
   }
 
-#if 1
   /* Disable all interrupts */
   __disable_irq();
 
@@ -264,17 +262,14 @@ static int parse_bootloader_statement() {
 
 
   /* Jump is done successfully */
-  while (1)
-  {
-    /* Code should never reach this loop */
-  }
-#endif
+  Error_Handler();
 
-  printf("Bootloader MSP: %08x EP: %08x\n", bootloader.msp, bootloader.reset_handler);
+  return 0;
 }
 
 int _parser_parse_statement()
 {
+  int retval;
   token_t cur_tok;
 
   parser_set_error("NOT SET");
@@ -293,8 +288,22 @@ int _parser_parse_statement()
       return parse_lmx_statement();
 
     case TOK_REDRAW:
-      force_redraw = 1;
-      return parse_statement_end();
+      retval = parse_statement_end();
+
+      if (retval == 0) {
+        terminal_send_command(TERMINAL_CMD_REDRAW);
+      }
+
+      return retval;
+
+    case TOK_CLEAR:
+      retval = parse_statement_end();
+
+      if (retval == 0) {
+        terminal_send_command(TERMINAL_CMD_CLEAR_OUTPUT);
+      }
+
+      return retval;
 
     case TOK_BOOTLOADER:
       return parse_bootloader_statement();

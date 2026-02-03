@@ -3,12 +3,18 @@
 
 #include "tx_api.h"
 
-extern TX_QUEUE console_tx_queue, console_rx_queue;
-
-extern void console_init(void);
-
-extern int txchar(int c);
+#if defined(__cplusplus)
+extern "C" void console_init(void);
 
 extern void console_cmd_ready(void);
+
+#else
+extern void console_init(void);
+#endif
+
+#if 0
+extern int txchar(int c);
+
+#endif
 
 #endif

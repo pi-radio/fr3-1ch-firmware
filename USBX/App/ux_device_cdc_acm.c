@@ -24,7 +24,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_threadx.h"
-#include "terminal.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

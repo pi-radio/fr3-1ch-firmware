@@ -23,6 +23,12 @@
 #define __MAIN_H
 
 #ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 

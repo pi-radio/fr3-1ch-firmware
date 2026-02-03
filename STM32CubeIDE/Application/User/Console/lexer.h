@@ -1,3 +1,4 @@
+#include <main.h>
 
 typedef enum {
   TOK_NONE,
@@ -17,6 +18,7 @@ typedef enum {
   TOK_WRITE,
   TOK_REG,
   TOK_BOOTLOADER,
+  TOK_CLEAR,
 
   TOK_ERROR
 } token_type_t;
@@ -33,5 +35,5 @@ typedef struct {
   };
 } token_t;
 
-extern void get_token(token_t *);
-extern void lexer_set_line(const char *s, int len);
+EXTERN_C void get_token(token_t *);
+EXTERN_C void lexer_set_line(const char *s, int len);

@@ -23,8 +23,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <console.h>
-#include <terminal.h>
 #include <lmx.h>
 #include <config_data.h>
 
