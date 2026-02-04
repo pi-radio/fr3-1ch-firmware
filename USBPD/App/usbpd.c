@@ -45,7 +45,10 @@ unsigned int USBPD_PreInitOs(void)
     return USBPD_ERROR;
   }
 
+
+#ifdef USE_DK
   MX_TCPP_Init();
+#endif
 
   return USBPD_OK;
 }

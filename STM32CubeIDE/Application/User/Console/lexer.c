@@ -157,6 +157,7 @@ void get_number(token_t *tok)
         get_float_exponent(tok);
       } else {
         tok->token_type = TOK_INT;
+        tok->i = neg * tok->i;
         return;
       }
     }

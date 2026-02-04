@@ -15,25 +15,10 @@
 #include <numeric>
 #include <memory>
 
-class irange
-{
-private:
-  int iter;
-  int last;
 
-public:
-  irange(int start, int end) : iter(start), last(end) { }
+#include <iterator>
 
-  const irange &begin() const { return *this; }
-  const irange &end() const { return *this; }
 
-  bool operator != (const irange &) const {
-    return iter < last;
-  }
-
-  void operator++() { ++iter; }
-  int operator*() { return iter; }
-};
 
 template <typename T> T min(T a, T b)
 {
@@ -46,6 +31,53 @@ template <typename T> T max(T a, T b)
 }
 
 typedef int32_t ord_t;
+
+template <typename T>
+struct _range {
+    // Store the start and end of the range (half-open: [start, end))
+    T _start;
+    T _end;
+
+    // Iterator for the range (models InputIterator)
+    struct _rangeiter {
+        using value_type = T;
+        using difference_type = std::ptrdiff_t;
+        using pointer = T*;
+        using reference = T&;
+        using iterator_category = std::input_iterator_tag;
+
+        T current; // Current value of the iterator
+
+        // Constructor: initialize with the starting value
+        explicit _rangeiter(T val) : current(val) {}
+
+        // Dereference: return current value
+        T operator*() const { return current; }
+
+        // Prefix increment: move to next value
+        _rangeiter& operator++() {
+            ++current;
+            return *this;
+        }
+
+        // Inequality comparison: check if iterators point to different values
+        bool operator!=(const _rangeiter& other) const {
+            return current != other.current;
+        }
+    };
+
+    _range(T __start, T __end) : _start(__start), _end(__end - 1) { }
+
+    // Begin iterator: starts at 'start'
+    _rangeiter begin() const { return _rangeiter(_start); }
+
+    // End iterator: stops at 'end' (exclusive)
+    _rangeiter end() const { return _rangeiter(_end); }
+};
+
+typedef _range<int> irange;
+typedef _range<ord_t> ordrange;
+
 
 struct position {
   ord_t row;
@@ -150,7 +182,7 @@ struct rect {
 
   inline ord_t area() { return s.area(); }
 
-  inline auto lines() const { return irange(top(), bottom()); }
+  inline auto lines() const { return ordrange(top(), bottom()); }
 
   inline void trim_top(ord_t n) {
     n = min(n, s.height);

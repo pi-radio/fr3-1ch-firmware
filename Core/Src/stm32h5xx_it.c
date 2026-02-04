@@ -22,8 +22,11 @@
 #include "stm32h5xx_it.h"
 #include "usbpd.h"
 #include "tracer_emb.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdarg.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +72,22 @@ extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
+static char msgbuf[128];
 
+static void dbgprintf(const char *fmt, ...)
+{
+  int n;
+
+  va_list args;
+
+  va_start(args, fmt);
+
+  n = vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
+
+  va_end(args);
+
+  HAL_UART_Transmit(&huart1, (const uint8_t *)msgbuf, n, 0xFFFF);
+}
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -101,8 +119,9 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
+  register unsigned long *sp asm("sp");
+
   /* USER CODE BEGIN HardFault_IRQn 0 */
-  __BKPT(0);
   if (FLASH_NS->ECCDETR & FLASH_ECCR_ECCD){
     FLASH_EccInfoTypeDef eccdata;
 
@@ -110,12 +129,27 @@ void HardFault_Handler(void)
 
     return;
   }
+
+
+  dbgprintf("Hard Fault: %08lx PC: %08lx LR: %08lx xPSR: %08lx\r\n", SCB->SHCSR, sp[7], sp[6], sp[8]);
+  dbgprintf("R0: %08lx R1: %08lx R2: %08lx R3: %08lx R12: %08lx\r\n", sp[0], sp[1], sp[2], sp[4], sp[5]);
+  dbgprintf("VTOR: %08lx\r\n", SCB->VTOR);
+
+
+#if 1
+  for (int i = 0; i < 15000000; i++) {
+
+  }
+
+  NVIC_SystemReset();
+#else
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
+#endif
 }
 
 /**

@@ -30,6 +30,10 @@ uint8_t *termbuf::alloc_buffer(size_t s)
 
 void termbuf::render_buffer(const rect &_r, const uint8_t *buf, const size_t &stride)
 {
+  if (engine == NULL) {
+    return;
+  }
+
   for (auto line : _r.lines()) {
     engine->draw(position(line, _r.left()), buf, _r.width());
     buf += stride;

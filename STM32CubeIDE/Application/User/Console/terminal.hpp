@@ -137,16 +137,7 @@ public:
   void lock() {};
   void unlock() {};
 
-  void strout(const uint8_t *s, int len)
-  {
-    lock();
-
-    while (len--) {
-      txchar(*s++);
-    }
-
-    unlock();
-  }
+  void strout(const uint8_t *s, int len);
 
   void strout(const char *s, int len) {
     strout((const uint8_t *)s, len);

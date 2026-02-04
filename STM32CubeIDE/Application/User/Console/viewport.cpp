@@ -25,23 +25,13 @@ uint8_t *viewport::alloc_buffer(size_t s)
 
 void viewport::render_buffer(const rect &_r, const uint8_t *buf, const size_t &stride)
 {
-  rect rr = _r + r.p;
-
-  if (rr.top() < 0) {
-    buf += -rr.top() * stride;
-  }
-
-  if (rr.left() < 0) {
-    buf += -rr.left();
-  }
-
-  rr = rr & r;
+  rect rr = _r;
 
   if (rr.empty()) {
     return;
   }
 
-  parent()->render_buffer(rr, buf, stride);
+  parent()->render_buffer(local2parent(rr), buf, stride);
 }
 
 void viewport::render(const rect &r)
@@ -51,13 +41,33 @@ void viewport::render(const rect &r)
 
 void viewport::redraw(region &occluded)
 {
-  dirty();
+  dirty_all();
 
+  refresh(occluded);
+}
+
+void viewport::dirty()
+{
+
+}
+
+void viewport::dirty_all()
+{
   for (auto pchild : children) {
-    pchild->redraw(occluded);
+    pchild->dirty_all();
   }
 
-  region draw_rects = local2global(r) - occluded;
+  dirty();
+}
+
+
+void viewport::refresh(region &occluded)
+{
+  for (auto pchild : children) {
+    pchild->refresh(occluded);
+  }
+
+  region draw_rects = local2global(rlocal()) - occluded;
 
   occluded += r;
 
@@ -66,11 +76,6 @@ void viewport::redraw(region &occluded)
   }
 
   validate_self(r);
-}
-
-void viewport::refresh(region &occluded)
-{
-  redraw(occluded);
 }
 
 void viewport::validate(const rect &_r)

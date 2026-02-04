@@ -27,6 +27,8 @@ public:
   inline rect local2parent(const rect &_r) { return _r + r.p; }
   inline rect parent2local(const rect &_r) { return _r - r.p; }
 
+  inline rect rlocal() const { return rect(pzero, r.s); }
+
   virtual uint8_t *_bufat(position) = 0;
   uint8_t *_bufat(uint32_t row, uint32_t col) { return _bufat(position(row, col)); };
   uint8_t *_bufatline(uint32_t row) { return _bufat(row, (uint32_t)0); }
@@ -70,6 +72,9 @@ public:
 
   void redraw(region &occluded);
   void refresh(region &occluded);
+
+  virtual void dirty();
+  virtual void dirty_all();
 
   void redraw() { region occluded; redraw(occluded); }
   void refresh() { region occluded; refresh(occluded); }

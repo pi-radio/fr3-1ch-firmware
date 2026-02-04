@@ -194,7 +194,7 @@ static VOID hw_thread_entry(ULONG _a)
   }
 }
 
-char hw_stack[1024];
+char hw_stack[2048];
 
 void fr3_1ch_hw_init(void)
 {

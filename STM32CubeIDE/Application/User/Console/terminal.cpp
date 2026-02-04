@@ -10,38 +10,18 @@
 #include <text_field.hpp>
 #include <window.hpp>
 #include <vtparser.hpp>
+#include <usart.h>
 
 #include "ux_device_cdc_acm.h"
 
 
+#if 0
+void USBPD_TRACE_Add(TRACE_EVENT Type, uint8_t PortNum, uint8_t Sop, uint8_t *Ptr, uint32_t Size);
+#endif
 
-
+#define debugprint(x)  HAL_UART_Transmit(&huart1, (const uint8_t *)x, strlen(x), 0xFFFF);
 
 int force_redraw;
-
-
-
-#if 0
-
-static void terminal_rx_thread_entry(ULONG param) {
-  struct terminal *term = (struct terminal *)param;
-
-  term->_rx_thread();
-}
-
-static void terminal_tx_thread_entry(ULONG param) {
-  struct terminal *term = (struct terminal *)param;
-
-  term->_tx_thread();
-}
-
-static void terminal_refresh_thread_entry(ULONG param) {
-  struct terminal *term = (struct terminal *)param;
-
-  term->_refresh_thread();
-}
-
-#endif
 
 
 terminal::terminal(TX_BYTE_POOL *_pool) :
@@ -95,24 +75,11 @@ terminal::terminal(TX_BYTE_POOL *_pool) :
   tx_thread.create(this, pool, "TX thread");
   refresh_thread.create(this, pool, "Refresh thread");
 
-#if 0
-  tx_byte_allocate(pool, &pstack, 4096, TX_NO_WAIT);
-
-  tx_thread_create(&rx_thread, (char *)"terminal_rx_thread_entry", terminal_rx_thread_entry, (ULONG)this, pstack, 4096, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
-
-  tx_byte_allocate(pool, &pstack, 4096, TX_NO_WAIT);
-
-  tx_thread_create(&tx_thread, (char *)"terminal_tx_thread_entry", terminal_tx_thread_entry, (ULONG)this, pstack, 4096, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
-
-
-  tx_byte_allocate(pool, &pstack, 4096, TX_NO_WAIT);
-
-  tx_thread_create(&refresh_thread, (char *)"terminal_refresh_thread_entry", terminal_refresh_thread_entry, (ULONG)this, pstack, 4096, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
-#endif
-
   tx_cur = tx_buf;
 
   _outbuf = new termbuf(pool, 40, 132);
+
+  _outbuf->set_render_engine(this);
 }
 
 void terminal::draw(position p, const uint8_t *buf, size_t len)
@@ -140,6 +107,21 @@ position terminal::query_position()
 
   return pos;
 }
+
+void terminal::strout(const uint8_t *s, int len)
+{
+  lock();
+
+  while (len--) {
+    uint8_t c = *s++;
+
+    if (c == 0) c = ' ';
+    txchar(c);
+  }
+
+  unlock();
+}
+
 
 void terminal::emit_cs(const char *fmt, ...)
 {
@@ -242,8 +224,12 @@ int terminal::rxchar(void)
   return c;
 }
 
+
+
 void terminal::_rx_thread()
 {
+  debugprint("_rxthread\r\n");
+
   while(1) {
     UCHAR rxbuf[64];
     UCHAR *p;
@@ -276,7 +262,12 @@ void terminal::_tx_thread() {
   ULONG c;
   ULONG wait;
 
+  debugprint("_txthread\r\n");
+
   wait_usb();
+
+  debugprint("tx usb attach");
+
 
   wait = TX_WAIT_FOREVER;
 
@@ -356,11 +347,18 @@ void terminal::_refresh_thread(void)
 
     dtr = dtr_is_set();
 
-    if (!last_dtr && dtr) force_redraw = 1;
+    if (last_dtr != dtr) {
+      last_dtr = dtr;
 
-    last_dtr = dtr;
+      if (dtr) {
+        _outbuf->redraw();
+        continue;
+      }
+    }
 
-    _outbuf->refresh();
+    if (dtr) {
+      _outbuf->refresh();
+    }
   }
 }
 
@@ -386,12 +384,12 @@ int terminal::printf(const char *fmt, ...)
   return n;
 }
 
-terminal *term;
+terminal *term = NULL;
 
 
-static window *output_win;
-static window *status_win;
-static text_field *input_win;
+static window *output_win = NULL;
+static window *status_win = NULL;
+static text_field *input_win = NULL;
 
 static TX_TIMER status_timer;
 
@@ -453,6 +451,10 @@ public:
 
 EXTERN_C int _write(int file, char *ptr, int len)
 {
+  if (output_win == NULL) {
+    const char *msg = "NULL Window\r\n";
+    HAL_UART_Transmit(&huart1, (const uint8_t *)msg, strlen(msg), 0xFFFF);
+  }
   return output_win->write(ptr, len);
 }
 

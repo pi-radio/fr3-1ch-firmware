@@ -49,22 +49,4 @@ public:
   virtual void render_buffer(const rect &, const uint8_t *, const size_t &) override;
 };
 
-
-
-
-#if 0
-
-
-
-static inline void termbuf_update_start(struct termbuf *tbuf, struct termbuf_update *upd)
-{
-  upd->tbuf = tbuf;
-  upd->line = -1;
-  upd->start = DIRTY_NONE;
-  upd->len = 0;
-}
-
-extern int termbuf_update_next(struct termbuf_update *upd);
-#endif
-
 #endif /* APPLICATION_USER_CONSOLE_TERMBUF_HPP_ */

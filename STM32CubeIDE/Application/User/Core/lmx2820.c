@@ -20,7 +20,7 @@ DECLARE_BITMAP(lmx_reg_dirty, N_LMX_REGS);
 
 static inline int bitmap_check(char *bitmap, int bit)
 {
-  return bitmap[bit / 8] & (1 << bit);
+  return bitmap[bit / 8] & (1 << (bit & 7));
 }
 
 static inline void bitmap_set(char *bitmap, int bit)
@@ -36,8 +36,13 @@ static inline void bitmap_clear(char *bitmap, int bit)
 static inline void lmx_program_reg(int reg) {
   uint32_t v = (reg << 16) | lmx_regs[reg];
 
+#if 0
   spi_transmit(SPI_DEVICE_LMX, 3, v);
   bitmap_clear(lmx_reg_dirty, reg);
+#else
+  spi_transfer(SPI_DEVICE_LMX, 3, &v);
+  bitmap_clear(lmx_reg_dirty, reg);
+#endif
 }
 
 int lmx_read_reg(int reg, uint16_t *val) {

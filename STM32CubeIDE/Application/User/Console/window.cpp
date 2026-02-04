@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <window.hpp>
 
+extern "C" void Error_Handler(void);
 
 static ssize_t win_read(void *cookie, char *data, size_t n)
 {
@@ -39,12 +40,26 @@ window::window(viewport *_parent, const rect &_r) :
 
   f = fopencookie(this, "w", win_iofunc);
 
-  buf = alloc_buffer(r.area());
+  buf_size = r.area();
+  buf = alloc_buffer(buf_size);
 
   memset(buf, 0, r.area());
 
   _stride = r.width();
 }
+
+uint8_t *window::_bufat(position p)
+{
+  if (p.row < 0 || p.row >= r.height()) {
+    Error_Handler();
+  }
+
+  if (p.col < 0 || p.col >= r.width()) {
+    Error_Handler();
+  }
+
+  return buf + p.row * _stride + p.col;
+};
 
 void window::clear(const rect &r)
 {
@@ -208,7 +223,7 @@ region window::dirty_region()
 
 void window::render(const rect &_r)
 {
-  rect rr = _r & r;
+  rect rr = _r & rlocal();
 
   render_buffer(rr, bufat(rr.p), _stride);
 }

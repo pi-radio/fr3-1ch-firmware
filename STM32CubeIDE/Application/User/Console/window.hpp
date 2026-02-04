@@ -24,7 +24,7 @@ class window : public viewport {
 
 
 protected:
-  uint8_t *_bufat(position p) override { return buf + p.row * _stride + p.col; };
+  uint8_t *_bufat(position p) override;
   position cursor;
   position pos;
   uint8_t *pcur;
@@ -45,8 +45,6 @@ public:
   ssize_t write(const char *str, size_t l);
   ssize_t write(position p, const char *str, size_t l);
 
-  inline rect rlocal() const { return rect(pzero, r.s); }
-
   void clear(const rect &r);
   inline void clear() { clear(rlocal()); }
   inline void clearline(int l) { clear(rect(l, 0, 1, r.width())); };
@@ -58,8 +56,8 @@ public:
 
   virtual region dirty_region();
 
-  void dirty(const rect &r) { _dirty += r; };
-  void dirty() { dirty(rlocal()); }
+  void dirty(const rect &r)  { _dirty += r; };
+  void dirty() override { dirty(rlocal()); }
 
   virtual void render(const rect &r) override;
 

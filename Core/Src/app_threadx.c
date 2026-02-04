@@ -19,7 +19,9 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "app_threadx.h"
+#include <usart.h>
+#include <app_threadx.h>
+#include <tx_trace.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -48,8 +50,7 @@
 /* USER CODE BEGIN PV */
 #define APP_POOL_SIZE  2048
 
-static UCHAR app_pool_data[APP_POOL_SIZE];
-static TX_BYTE_POOL app_pool;
+static UCHAR app_pool_stack[APP_POOL_SIZE];
 static TX_THREAD app_thread;
 
 TX_EVENT_FLAGS_GROUP app_events;
@@ -69,13 +70,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 {
   UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_MEM_POOL */
-  UCHAR *pStack;
-
-  tx_byte_pool_create(&app_pool, "application pool", app_pool_data, APP_POOL_SIZE);
-
-  tx_byte_allocate(&app_pool, (VOID **)&pStack, 1024, TX_NO_WAIT);
-
-  tx_thread_create(&app_thread, "app_thread", app_thread_entry, 1, pStack, 1024, 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
+  tx_thread_create(&app_thread, "app_thread", app_thread_entry, 1, app_pool_stack, sizeof(app_pool_stack), 20, 20, TX_NO_TIME_SLICE, TX_AUTO_START);
 
   tx_event_flags_create(&app_events, "app_events");
 
@@ -106,8 +101,18 @@ void MX_ThreadX_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+#if DUMP_TRACEX
+static TX_TRACE_BUFFER_ENTRY *last_ptr;
+#endif
+
 VOID app_thread_entry(ULONG _a)
 {
+#if DUMP_TRACEX
+  int n;
+  char buf[128];
+  last_ptr  = _tx_trace_buffer_start_ptr;
+#endif
+
   printf("FR3 1ch starting...\n");
 
   printf("Programming LMX...\n");
@@ -116,6 +121,28 @@ VOID app_thread_entry(ULONG _a)
 
   while(1) {
     tx_thread_sleep(1000);
+
+#if DUMP_TRACEX
+    if (_tx_trace_buffer_current_ptr < last_ptr) {
+      last_ptr = _tx_trace_buffer_start_ptr;
+    }
+
+    if (_tx_trace_buffer_current_ptr != last_ptr) {
+      while (last_ptr < _tx_trace_buffer_current_ptr) {
+        n = snprintf(buf, sizeof(buf), "%08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\r\n",
+            last_ptr->tx_trace_buffer_entry_thread_pointer,
+            last_ptr->tx_trace_buffer_entry_thread_priority,
+            last_ptr->tx_trace_buffer_entry_event_id,
+            last_ptr->tx_trace_buffer_entry_time_stamp,
+            last_ptr->tx_trace_buffer_entry_information_field_1,
+            last_ptr->tx_trace_buffer_entry_information_field_2,
+            last_ptr->tx_trace_buffer_entry_information_field_3,
+            last_ptr->tx_trace_buffer_entry_information_field_4);
+
+        HAL_UART_Transmit(&huart1, (uint8_t *)buf, n, 0xFFFF);
+      }
+    }
+#endif
   }
 }
 

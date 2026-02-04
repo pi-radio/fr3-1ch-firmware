@@ -40,10 +40,10 @@ void init_config_data(void) {
   flash_code = (*pu32) & 0xFFFF;
   package_code = (*pu32) >> 16;
 
-  uint16_t *pbcd = (uint16_t *)&_board_config_data;
+  //uint16_t *pbcd = (uint16_t *)&_board_config_data;
 
-  uint16_t a = *pbcd;
-  a++;
+  //uint16_t a = *pbcd;
+  //a++;
 }
 
 uint16_t config_get_flash_code(void) {

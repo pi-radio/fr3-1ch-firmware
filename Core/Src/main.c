@@ -33,6 +33,7 @@
 #include "gpio.h"
 #include "app_tcpp.h"
 #include "usbpd.h"
+#include "ux_api.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -69,6 +70,7 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+const char *clearscreen = "\e[2J\e[H";
 
 /* USER CODE END 0 */
 
@@ -99,23 +101,34 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
   MPU_Config();
+
+
   MX_FLASH_Init();
   init_config_data();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+
+  MX_USART1_UART_Init();
+
+  HAL_UART_Transmit(&huart1, (const uint8_t *)clearscreen, strlen(clearscreen), 0xFFFF);
+
+
   MX_GPDMA1_Init();
   MX_SPI4_Init();
-  MX_UCPD1_Init();
-  MX_USART1_UART_Init();
-  MX_USB_PCD_Init();
   MX_DCACHE1_Init();
   MX_ICACHE_Init();
   MX_ADC1_Init();
   MX_FLASH_Init();
   MX_DTS_Init();
   MX_LPTIM1_Init();
+
+  MX_UCPD1_Init();
+  MX_USB_PCD_Init();
+
+  HAL_Delay(1000);
+
   /* Call PreOsInit function */
   USBPD_PreInitOs();
   /* USER CODE BEGIN 2 */
