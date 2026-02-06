@@ -120,13 +120,10 @@ class terminal : public text_field_callbacks,
   void usb_txchar(uint8_t);
 
   void emit_cs(const char *fmt, ...);
-  int printf(const char *fmt, ...);
 
   void enqueue_cmd(int cmd) {
     tx_queue_send(&cmd_queue, &cmd, TX_WAIT_FOREVER);
   }
-
-  void redraw(void);
 
 public:
   terminal(TX_BYTE_POOL *_pool);
@@ -136,12 +133,6 @@ public:
   int txchar(uint32_t c);
   void lock() {};
   void unlock() {};
-
-  void strout(const uint8_t *s, int len);
-
-  void strout(const char *s, int len) {
-    strout((const uint8_t *)s, len);
-  }
 
   void flush() {
     txchar(TERMINAL_FLUSH);
@@ -168,6 +159,7 @@ public:
 
   void move_to(uint32_t row, uint32_t col) { emit_cs("%d;%dH", row + 1, col + 1); };
   void move_to(position p) { move_to(p.row, p.col); };
+  void move_right(uint32_t cols) { emit_cs("%dC", cols); }
 
   void echo_off() { emit_cs("12h"); };
 

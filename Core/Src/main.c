@@ -38,6 +38,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <config_data.h>
+
+#include <stdarg.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +73,29 @@ static void MPU_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 const char *clearscreen = "\e[2J\e[H";
+int dbg_ready = 0;
+
+static char serbuf[128];
+
+
+int dbgprint(const char *fmt, ...)
+{
+  size_t retval;
+
+  va_list args;
+
+  va_start(args, fmt);
+
+  retval = vsnprintf(serbuf, 128, fmt, args);
+
+  va_end(args);
+
+  HAL_UART_Transmit(&huart1, (uint8_t *)serbuf, retval, 0xFFFF);
+
+  return retval;
+
+}
+
 
 /* USER CODE END 0 */
 
@@ -119,15 +144,15 @@ int main(void)
   MX_SPI4_Init();
   MX_DCACHE1_Init();
   MX_ICACHE_Init();
+#ifdef USE_DK
   MX_ADC1_Init();
+#endif
   MX_FLASH_Init();
   MX_DTS_Init();
   MX_LPTIM1_Init();
 
   MX_UCPD1_Init();
   MX_USB_PCD_Init();
-
-  HAL_Delay(1000);
 
   /* Call PreOsInit function */
   USBPD_PreInitOs();
@@ -246,6 +271,14 @@ void MPU_Config(void)
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 
 }
+
+#ifndef USE_DK
+void HAL_IncTick(void)
+{
+  uwTick += (uint32_t)uwTickFreq;
+  USBPD_DPM_TimerCounter();
+}
+#endif
 
 /**
   * @brief  Period elapsed callback in non blocking mode

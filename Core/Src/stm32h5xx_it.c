@@ -72,22 +72,16 @@ extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
-static char msgbuf[128];
+int exception_magic;
+char exception_msgbuf[256];
 
-static void dbgprintf(const char *fmt, ...)
+exception_info_t __attribute__(( section(".noinitdata") )) _last_exception;
+
+exception_info_t *get_exception_info()
 {
-  int n;
-
-  va_list args;
-
-  va_start(args, fmt);
-
-  n = vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
-
-  va_end(args);
-
-  HAL_UART_Transmit(&huart1, (const uint8_t *)msgbuf, n, 0xFFFF);
+  return &_last_exception;
 }
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -130,16 +124,20 @@ void HardFault_Handler(void)
     return;
   }
 
-
-  dbgprintf("Hard Fault: %08lx PC: %08lx LR: %08lx xPSR: %08lx\r\n", SCB->SHCSR, sp[7], sp[6], sp[8]);
-  dbgprintf("R0: %08lx R1: %08lx R2: %08lx R3: %08lx R12: %08lx\r\n", sp[0], sp[1], sp[2], sp[4], sp[5]);
-  dbgprintf("VTOR: %08lx\r\n", SCB->VTOR);
+  _last_exception.exception_type = EXCEPTION_HARD_FAULT;
+  _last_exception.hf.SHCSR = SCB->SHCSR;
+  _last_exception.hf.VTOR = SCB->VTOR;
+  _last_exception.hf.PC = sp[6];
+  _last_exception.hf.LR = sp[5];
+  _last_exception.hf.xPSR = sp[7];
+  _last_exception.hf.R0 = sp[0];
+  _last_exception.hf.R1 = sp[1];
+  _last_exception.hf.R2 = sp[2];
+  _last_exception.hf.R3 = sp[3];
+  _last_exception.hf.R12 = sp[4];
 
 
 #if 1
-  for (int i = 0; i < 15000000; i++) {
-
-  }
 
   NVIC_SystemReset();
 #else

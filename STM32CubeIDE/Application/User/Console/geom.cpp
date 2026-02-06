@@ -131,7 +131,7 @@ region &region::operator +=(const rect &_r)
 
       std::shared_ptr<region> reg = r + *it;
 
-      rects.erase(it);
+      it = rects.erase(it);
 
       for (auto r2 : reg->rects) {
         new_rects.push_back(r2);

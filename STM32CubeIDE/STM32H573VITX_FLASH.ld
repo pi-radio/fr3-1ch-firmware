@@ -44,7 +44,8 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)      : ORIGIN = 0x20000000,   LENGTH = 640K
+  RAM    (xrw)      : ORIGIN = 0x20000000,   LENGTH = 638K
+  NOINIT (rw)       : ORIGIN = 0x2009F800,   LENGTH = 2K
   FLASH    (rx)     : ORIGIN = 0x08000000,   LENGTH = 2048K
 }
 
@@ -176,6 +177,11 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
+  
+  .noinit (NOLOAD):
+  {
+  	KEEP(*(.noinitdata))
+  } >NOINIT
 
   .system_ro_data 0x08FFF800 : { _system_ro_data = .; }
   

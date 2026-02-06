@@ -27,7 +27,8 @@
 #endif /* _TRACE */
 
 /* USER CODE BEGIN include */
-
+#include <stdio.h>
+#include <main.h>
 /* USER CODE END include */
 
 /** @addtogroup BSP
@@ -66,7 +67,11 @@
 #define PWR_DEBUG_TRACE(_PORT_, __MESSAGE__)
 #endif /* _TRACE */
 /* USER CODE BEGIN POWER_Private_Macros */
-
+#if 1
+#define TRACE_FUNC()  if(dbg_ready) dbgprint("%s:%d\r\n", __FILE__, __LINE__)
+#else
+#define TRACE_FUNC()  {}
+#endif
 /* USER CODE END POWER_Private_Macros */
 /**
   * @}
@@ -118,6 +123,8 @@ __weak int32_t BSP_USBPD_PWR_Init(uint32_t Instance)
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -138,6 +145,8 @@ __weak int32_t BSP_USBPD_PWR_Deinit(uint32_t Instance)
   /* USER CODE BEGIN BSP_USBPD_PWR_Deinit */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -168,9 +177,11 @@ __weak int32_t BSP_USBPD_PWR_SetRole(uint32_t Instance, USBPD_PWR_PowerRoleTypeD
   /* USER CODE BEGIN BSP_USBPD_PWR_SetRole */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
+    printf("BSP PWR SetRole FAILED\n");
     ret = BSP_ERROR_WRONG_PARAM;
   }
   else
@@ -200,6 +211,8 @@ __weak int32_t BSP_USBPD_PWR_SetPowerMode(uint32_t Instance, USBPD_PWR_PowerMode
   /* USER CODE BEGIN BSP_USBPD_PWR_SetPowerMode */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -233,6 +246,8 @@ __weak int32_t BSP_USBPD_PWR_GetPowerMode(uint32_t Instance, USBPD_PWR_PowerMode
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -258,6 +273,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSInit(uint32_t Instance)
   /* USER CODE BEGIN BSP_USBPD_PWR_VBUSInit */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -286,6 +303,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSDeInit(uint32_t Instance)
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -306,6 +325,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSOn(uint32_t Instance)
   /* USER CODE BEGIN BSP_USBPD_PWR_VBUSOn */
   /* Check if instance is valid       */
   int32_t ret;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -332,6 +353,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSOff(uint32_t Instance)
   /* USER CODE BEGIN BSP_USBPD_PWR_VBUSOff */
   /* Check if instance is valid       */
   int32_t ret;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -365,6 +388,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSSetVoltage_Fixed(uint32_t Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -393,6 +418,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSSetVoltage_Variable(uint32_t Instance,
   /* USER CODE BEGIN BSP_USBPD_PWR_VBUSSetVoltage_Variable */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -423,6 +450,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSSetVoltage_Battery(uint32_t Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -450,6 +479,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSSetVoltage_APDO(uint32_t Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -457,6 +488,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSSetVoltage_APDO(uint32_t Instance,
   return ret;
   /* USER CODE END BSP_USBPD_PWR_VBUSSetVoltage_APDO */
 }
+
+int expected_voltage = 5000;
 
 /**
   * @brief  Get actual voltage level measured on the VBUS line.
@@ -479,8 +512,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSGetVoltage(uint32_t Instance, uint32_t *pVoltag
   }
   else
   {
+    val = expected_voltage;
     ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
-    PWR_DEBUG_TRACE(Instance, "ADVICE: Update BSP_USBPD_PWR_VBUSGetVoltage");
   }
   *pVoltage = val;
   return ret;
@@ -500,6 +533,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSGetCurrent(uint32_t Instance, int32_t *pCurrent
   /* USER CODE BEGIN BSP_USBPD_PWR_VBUSGetCurrent */
   /* Check if instance is valid       */
   int32_t ret;
+
+  TRACE_FUNC();
 
   if ((Instance >= USBPD_PWR_INSTANCES_NBR) || (NULL == pCurrent))
   {
@@ -532,6 +567,8 @@ __weak int32_t BSP_USBPD_PWR_VCONNInit(uint32_t Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -557,6 +594,8 @@ __weak int32_t BSP_USBPD_PWR_VCONNDeInit(uint32_t Instance,
   /* USER CODE BEGIN BSP_USBPD_PWR_VCONNDeInit */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -584,6 +623,8 @@ __weak int32_t BSP_USBPD_PWR_VCONNOn(uint32_t Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -609,6 +650,8 @@ __weak int32_t BSP_USBPD_PWR_VCONNOff(uint32_t Instance,
   /* USER CODE BEGIN BSP_USBPD_PWR_VCONNOff */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -637,6 +680,8 @@ __weak int32_t BSP_USBPD_PWR_VCONNIsOn(uint32_t Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -663,6 +708,8 @@ __weak int32_t BSP_USBPD_PWR_SetVBUSDisconnectionThreshold(uint32_t Instance,
   /* USER CODE BEGIN BSP_USBPD_PWR_SetVBUSDisconnectionThreshold */
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -691,6 +738,8 @@ __weak int32_t BSP_USBPD_PWR_RegisterVBUSDetectCallback(uint32_t  Instance,
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_FEATURE_NOT_SUPPORTED;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -713,6 +762,8 @@ __weak int32_t BSP_USBPD_PWR_VBUSIsOn(uint32_t Instance, uint8_t *pState)
   /* Check if instance is valid       */
   int32_t ret;
   uint8_t state = 0U;
+
+  TRACE_FUNC();
 
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
@@ -742,6 +793,8 @@ __weak int32_t BSP_USBPD_PWR_VCCSetState(uint32_t Instance, uint32_t State)
   /* Check if instance is valid       */
   int32_t ret = BSP_ERROR_NONE;
 
+  TRACE_FUNC();
+
   if (Instance >= USBPD_PWR_INSTANCES_NBR)
   {
     ret = BSP_ERROR_WRONG_PARAM;
@@ -767,6 +820,8 @@ __weak int32_t BSP_USBPD_PWR_VCCSetState(uint32_t Instance, uint32_t State)
 __weak void BSP_USBPD_PWR_EventCallback(uint32_t Instance)
 {
   /* USER CODE BEGIN BSP_USBPD_PWR_EventCallback */
+  TRACE_FUNC();
+
   PWR_DEBUG_TRACE(Instance, "ADVICE: Update BSP_USBPD_PWR_EventCallback");
   /* USER CODE END BSP_USBPD_PWR_EventCallback */
 }

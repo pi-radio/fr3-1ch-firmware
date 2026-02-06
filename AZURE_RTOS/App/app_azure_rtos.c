@@ -97,6 +97,8 @@ VOID tx_application_define(VOID *first_unused_memory)
   /* USER CODE BEGIN  tx_application_define_1*/
   terminal_init();
 
+  dbg_ready = 1;
+
   console_init();
 
   fr3_1ch_hw_init();

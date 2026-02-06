@@ -61,6 +61,7 @@ unsigned int MX_USBPD_Init(void *memory_ptr)
   /* Initialise the DPM application */
   if (USBPD_OK != USBPD_DPM_UserInit())
   {
+    printf("User init failed\n");
     return USBPD_ERROR;
   }
 
@@ -69,6 +70,7 @@ unsigned int MX_USBPD_Init(void *memory_ptr)
 
   if (USBPD_OK != USBPD_DPM_InitOS((void*)memory_ptr))
   {
+    printf("Init OS failed\n");
     return USBPD_ERROR;
   }
   return result;

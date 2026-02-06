@@ -315,7 +315,6 @@ DEF_TASK_FUNCTION(USBPD_PE_Task)
       /* if the port is no more connected, suspend the PE thread */
       OS_TASK_SUSPEND(OS_TASK_GETID());
     }
-
     _timing = USBPD_PE_StateMachine_SNK(_port);
  /* _DRP || ( _SRC && _SNK) */
 
@@ -352,6 +351,7 @@ DEF_TASK_FUNCTION(USBPD_CAD_Task)
 void USBPD_DPM_CADCallback(uint8_t PortNum, USBPD_CAD_EVENT State, CCxPin_TypeDef Cc)
 {
   USBPD_TRACE_Add(USBPD_TRACE_CADEVENT, PortNum, (uint8_t)State, NULL, 0);
+  USBPD_dbgprintf("CAD Callback %d %d\r\n", (int)PortNum, (int)State);
  /* _TRACE */
   (void)(Cc);
   switch (State)

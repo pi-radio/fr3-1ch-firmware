@@ -13,13 +13,8 @@
 #include <usart.h>
 
 #include "ux_device_cdc_acm.h"
+#include <main.h>
 
-
-#if 0
-void USBPD_TRACE_Add(TRACE_EVENT Type, uint8_t PortNum, uint8_t Sop, uint8_t *Ptr, uint32_t Size);
-#endif
-
-#define debugprint(x)  HAL_UART_Transmit(&huart1, (const uint8_t *)x, strlen(x), 0xFFFF);
 
 int force_redraw;
 
@@ -95,7 +90,25 @@ void terminal::draw(position p, const uint8_t *buf, size_t len)
 
   erase_right(len);
 
-  strout(buf, len);
+  int last_col = -1, cur_col = 0;
+
+  while(len--) {
+    uint8_t c = *buf++;
+
+    if (c == 0) {
+      cur_col++;
+      continue;
+    }
+
+    if (last_col + 1 != cur_col) {
+      move_right(cur_col - last_col);
+    }
+
+    txchar(c);
+
+    last_col = cur_col;
+    cur_col++;
+  }
 }
 
 
@@ -108,26 +121,13 @@ position terminal::query_position()
   return pos;
 }
 
-void terminal::strout(const uint8_t *s, int len)
-{
-  lock();
-
-  while (len--) {
-    uint8_t c = *s++;
-
-    if (c == 0) c = ' ';
-    txchar(c);
-  }
-
-  unlock();
-}
-
 
 void terminal::emit_cs(const char *fmt, ...)
 {
   size_t n;
   const char prefix[] = { '\e', '[' };
   char str[128];
+  char *p;
   va_list args;
 
   va_start(args, fmt);
@@ -144,7 +144,11 @@ void terminal::emit_cs(const char *fmt, ...)
     n = sizeof(str);
   }
 
-  strout((uint8_t *)str, n);
+  p = str;
+
+  while(n--) {
+    txchar(*p++);
+  }
 }
 
 void terminal::usb_flush_buffer() {
@@ -228,7 +232,7 @@ int terminal::rxchar(void)
 
 void terminal::_rx_thread()
 {
-  debugprint("_rxthread\r\n");
+  dbgprint("_rxthread\r\n");
 
   while(1) {
     UCHAR rxbuf[64];
@@ -262,11 +266,11 @@ void terminal::_tx_thread() {
   ULONG c;
   ULONG wait;
 
-  debugprint("_txthread\r\n");
+  dbgprint("_txthread\r\n");
 
   wait_usb();
 
-  debugprint("tx usb attach");
+  dbgprint("tx usb attach\r\n");
 
 
   wait = TX_WAIT_FOREVER;
@@ -302,27 +306,6 @@ void terminal::_tx_thread() {
     usb_txchar(c);
   }
 }
-
-void terminal::redraw(void)
-{
-  uint32_t line;
-
-  txchar(0x1B); txchar('Z');
-  flush();
-
-  query_position();
-
-  //terminal_echo_off();
-
-  move_to(0,0);
-
-  for (line = 0; line < _outbuf->rows(); line++) {
-    move_to(line, 0);
-    clear_line();
-    strout(_outbuf->bufat(line, 0), _outbuf->cols());
-  }
-}
-
 
 
 void terminal::_refresh_thread(void)
@@ -360,28 +343,6 @@ void terminal::_refresh_thread(void)
       _outbuf->refresh();
     }
   }
-}
-
-// Might be a good idea to write this
-int terminal::printf(const char *fmt, ...)
-{
-  size_t n;
-  char str[128];
-  va_list args;
-
-  va_start(args, fmt);
-
-  n = vsnprintf(str , sizeof(str) - 2, fmt, args);
-
-  va_end(args);
-
-  if (n > sizeof(str)) {
-    n = sizeof(str);
-  }
-
-  strout(str, n);
-
-  return n;
 }
 
 terminal *term = NULL;
@@ -452,8 +413,7 @@ public:
 EXTERN_C int _write(int file, char *ptr, int len)
 {
   if (output_win == NULL) {
-    const char *msg = "NULL Window\r\n";
-    HAL_UART_Transmit(&huart1, (const uint8_t *)msg, strlen(msg), 0xFFFF);
+    return len;
   }
   return output_win->write(ptr, len);
 }

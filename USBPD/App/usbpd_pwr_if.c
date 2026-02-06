@@ -127,6 +127,7 @@ USBPD_StatusTypeDef USBPD_PWR_IF_Init(void)
   */
 USBPD_StatusTypeDef USBPD_PWR_IF_SupplyReady(uint8_t PortNum, USBPD_VSAFE_StatusTypeDef Vsafe)
 {
+#if 0
 /* USER CODE BEGIN USBPD_PWR_IF_SupplyReady */
   USBPD_StatusTypeDef status = USBPD_ERROR;
   uint32_t _voltage;
@@ -151,6 +152,9 @@ USBPD_StatusTypeDef USBPD_PWR_IF_SupplyReady(uint8_t PortNum, USBPD_VSAFE_Status
 
   return status;
 /* USER CODE END USBPD_PWR_IF_SupplyReady */
+#else
+  return USBPD_OK;
+#endif
 }
 
 /**
@@ -262,6 +266,7 @@ void USBPD_PWR_IF_Alarm()
   */
 uint8_t USBPD_PWR_IF_GetVBUSStatus(uint8_t PortNum, USBPD_VBUSPOWER_STATUS PowerTypeStatus)
 {
+#if 0
 /* USER CODE BEGIN USBPD_PWR_IF_GetVBUSStatus */
   uint8_t _status = USBPD_FALSE;
   uint32_t _vbus = HW_IF_PWR_GetVoltage(PortNum);
@@ -282,6 +287,9 @@ uint8_t USBPD_PWR_IF_GetVBUSStatus(uint8_t PortNum, USBPD_VBUSPOWER_STATUS Power
   }
   return _status;
 /* USER CODE END USBPD_PWR_IF_GetVBUSStatus */
+#else
+  return USBPD_TRUE;
+#endif
 }
 
 /**

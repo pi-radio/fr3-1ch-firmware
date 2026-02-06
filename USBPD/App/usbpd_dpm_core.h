@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+#include <main.h>
+
 /* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -68,6 +70,11 @@ uint32_t USBPD_DPM_InitOS(void *MemoryPtr);
 void                USBPD_DPM_TimerCounter(void);
 __WEAK void         USBPD_DPM_ErrorHandler(void);
 /* USER CODE BEGIN functions */
+#if 1
+#define USBPD_dbgprintf(...) dbgprint(__VA_ARGS__)
+#else
+#define USBPD_dbgprintf(...)
+#endif
 
 /* USER CODE END functions */
 

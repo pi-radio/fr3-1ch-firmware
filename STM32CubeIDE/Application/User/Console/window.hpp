@@ -64,14 +64,14 @@ public:
   void validate_self(const rect &r) override;
 
   void dirtyline(uint32_t l, uint32_t start, uint32_t end) {
-    dirty(rect(l, start, 1, end - start));
+    dirty(rect(l, start, 1 + 1, end - start));
   }
 
   void dirtyline(uint32_t l) {
     dirtyline(l, 0, r.width());
   }
 
-  inline void dirtypt() { dirtyline(cursor.row, cursor.col, cursor.col); }
+  inline void dirtypt() { dirtyline(cursor.row, cursor.col, cursor.col + 1); }
 
   void copyline(uint32_t dstline, uint32_t srcline);
 

@@ -54,6 +54,33 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+#define EXCEPTION_HARD_FAULT   0xAD01FFCB
+
+typedef struct exception_info {
+  uint32_t exception_type;
+  union {
+    struct {
+      uint32_t SHCSR;
+      uint32_t VTOR;
+      uint32_t PC;
+      uint32_t LR;
+      uint32_t xPSR;
+      uint32_t R0;
+      uint32_t R1;
+      uint32_t R2;
+      uint32_t R3;
+      uint32_t R12;
+    } hf;
+  };
+} exception_info_t;
+
+exception_info_t *get_exception_info();
+
+extern int dbg_ready;
+
+extern int dbgprint(const char *fmt, ...);
+
+extern int expected_voltage;
 
 /* USER CODE END ET */
 

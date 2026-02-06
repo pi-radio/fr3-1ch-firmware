@@ -36,8 +36,6 @@ window::window(viewport *_parent, const rect &_r) :
   viewport(_parent, _r),
   cursor(0, 0)
 {
-  pcur = _bufat(cursor);
-
   f = fopencookie(this, "w", win_iofunc);
 
   buf_size = r.area();
@@ -46,6 +44,7 @@ window::window(viewport *_parent, const rect &_r) :
   memset(buf, 0, r.area());
 
   _stride = r.width();
+  pcur = _bufat(cursor);
 }
 
 uint8_t *window::_bufat(position p)
