@@ -12,6 +12,7 @@ Debug/
 debug/
 Release/
 release
+OctoLO_Debug/
 
 # Prerequisites
 *.d
