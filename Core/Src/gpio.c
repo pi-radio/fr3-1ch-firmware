@@ -80,6 +80,8 @@ void MX_GPIO_Init(void)
 
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_RESET);
 
+  // Put GPIO Configs here
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
 
 #if USE_DK
   // This is for the TCPP module
