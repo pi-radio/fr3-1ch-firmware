@@ -53,3 +53,5 @@ release
 *.su
 *.idb
 *.pdb
+
+*.cyclo
