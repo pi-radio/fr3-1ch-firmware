@@ -266,7 +266,6 @@ void USBPD_PWR_IF_Alarm()
   */
 uint8_t USBPD_PWR_IF_GetVBUSStatus(uint8_t PortNum, USBPD_VBUSPOWER_STATUS PowerTypeStatus)
 {
-#if 0
 /* USER CODE BEGIN USBPD_PWR_IF_GetVBUSStatus */
   uint8_t _status = USBPD_FALSE;
   uint32_t _vbus = HW_IF_PWR_GetVoltage(PortNum);
@@ -275,21 +274,24 @@ uint8_t USBPD_PWR_IF_GetVBUSStatus(uint8_t PortNum, USBPD_VBUSPOWER_STATUS Power
   {
   case USBPD_PWR_BELOWVSAFE0V :
     if (_vbus < USBPD_PWR_LOW_VBUS_THRESHOLD) _status = USBPD_TRUE;
+    dbgprint("USBPD PWR IF GetVBUSStatus below safe: status: %d _vbus: %d\r\n", _status, _vbus);
     break;
   case USBPD_PWR_VSAFE5V :
     if (_vbus >= USBPD_PWR_HIGH_VBUS_THRESHOLD) _status = USBPD_TRUE;
+    dbgprint("USBPD PWR IF GetVBUSStatus vsafe: status: %d _vbus: %d\r\n", _status, _vbus);
     break;
   case USBPD_PWR_SNKDETACH:
+    _vbus = 0;
     if (_vbus < USBPD_PWR_HIGH_VBUS_THRESHOLD) _status = USBPD_TRUE;
+    dbgprint("USBPD PWR IF GetVBUSStatus high vbus: status: %d _vbus: %d\r\n", _status, _vbus);
     break;
   default :
     break;
   }
+
+
   return _status;
 /* USER CODE END USBPD_PWR_IF_GetVBUSStatus */
-#else
-  return USBPD_TRUE;
-#endif
 }
 
 /**

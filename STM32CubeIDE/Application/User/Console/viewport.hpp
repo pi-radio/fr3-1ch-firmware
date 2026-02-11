@@ -16,27 +16,31 @@ class viewport {
   viewport *_focus;
 
 protected:
-  rect r;
+  position p;
+  size s;
 
-  viewport(viewport *parent, rect _r) : _parent(parent),
-      _focus(NULL), r(_r) { }
+  viewport(viewport *parent, position _p, size _s) : _parent(parent),
+      _focus(NULL), p(_p), s(_s) { }
+
+  viewport(viewport *parent, rect _r) : viewport(parent, _r.p, _r.s) {}
 
 public:
-  inline rect local2global(const rect &_r) { if (_parent) return _parent->local2global(_r + r.p); return _r; }
-  inline rect global2local(const rect &_r) { if (_parent) return _parent->global2local(_r) - r.p; return _r; }
-  inline rect local2parent(const rect &_r) { return _r + r.p; }
-  inline rect parent2local(const rect &_r) { return _r - r.p; }
+  inline rect local2global(const rect &_r) const { if (_parent) return _parent->local2global(_r + p); return _r; }
+  inline rect global2local(const rect &_r) const { if (_parent) return _parent->global2local(_r) - p; return _r; }
+  inline rect local2parent(const rect &_r) const { return _r + p; }
+  inline rect parent2local(const rect &_r) const { return _r - p; }
 
-  inline rect rlocal() const { return rect(pzero, r.s); }
+  inline rect rparent() const { return rect(p, s); }
+  inline rect rlocal() const { return rect(pzero, s); }
+  inline rect rglobal() const { return local2global(rlocal()); }
 
   virtual uint8_t *_bufat(position) = 0;
   uint8_t *_bufat(uint32_t row, uint32_t col) { return _bufat(position(row, col)); };
   uint8_t *_bufatline(uint32_t row) { return _bufat(row, (uint32_t)0); }
 
-  inline rect get_rect() { return r; }
-  inline size get_size() { return r.s; }
-  inline uint32_t rows() { return r.s.height; }
-  inline uint32_t cols() { return r.s.width; }
+  inline size get_size() { return s; }
+  inline uint32_t rows() { return s.height; }
+  inline uint32_t cols() { return s.width; }
 
   viewport *parent() const { return _parent; }
 
@@ -61,23 +65,24 @@ public:
 
   virtual size_t stride() const = 0;
 
-  virtual region dirty_region();
+  virtual rect dirty_rect();
 
-  virtual void render(const rect &);
+
   virtual void render_buffer(const rect &, const uint8_t *, const size_t &);
 
-  void validate(const rect &);
   virtual void validate_self(const rect &);
   virtual void refresh_self(const rect &);
 
-  void redraw(region &occluded);
-  void refresh(region &occluded);
+  void validate(const rect &);
+  void redraw(std::vector<rect> &occluded);
+  void refresh(std::vector<rect> &occluded);
 
+  inline bool is_dirty() { return !dirty_rect().empty(); }
   virtual void dirty();
   virtual void dirty_all();
 
-  void redraw() { region occluded; redraw(occluded); }
-  void refresh() { region occluded; refresh(occluded); }
+  void redraw() { std::vector<rect> occluded; redraw(occluded); }
+  void refresh() { std::vector<rect> occluded; refresh(occluded); }
 };
 
 #endif /* APPLICATION_USER_CONSOLE_VIEWPORT_HPP_ */

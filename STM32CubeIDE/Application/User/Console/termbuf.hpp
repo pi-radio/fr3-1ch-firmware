@@ -44,7 +44,7 @@ public:
 
   virtual uint8_t *alloc_buffer(size_t s);
 
-  virtual size_t stride() const { return r.width(); };
+  virtual size_t stride() const { return s.width; };
 
   virtual void render_buffer(const rect &, const uint8_t *, const size_t &) override;
 };

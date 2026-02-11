@@ -109,7 +109,7 @@ void lmx_init(void)
 
 
 uint16_t lmx_default_regs[N_LMX_REGS] = {
-    0x6470,
+    0x6070,
     0x57a0,
     0x81f4,
     0x0041,
@@ -145,7 +145,7 @@ uint16_t lmx_default_regs[N_LMX_REGS] = {
     0x0000,
     0x0010,
     0x3100,
-    0x0032,
+    0x01f4,
     0x0500,
     0x0000,
     0x03e8,
@@ -231,5 +231,5 @@ uint16_t lmx_default_regs[N_LMX_REGS] = {
     0x0000,
     0x0000,
     0x0000,
-    0x0000
+    0x0000,
 };

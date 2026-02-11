@@ -29,7 +29,7 @@ protected:
   position pos;
   uint8_t *pcur;
   size_t _stride;
-  region _dirty;
+  rect _dirty;
 
 public:
   window(viewport *parent, const rect &_r);
@@ -47,28 +47,27 @@ public:
 
   void clear(const rect &r);
   inline void clear() { clear(rlocal()); }
-  inline void clearline(int l) { clear(rect(l, 0, 1, r.width())); };
+  inline void clearline(int l) { clear(rect(l, 0, l+1, s.width+1)); };
 
 
   void scroll(ord_t n);
   void cr();
   int putc(char c);
 
-  virtual region dirty_region();
+  virtual rect dirty_rect() override;
 
-  void dirty(const rect &r)  { _dirty += r; };
+  void dirty(const rect &r)  { _dirty = rect::enclosing(_dirty, r); };
   void dirty() override { dirty(rlocal()); }
 
-  virtual void render(const rect &r) override;
-
   void validate_self(const rect &r) override;
+  void refresh_self(const rect &r) override;
 
   void dirtyline(uint32_t l, uint32_t start, uint32_t end) {
-    dirty(rect(l, start, 1 + 1, end - start));
+    dirty(rect(l, start, l + 1, end));
   }
 
   void dirtyline(uint32_t l) {
-    dirtyline(l, 0, r.width());
+    dirtyline(l, 0, s.width);
   }
 
   inline void dirtypt() { dirtyline(cursor.row, cursor.col, cursor.col + 1); }

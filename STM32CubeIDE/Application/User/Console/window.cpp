@@ -38,26 +38,22 @@ window::window(viewport *_parent, const rect &_r) :
 {
   f = fopencookie(this, "w", win_iofunc);
 
-  buf_size = r.area();
+  buf_size = s.area();
   buf = alloc_buffer(buf_size);
 
-  memset(buf, 0, r.area());
+  memset(buf, 0, s.area());
 
-  _stride = r.width();
+  _stride = s.width;
   pcur = _bufat(cursor);
 }
 
-uint8_t *window::_bufat(position p)
+uint8_t *window::_bufat(position _p)
 {
-  if (p.row < 0 || p.row >= r.height()) {
+  if (!rlocal().inside(_p)) {
     Error_Handler();
   }
 
-  if (p.col < 0 || p.col >= r.width()) {
-    Error_Handler();
-  }
-
-  return buf + p.row * _stride + p.col;
+  return buf + _p.row * _stride + _p.col;
 };
 
 void window::clear(const rect &r)
@@ -69,19 +65,19 @@ void window::clear(const rect &r)
   dirty(r);
 
   for (i = 0; i < r.height(); i++) {
-    memset(pbuf, 0, r.width());
+    memset(pbuf, 0, s.width);
     pbuf += stride();
   }
 }
 
 void window::moveto(position p)
 {
-  if (p.row >= r.height()) {
-    p.row = r.height() - 1;
+  if (p.row >= s.height) {
+    p.row = s.height - 1;
   }
 
-  if (p.col >= r.width()) {
-    p.col = r.width() - 1;
+  if (p.col >= s.width) {
+    p.col = s.width - 1;
   }
 
   cursor = p;
@@ -125,16 +121,16 @@ size_t window::printf(position p, const char *fmt, ...)
 }
 
 
-ssize_t window::write(const char *s, size_t l)
+ssize_t window::write(const char *str, size_t l)
 {
   ssize_t retval = l;
 
   while (l) {
-    char c = *s++;
+    char c = *str++;
     l--;
 
     if (c == '\n') {
-      if (cursor.row == r.height() - 1) {
+      if (cursor.row == s.height - 1) {
         scroll(1);
       } else {
         cursor.row++;
@@ -161,7 +157,7 @@ void window::scroll(ord_t n)
 
   dirty();
 
-  if (std::abs(n) >= r.height()) {
+  if (std::abs(n) >= s.height) {
     clear();
     return;
   }
@@ -169,7 +165,7 @@ void window::scroll(ord_t n)
   if (n > 0) {
     l = 0;
 
-    for (i = 0; i < r.height() - n; i++) {
+    for (i = 0; i < s.height - n; i++) {
       clearline(l);
       copyline(l, l + n);
       l++;
@@ -188,7 +184,7 @@ void window::cr() {
 }
 
 int window::putc(char c) {
-  if (cursor.col >= r.width()) {
+  if (cursor.col >= s.width) {
     return -1;
   }
 
@@ -202,29 +198,30 @@ int window::putc(char c) {
 void window::copyline(uint32_t dstline, uint32_t srcline)
 {
   dirtyline(dstline);
-  memcpy(_bufatline(dstline), _bufatline(srcline), r.width());
+  memcpy(_bufatline(dstline), _bufatline(srcline), s.width);
 }
 
-void window::validate_self(const rect &_r)
-{
-  if (_r.contains(r)) {
-    _dirty.clear();
-    return;
-  }
-
-  _dirty -= r;
-}
-
-region window::dirty_region()
-{
-  return _dirty;
-}
-
-void window::render(const rect &_r)
+void window::refresh_self(const rect &_r)
 {
   rect rr = _r & rlocal();
 
   render_buffer(rr, bufat(rr.p), _stride);
+}
+
+void window::validate_self(const rect &_r)
+{
+  _dirty.clear();
+  return;
+
+  if (_r.contains(rlocal())) {
+    _dirty.clear();
+    return;
+  }
+}
+
+rect window::dirty_rect()
+{
+  return _dirty;
 }
 
 

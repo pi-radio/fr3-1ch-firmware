@@ -34,12 +34,7 @@ void viewport::render_buffer(const rect &_r, const uint8_t *buf, const size_t &s
   parent()->render_buffer(local2parent(rr), buf, stride);
 }
 
-void viewport::render(const rect &r)
-{
-
-}
-
-void viewport::redraw(region &occluded)
+void viewport::redraw(std::vector<rect> &occluded)
 {
   dirty_all();
 
@@ -61,30 +56,31 @@ void viewport::dirty_all()
 }
 
 
-void viewport::refresh(region &occluded)
+void viewport::refresh(std::vector<rect> &occluded)
 {
   for (auto pchild : children) {
+    if (!pchild->is_dirty()) {
+      continue;
+    }
+
     pchild->refresh(occluded);
   }
 
-  region draw_rects = local2global(rlocal()) - occluded;
+  // TODO -- handle occlusion
+  refresh_self(dirty_rect());
 
-  occluded += r;
+  occluded.emplace_back(rglobal());
 
-  for (auto r : draw_rects.rects) {
-    render(global2local(r));
-  }
-
-  validate_self(r);
+  validate_self(rlocal());
 }
 
 void viewport::validate(const rect &_r)
 {
   for (auto child : children) {
-    child->validate(r);
+    child->validate(_r);
   }
 
-  validate_self(r);
+  validate_self(_r);
 }
 
 void viewport::validate_self(const rect &)
@@ -96,8 +92,8 @@ void viewport::refresh_self(const rect &)
 }
 
 
-region viewport::dirty_region()
+rect viewport::dirty_rect()
 {
-  return region();
+  return rect();
 }
 

@@ -98,7 +98,8 @@ extern int expected_voltage;
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void schedule_power_on();
+void power_off();
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

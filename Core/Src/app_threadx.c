@@ -123,14 +123,17 @@ VOID app_thread_entry(ULONG _a)
     printf("Hard Fault\n");
     printf("SHCSR: %08lx VTOR: %08lx PC: %08lx LR: %08lx xPSR: %08lx\n", einfo->hf.SHCSR, SCB->VTOR, einfo->hf.PC, einfo->hf.LR, einfo->hf.xPSR);
     printf("R0: %08lx R1: %08lx R2: %08lx R3: %08lx R12: %08lx\n", einfo->hf.R0, einfo->hf.R1, einfo->hf.R2, einfo->hf.R3, einfo->hf.R12);
+    dbgprint("Hard Fault\r\n");
+    dbgprint("SHCSR: %08lx VTOR: %08lx PC: %08lx LR: %08lx xPSR: %08lx\r\n", einfo->hf.SHCSR, SCB->VTOR, einfo->hf.PC, einfo->hf.LR, einfo->hf.xPSR);
+    dbgprint("R0: %08lx R1: %08lx R2: %08lx R3: %08lx R12: %08lx\r\n", einfo->hf.R0, einfo->hf.R1, einfo->hf.R2, einfo->hf.R3, einfo->hf.R12);
     break;
   default:
   }
 
   einfo->exception_type = 0;
 
-  //printf("Programming LMX...\n");
-  //lmx_program();
+  printf("Programming LMX...\n");
+  lmx_program();
 
   while(1) {
     tx_thread_sleep(1000);

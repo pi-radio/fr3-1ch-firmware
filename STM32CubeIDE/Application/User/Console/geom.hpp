@@ -14,6 +14,7 @@
 #include <ranges>
 #include <numeric>
 #include <memory>
+#include <vector>
 
 
 #include <iterator>
@@ -66,7 +67,7 @@ struct _range {
         }
     };
 
-    _range(T __start, T __end) : _start(__start), _end(__end - 1) { }
+    _range(T __start, T __end) : _start(__start), _end(__end) { }
 
     // Begin iterator: starts at 'start'
     _rangeiter begin() const { return _rangeiter(_start); }
@@ -123,14 +124,11 @@ struct size {
 extern const position pzero;
 extern const size szero;
 
-struct region;
 class viewport;
 
 struct rect {
   position p;
   size s;
-
-  rect(ord_t top, ord_t left, ord_t bottom, ord_t right) : p(top, left), s(bottom - top, right - left) { };
 
   rect(const position &_p = pzero, const size &_s = szero) : p(_p), s(_s) {
     if (s.height < 0) {
@@ -143,6 +141,10 @@ struct rect {
       s.width = -s.width;
     }
   };
+
+  rect(ord_t top, ord_t left, ord_t bottom, ord_t right) : rect(position(top, left), size(bottom - top, right - left)) { };
+
+  inline bool inside(const position &_p) { return (_p.row >= top()) && (_p.row < bottom()) && (_p.col >= left()) && (_p.col < right()); }
 
   bool disjoint(const rect &r) const {
     if ((bottom() < r.top()) ||
@@ -167,8 +169,20 @@ struct rect {
         (bottom() >= r.bottom());
   }
 
-  std::shared_ptr<region> operator +(const rect &) const;
-  std::shared_ptr<region> operator -(const rect &) const;
+  static rect enclosing(const rect &r1, const rect &r2) {
+    if (r1.empty()) return r2;
+    if (r2.empty()) return r1;
+
+    return rect(min(r1.top(), r2.top()),
+        min(r1.left(), r2.left()),
+        max(r1.bottom(), r2.bottom()),
+        max(r1.right(), r2.right()));
+  }
+
+  inline rect operator +(const position &offset) const { return rect(p + offset, s); }
+  inline rect operator -(const position &offset) const { return rect(p - offset, s); }
+
+  inline void clear() { p = position(0,0); s = size(0,0); }
 
   inline bool empty() const { return (s.height == 0) || (s.width == 0); }
 
@@ -244,43 +258,5 @@ struct rect {
         min(right(), r.right()));
   }
 };
-
-
-
-struct region {
-  std::list<rect> rects;
-
-  region() {};
-  region(const rect &r) { rects.emplace_front(r); }
-  region(const region &r) : rects(r.rects) {}
-
-  // To add a non-overlapping region
-  void add(const rect &r) { if (!r.empty()) rects.emplace_back(r); }
-
-  region &operator +=(const rect &);
-  region &operator +=(const region &);
-
-  region &operator -=(const rect &);
-  region &operator -=(const region &);
-
-  inline bool empty() { return rects.empty(); }
-
-  inline void clear() { rects.clear(); }
-};
-
-static inline rect operator +(const rect &r, const position &_p) { return rect(r.p + _p, r.s); }
-static inline rect operator -(const rect &r, const position &_p) { return rect(r.p - _p, r.s); }
-
-
-static inline region operator-(const rect &_rect, const region &_region)
-{
-  region retval(_rect);
-
-  retval -= _region;
-
-  return retval;
-}
-
-region operator&(const rect &_rect, const region &_region);
 
 #endif /* APPLICATION_USER_CONSOLE_GEOM_HPP_ */

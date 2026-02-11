@@ -117,21 +117,17 @@ int spi_transfer(int device, int lenb, uint32_t *v)
 
 void spi_callback(SPI_HandleTypeDef *hspi)
 {
-  tx_semaphore_put(&spi_semaphore);
 }
 
 static void handle_spi_cmd(spi_req_t *req)
 {
+  int result;
   uint32_t i, len;
   uint8_t tx_buf[4], rx_buf[4];
   uint8_t *pbyte;
+  int pin = GPIO_PIN_9;
 
   len = GET_SPI_LEN(req->dev_flags_size);
-
-  printf("SPI COMMAND %ld %ld %08lx\n",
-      GET_SPI_DEV(req->dev_flags_size),
-      len,
-      req->data);
 
   pbyte = &tx_buf[len - 1];
 
@@ -140,14 +136,14 @@ static void handle_spi_cmd(spi_req_t *req)
     req->data >>= 8;
   }
 
+  HAL_GPIO_WritePin(GPIOE, pin, GPIO_PIN_RESET);
+
+  result = HAL_SPI_TransmitReceive(&hspi4, tx_buf, rx_buf, len, 0xFFFF);
+
+  HAL_GPIO_WritePin(GPIOE, pin, GPIO_PIN_SET);
+
   if (req->cmd_flags & CMD_FLAG_WAIT) {
-    int result;
-
-    result = HAL_SPI_TransmitReceive_IT(&hspi4, tx_buf, rx_buf, len);
-
     if (result == HAL_OK) {
-      tx_semaphore_get(&spi_semaphore, TX_WAIT_FOREVER);
-
       pbyte = rx_buf;
       req->data = 0;
 
@@ -159,10 +155,7 @@ static void handle_spi_cmd(spi_req_t *req)
       req->data = 0xFFFFFFFF;
     }
 
-
     tx_event_flags_set(&hw_req_flags, (1 << hw_req_get_id((hw_req_t *)req)), TX_OR);
-  } else {
-    HAL_SPI_Transmit_IT(&hspi4, tx_buf, len);
   }
 }
 
@@ -194,13 +187,57 @@ static VOID hw_thread_entry(ULONG _a)
   }
 }
 
+TX_TIMER timer_5V;
+TX_TIMER timer_3V3;
+
+void schedule_power_on()
+{
+  tx_timer_activate(&timer_5V);
+}
+
+void power_off()
+{
+  dbgprint("Switching off 3V3 and 5V power\r\n");
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_RESET);
+}
+
+void timer_5V_callback(ULONG a)
+{
+  dbgprint("Starting 5V...\r\n");
+  tx_timer_activate(&timer_3V3);
+
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
+}
+
+void timer_3V3_callback(ULONG a)
+{
+  dbgprint("Starting 3V3...\r\n");
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+}
+
 char hw_stack[2048];
 
 void fr3_1ch_hw_init(void)
 {
   int result;
 
-  HAL_SPI_RegisterCallback(&hspi4, HAL_SPI_TX_RX_COMPLETE_CB_ID, spi_callback);
+  tx_timer_create(&timer_5V,
+      (char *)"5V timer",
+      timer_5V_callback,
+      (ULONG)NULL,
+      1000,
+      0,
+      TX_NO_ACTIVATE);
+
+  tx_timer_create(&timer_3V3,
+      (char *)"3V3 timer",
+      timer_3V3_callback,
+      (ULONG)NULL,
+      1000,
+      0,
+      TX_NO_ACTIVATE);
+
+ //HAL_SPI_RegisterCallback(&hspi4, HAL_SPI_TX_RX_COMPLETE_CB_ID, spi_callback);
 
   result = tx_semaphore_create(&spi_semaphore, "SPI Semaphore", 0);
 

@@ -80,7 +80,7 @@ terminal::terminal(TX_BYTE_POOL *_pool) :
 void terminal::draw(position p, const uint8_t *buf, size_t len)
 {
   ord_t end = p.col + len;
-  ord_t right = _outbuf->get_rect().right();
+  ord_t right = _outbuf->rlocal().right();
 
   if (end > right) {
     len = right - p.col;
