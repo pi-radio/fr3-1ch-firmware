@@ -678,6 +678,8 @@ static void USBD_FrameWork_CDCDesc(USBD_DevClassHandleTypeDef *pdev,
   static USBD_IadDescTypedef              *pIadDesc;
 #endif /* USBD_COMPOSITE_USE_IAD == 1 */
 
+  dbgprint("USBD_FrameWork_CDCDesc\r\n");
+
 #if USBD_COMPOSITE_USE_IAD == 1
   pIadDesc = ((USBD_IadDescTypedef *)(pConf + *Sze));
   pIadDesc->bLength = (uint8_t)sizeof(USBD_IadDescTypedef);

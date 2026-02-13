@@ -72,19 +72,29 @@
 /**************************************************************************/
 VOID   _ux_system_error_handler(UINT system_level, UINT system_context, UINT error_code)
 {
+  switch (error_code) {
+  case UX_MEMORY_INSUFFICIENT:
+    dbgprint("Memory Allocation Failure: %d %d\r\n", system_level, system_context);
+    break;
+  case TX_WAIT_ERROR:
+    dbgprint("Wait Error: %d %d\r\n", system_level, system_context);
+    break;
+  default:
+    dbgprint("ERROR HANDLER: %d %d %d\r\n", system_level, system_context, error_code);
+    break;
+  }
 
-    /* Save the last system error code.  */
-    _ux_system -> ux_system_last_error =  error_code;
+  /* Save the last system error code.  */
+  _ux_system -> ux_system_last_error =  error_code;
  
-    /* Increment the total number of system errors.  */
-    _ux_system -> ux_system_error_count++;
+  /* Increment the total number of system errors.  */
+  _ux_system -> ux_system_error_count++;
 
-    /* Is there an application call back function to call ? */
-    if (_ux_system -> ux_system_error_callback_function != UX_NULL)
-    {    
-
-        /* The callback function is defined, call it.  */
-        _ux_system -> ux_system_error_callback_function(system_level, system_context, error_code);
-    }
+  /* Is there an application call back function to call ? */
+  if (_ux_system -> ux_system_error_callback_function != UX_NULL)
+  {
+    /* The callback function is defined, call it.  */
+    _ux_system -> ux_system_error_callback_function(system_level, system_context, error_code);
+  }
 }
 #endif

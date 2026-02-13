@@ -31,7 +31,6 @@
 #include "usart.h"
 #include "usb.h"
 #include "gpio.h"
-#include "app_tcpp.h"
 #include "usbpd.h"
 #include "ux_api.h"
 
@@ -142,17 +141,13 @@ int main(void)
 
   MX_GPDMA1_Init();
   MX_SPI4_Init();
+  MX_UCPD1_Init();
+  //MX_USB_PCD_Init();
   MX_DCACHE1_Init();
   MX_ICACHE_Init();
-#ifdef USE_DK
-  MX_ADC1_Init();
-#endif
   MX_FLASH_Init();
   MX_DTS_Init();
   MX_LPTIM1_Init();
-
-  MX_UCPD1_Init();
-  MX_USB_PCD_Init();
 
   /* Call PreOsInit function */
   USBPD_PreInitOs();
@@ -306,13 +301,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
+void __error_handler(const char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
 
-  __BKPT(0);
+  exception_info_t *info = get_exception_info();
+
+  info->exception_type = EXCEPTION_ERROR_HANDLER;
+
+  info->excSP = (uint32_t)file;
+  info->excLR = line;
+
+  NVIC_SystemReset();
+
   while (1)
   {
   }

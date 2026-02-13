@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+#if 0
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
@@ -43,6 +44,7 @@ void MX_ADC1_Init(void);
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */
+#endif
 
 #ifdef __cplusplus
 }

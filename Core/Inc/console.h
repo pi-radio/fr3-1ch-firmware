@@ -6,7 +6,7 @@
 #if defined(__cplusplus)
 extern "C" void console_init(void);
 
-extern void console_cmd_ready(void);
+extern void console_cmd_ready(const char *s, size_t l);
 
 #else
 extern void console_init(void);

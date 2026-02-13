@@ -21,8 +21,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbpd.h"
 
-#include "app_tcpp.h"
-
 /* USER CODE BEGIN 0 */
 /* USER CODE END 0 */
 
@@ -44,11 +42,6 @@ unsigned int USBPD_PreInitOs(void)
   {
     return USBPD_ERROR;
   }
-
-
-#ifdef USE_DK
-  MX_TCPP_Init();
-#endif
 
   return USBPD_OK;
 }

@@ -283,7 +283,7 @@ uint8_t USBPD_PWR_IF_GetVBUSStatus(uint8_t PortNum, USBPD_VBUSPOWER_STATUS Power
   case USBPD_PWR_SNKDETACH:
     _vbus = 0;
     if (_vbus < USBPD_PWR_HIGH_VBUS_THRESHOLD) _status = USBPD_TRUE;
-    dbgprint("USBPD PWR IF GetVBUSStatus high vbus: status: %d _vbus: %d\r\n", _status, _vbus);
+    //dbgprint("USBPD PWR IF GetVBUSStatus high vbus: status: %d _vbus: %d\r\n", _status, _vbus);
     break;
   default :
     break;

@@ -8,47 +8,52 @@
 #include <fr3_1ch_hw.h>
 #include <lmx.h>
 
-#define N_LMX_REGS 123
+extern uint16_t lmx_default_regs[LMX2820::N_REGS];
 
-extern uint16_t lmx_default_regs[N_LMX_REGS];
+LMX2820 lmx;
 
-uint16_t lmx_regs[N_LMX_REGS];
-
-#define DECLARE_BITMAP(name, n)   char name[(n+7)/8]
-
-DECLARE_BITMAP(lmx_reg_dirty, N_LMX_REGS);
-
-static inline int bitmap_check(char *bitmap, int bit)
+LMX2820::LMX2820()
 {
-  return bitmap[bit / 8] & (1 << (bit & 7));
+  dirty.set_all();
+
+  memcpy(regs, lmx_default_regs, sizeof(regs));
 }
 
-static inline void bitmap_set(char *bitmap, int bit)
+void LMX2820::reprogram()
 {
-  bitmap[bit / 8] |= (1 << bit);
+  dirty.set_all();
+
+  program();
 }
 
-static inline void bitmap_clear(char *bitmap, int bit)
+void LMX2820::program()
 {
-  bitmap[bit / 8] &= ~(1 << bit);
+  int i;
+
+  for (i = N_REGS - 1; i >= 0; i--) {
+    if (dirty.get(i)) {
+      lmx.program_reg(i);
+    }
+  }
 }
 
-static inline void lmx_program_reg(int reg) {
-  uint32_t v = (reg << 16) | lmx_regs[reg];
+void LMX2820::program_reg(int reg)
+{
+  uint32_t v = (reg << 16) | regs[reg];
 
 #if 0
   spi_transmit(SPI_DEVICE_LMX, 3, v);
-  bitmap_clear(lmx_reg_dirty, reg);
 #else
   spi_transfer(SPI_DEVICE_LMX, 3, &v);
-  bitmap_clear(lmx_reg_dirty, reg);
 #endif
+
+  dirty.clear(reg);
 }
 
-int lmx_read_reg(int reg, uint16_t *val) {
+int LMX2820::read_reg(int reg, uint16_t *val) {
   int retval;
 
-  uint32_t v = (reg << 16) | lmx_regs[reg];
+  uint32_t v = (reg << 16) | regs[reg];
 
   retval = spi_transfer(SPI_DEVICE_LMX, 3, &v);
 
@@ -57,28 +62,13 @@ int lmx_read_reg(int reg, uint16_t *val) {
   return retval;
 }
 
-void lmx_program(void)
-{
-  int i;
-
-  for (i = N_LMX_REGS - 1; i >= 0; i--) {
-    if (bitmap_check(lmx_reg_dirty, i)) {
-      lmx_program_reg(i);
-    }
-  }
-}
-
-
-
-int lmx_locked(void)
+int LMX2820::locked()
 {
   uint16_t v;
-  int retval;
-
-  retval = lmx_read_reg(74, &v);
+  int retval = read_reg(74, &v);
 
   if (retval < 0) {
-    return retval;
+    return false;
   }
 
   v = (v >> 14) & 0x3;
@@ -99,18 +89,15 @@ int lmx_locked(void)
   return retval;
 }
 
-void lmx_init(void)
+extern "C" void lmx_program(void)
 {
-  memset(lmx_reg_dirty, 0xFF, sizeof(lmx_reg_dirty));
-
-  memcpy(lmx_regs, lmx_default_regs, sizeof(lmx_regs));
+  lmx.program();
 }
-
 
 #ifndef OCTOLO
 
 // Default 10MHz registers
-uint16_t lmx_default_regs[N_LMX_REGS] = {
+uint16_t lmx_default_regs[LMX2820::N_REGS] = {
     0x6070,
     0x57a0,
     0x81f4,
@@ -238,7 +225,7 @@ uint16_t lmx_default_regs[N_LMX_REGS] = {
 
 #else
 
-uint16_t lmx_default_regs[N_LMX_REGS] = {
+uint16_t lmx_default_regs[LMX2820::N_REGS] = {
     0x6470,
      0x57a0,
      0x81f4,
@@ -361,8 +348,7 @@ uint16_t lmx_default_regs[N_LMX_REGS] = {
      0x0000,
      0x0000,
      0x0000,
-     0x0000,
-
+     0x0000
 };
 
 

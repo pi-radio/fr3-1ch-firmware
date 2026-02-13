@@ -390,20 +390,7 @@ public:
   void on_cr(const uint8_t *s, size_t l) {
     output_win->printf("%.*s\n", l, s);
 
-    lexer_set_line((const char *)s, l);
-
-    console_cmd_ready();
-
-    int result = parser_parse_statement();
-
-    switch(result) {
-    case PARSER_OK:
-      printf("OK\n");
-      break;
-    case PARSER_SYNTAX_ERROR:
-      printf("Syntax Error: (%d) %s\n", l, s);
-      break;
-    }
+    console_cmd_ready((const char *)s, l);
   }
 };
 

@@ -113,8 +113,6 @@ UX_INTERRUPT_SAVE_AREA
     _ux_system -> ux_system_debug_count++;
 
 
-    HAL_UART_Transmit(&huart1, debug_message, strlen(debug_message), 0xFFFF);
-
     /* Calculate the string length.  */
     debug_location_string_length = UX_DEBUG_LOG_SIZE;
     _ux_utility_string_length_check(debug_location, &debug_location_string_length, UX_DEBUG_LOG_SIZE);

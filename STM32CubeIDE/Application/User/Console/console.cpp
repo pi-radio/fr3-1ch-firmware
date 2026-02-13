@@ -49,12 +49,18 @@ void wait_usb(void) {
   tx_event_flags_get(&app_events, USB_AVAILABLE_FLAG, TX_AND, &flags, TX_WAIT_FOREVER);
 }
 
-void console_cmd_ready(void)
+void console_cmd_ready(const char *s, size_t l)
 {
   int result;
-  ULONG sul = 0;
 
-  result = tx_queue_send(&console_cmd_queue, &sul, TX_WAIT_FOREVER);
+  std::string *ps = new std::string(s, l);
+
+  if (ps == NULL) {
+    printf("Unable to process: Out of memory\n");
+    return;
+  }
+
+  result = tx_queue_send(&console_cmd_queue, &ps, TX_WAIT_FOREVER);
 
   if (result != TX_SUCCESS) {
     printf("Console failure: %d\n", result);
@@ -68,6 +74,12 @@ void console_cmd_thread_entry(ULONG _a) {
     ULONG c;
 
     result = tx_queue_receive(&console_cmd_queue, &c, TX_WAIT_FOREVER);
+
+    std::string *ps = (std::string *)c;
+
+    lexer_set_line(*ps);
+
+    delete ps;
 
     result = parser_parse_statement();
 

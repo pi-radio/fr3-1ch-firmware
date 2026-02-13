@@ -75,11 +75,58 @@ extern TIM_HandleTypeDef htim1;
 int exception_magic;
 char exception_msgbuf[256];
 
-exception_info_t __attribute__(( section(".noinitdata") )) _last_exception;
+exception_info_t __attribute__(( section(".noinitdata") )) _einfo;
+
+uint32_t __exc_stor[2];
 
 exception_info_t *get_exception_info()
 {
-  return &_last_exception;
+  return &_einfo;
+}
+
+void save_exception(uint32_t exception_type)
+{
+  _einfo.excSP = __exc_stor[0];
+  _einfo.excLR = __exc_stor[1];
+
+  uint32_t *cp = (uint32_t *)_einfo.excSP;
+
+  _einfo.exception_type = exception_type;
+  _einfo.CONTROL = __get_CONTROL();
+  _einfo.CFSR = SCB->CFSR;
+  _einfo.HFSR = SCB->HFSR;
+  _einfo.SHCSR = SCB->SHCSR;
+  _einfo.VTOR = SCB->VTOR;
+
+  memcpy(&_einfo.base_ctx, cp, sizeof(_einfo.base_ctx));
+  cp += sizeof(_einfo.base_ctx) / 4;
+
+  _einfo.SP1 = *cp;
+
+  if (!(_einfo.excLR & (1 << 4))) {
+    memcpy(&_einfo.fp_ctx, cp, sizeof(_einfo.fp_ctx));
+    cp += sizeof(_einfo.fp_ctx) / 4;
+  }
+
+  _einfo.SP = *cp++;
+
+  _einfo.excbase = (uint32_t)cp;
+
+  dbgprint("Exception: Type: %08lx PC: %08lx\r\n", _einfo.exception_type, _einfo.base_ctx.PC);
+
+  for (int i = 0; i < 5000000; i++);
+}
+
+void clear_exception(void)
+{
+  memset(&_einfo, 0, sizeof(_einfo));
+}
+
+void handle_flash(void)
+{
+  FLASH_EccInfoTypeDef eccdata;
+
+  HAL_FLASHEx_GetEccInfo(&eccdata);
 }
 
 /* USER CODE END EV */
@@ -90,64 +137,39 @@ exception_info_t *get_exception_info()
 /**
   * @brief This function handles Non maskable interrupt.
   */
-void NMI_Handler(void)
+void __NMI_Handler(void)
 {
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
   if (FLASH_NS->ECCDETR & FLASH_ECCR_ECCD){
-    FLASH_EccInfoTypeDef eccdata;
-
-    HAL_FLASHEx_GetEccInfo(&eccdata);
-
-    return;
+    handle_flash();
   }
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
+  save_exception(EXCEPTION_NMI);
+
+  NVIC_SystemReset();
+
   while (1)
   {
   }
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
+
+
 /**
   * @brief This function handles Hard fault interrupt.
   */
-void HardFault_Handler(void)
+void __HardFault_Handler(void)
 {
-  register unsigned long *sp asm("sp");
-
   /* USER CODE BEGIN HardFault_IRQn 0 */
   if (FLASH_NS->ECCDETR & FLASH_ECCR_ECCD){
-    FLASH_EccInfoTypeDef eccdata;
-
-    HAL_FLASHEx_GetEccInfo(&eccdata);
-
-    return;
+    handle_flash();
   }
 
-  _last_exception.exception_type = EXCEPTION_HARD_FAULT;
-  _last_exception.hf.SHCSR = SCB->SHCSR;
-  _last_exception.hf.VTOR = SCB->VTOR;
-  _last_exception.hf.PC = sp[6];
-  _last_exception.hf.LR = sp[5];
-  _last_exception.hf.xPSR = sp[7];
-  _last_exception.hf.R0 = sp[0];
-  _last_exception.hf.R1 = sp[1];
-  _last_exception.hf.R2 = sp[2];
-  _last_exception.hf.R3 = sp[3];
-  _last_exception.hf.R12 = sp[4];
-
-
-#if 1
+  save_exception(EXCEPTION_HARD_FAULT);
 
   NVIC_SystemReset();
-#else
-  /* USER CODE END HardFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* USER CODE END W1_HardFault_IRQn 0 */
-  }
-#endif
 }
 
 /**
@@ -156,6 +178,9 @@ void HardFault_Handler(void)
 void MemManage_Handler(void)
 {
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
+  save_exception(EXCEPTION_MEM_MANAGE);
+
+  NVIC_SystemReset();
 
   /* USER CODE END MemoryManagement_IRQn 0 */
   while (1)
@@ -168,9 +193,12 @@ void MemManage_Handler(void)
 /**
   * @brief This function handles Pre-fetch fault, memory access fault.
   */
-void BusFault_Handler(void)
+void __BusFault_Handler(void)
 {
   /* USER CODE BEGIN BusFault_IRQn 0 */
+  save_exception(EXCEPTION_MEM_MANAGE);
+
+  NVIC_SystemReset();
 
   /* USER CODE END BusFault_IRQn 0 */
   while (1)
@@ -186,6 +214,9 @@ void BusFault_Handler(void)
 void UsageFault_Handler(void)
 {
   /* USER CODE BEGIN UsageFault_IRQn 0 */
+  save_exception(EXCEPTION_USAGE_FAULT);
+
+  NVIC_SystemReset();
 
   /* USER CODE END UsageFault_IRQn 0 */
   while (1)
@@ -198,10 +229,12 @@ void UsageFault_Handler(void)
 /**
   * @brief This function handles Debug monitor.
   */
-void DebugMon_Handler(void)
+void __DebugMon_Handler(void)
 {
   /* USER CODE BEGIN DebugMonitor_IRQn 0 */
+  save_exception(EXCEPTION_DEBUG);
 
+  NVIC_SystemReset();
   /* USER CODE END DebugMonitor_IRQn 0 */
   /* USER CODE BEGIN DebugMonitor_IRQn 1 */
 
@@ -215,61 +248,6 @@ void DebugMon_Handler(void)
 /* please refer to the startup file (startup_stm32h5xx.s).                    */
 /******************************************************************************/
 
-/**
-  * @brief This function handles GPDMA1 Channel 0 global interrupt.
-  */
-void GPDMA1_Channel0_IRQHandler(void)
-{
-  /* USER CODE BEGIN GPDMA1_Channel0_IRQn 0 */
-
-  /* USER CODE END GPDMA1_Channel0_IRQn 0 */
-  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel0);
-  /* USER CODE BEGIN GPDMA1_Channel0_IRQn 1 */
-
-  /* USER CODE END GPDMA1_Channel0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles GPDMA1 Channel 1 global interrupt.
-  */
-void GPDMA1_Channel1_IRQHandler(void)
-{
-  /* USER CODE BEGIN GPDMA1_Channel1_IRQn 0 */
-
-  /* USER CODE END GPDMA1_Channel1_IRQn 0 */
-  TRACER_EMB_IRQHandlerDMA();
-  /* USER CODE BEGIN GPDMA1_Channel1_IRQn 1 */
-
-  /* USER CODE END GPDMA1_Channel1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles GPDMA1 Channel 2 global interrupt.
-  */
-void GPDMA1_Channel2_IRQHandler(void)
-{
-  /* USER CODE BEGIN GPDMA1_Channel2_IRQn 0 */
-
-  /* USER CODE END GPDMA1_Channel2_IRQn 0 */
-  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel2);
-  /* USER CODE BEGIN GPDMA1_Channel2_IRQn 1 */
-
-  /* USER CODE END GPDMA1_Channel2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles GPDMA1 Channel 3 global interrupt.
-  */
-void GPDMA1_Channel3_IRQHandler(void)
-{
-  /* USER CODE BEGIN GPDMA1_Channel3_IRQn 0 */
-
-  /* USER CODE END GPDMA1_Channel3_IRQn 0 */
-  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel3);
-  /* USER CODE BEGIN GPDMA1_Channel3_IRQn 1 */
-
-  /* USER CODE END GPDMA1_Channel3_IRQn 1 */
-}
 
 /**
   * @brief This function handles GPDMA1 Channel 6 global interrupt.

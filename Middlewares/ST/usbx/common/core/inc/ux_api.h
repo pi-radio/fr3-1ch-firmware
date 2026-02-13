@@ -864,6 +864,7 @@ VOID    _ux_trace_event_update(TX_TRACE_BUFFER_ENTRY *event, ULONG timestamp, UL
 #else
 #define UX_TRACE_OBJECT_REGISTER(t,p,n,a,b)
 #define UX_TRACE_OBJECT_UNREGISTER(o)
+//#define UX_TRACE_IN_LINE_INSERT(i,a,b,c,d,f,g,h)   dbgprint("USBX: %s:%d\r\n", __FILE__, __LINE__);
 #define UX_TRACE_IN_LINE_INSERT(i,a,b,c,d,f,g,h)
 #define UX_TRACE_EVENT_UPDATE(e,t,i,a,b,c,d)
 #endif

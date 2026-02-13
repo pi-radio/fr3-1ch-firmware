@@ -106,6 +106,49 @@ LoopForever:
 
   .size Reset_Handler, .-Reset_Handler
 
+
+
+    .section	.text.HardFault_Handler
+	.type	HardFault_Handler, %function
+HardFault_Handler:
+	ldr r0, =__exc_stor
+	str sp, [r0]
+	str lr, [r0, #4]
+	b __HardFault_Handler
+
+  .size HardFault_Handler, .-HardFault_Handler
+
+    .section	.text.NMI_Handler
+	.type	NMI_Handler, %function
+NMI_Handler:
+	ldr r0, =__exc_stor
+	str sp, [r0]
+	str lr, [r0, #4]
+	b __NMI_Handler
+
+  .size NMI_Handler, .-NMI_Handler
+
+    .section	.text.BusFault_Handler
+	.type	NMI_Handler, %function
+BusFault_Handler:
+	ldr r0, =__exc_stor
+	str sp, [r0]
+	str lr, [r0, #4]
+	b __BusFault_Handler
+
+  .size BusFault_Handler, .-BusFault_Handler
+
+    .section	.text.DebugMon_Handler
+	.type	DebugMon_Handler, %function
+DebugMon_Handler:
+	ldr r0, =__exc_stor
+	str sp, [r0]
+	str lr, [r0, #4]
+	b __DebugMon_Handler
+
+  .size DebugMon_Handler, .-DebugMon_Handler
+
+
 /**
  * @brief  This is the code that gets called when the processor receives an
  *         unexpected interrupt.  This simply enters an infinite loop, preserving
@@ -119,6 +162,7 @@ Default_Handler:
 Infinite_Loop:
   b Infinite_Loop
   .size Default_Handler, .-Default_Handler
+
 
 /******************************************************************************
 *
@@ -290,17 +334,8 @@ g_pfnVectors:
 *
 *******************************************************************************/
 
-	.weak	NMI_Handler
-	.thumb_set NMI_Handler,Default_Handler
-
-	.weak	HardFault_Handler
-	.thumb_set HardFault_Handler,Default_Handler
-
 	.weak	MemManage_Handler
 	.thumb_set MemManage_Handler,Default_Handler
-
-	.weak	BusFault_Handler
-	.thumb_set BusFault_Handler,Default_Handler
 
 	.weak	UsageFault_Handler
 	.thumb_set UsageFault_Handler,Default_Handler
@@ -310,9 +345,6 @@ g_pfnVectors:
 
 	.weak	SVC_Handler
 	.thumb_set SVC_Handler,Default_Handler
-
-	.weak	DebugMon_Handler
-	.thumb_set DebugMon_Handler,Default_Handler
 
 	.weak	PendSV_Handler
 	.thumb_set PendSV_Handler,Default_Handler
@@ -712,3 +744,5 @@ g_pfnVectors:
 
 	.weak	LPTIM6_IRQHandler
 	.thumb_set LPTIM6_IRQHandler,Default_Handler
+
+

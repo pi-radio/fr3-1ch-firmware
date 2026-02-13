@@ -285,11 +285,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USBPD_Library/Core/src/usbpd_trace.c</locationURI>
 		</link>
 		<link>
-			<name>Application/User/Core/adc.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/adc.c</locationURI>
-		</link>
-		<link>
 			<name>Application/User/Core/app_threadx.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/app_threadx.c</locationURI>
@@ -1843,26 +1838,6 @@
 			<name>Application/User/AZURE_RTOS/App/app_azure_rtos.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/AZURE_RTOS/App/app_azure_rtos.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/TCPP/App/app_tcpp.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/TCPP/App/app_tcpp.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/TCPP/Target/custom_board_usbpd_pwr.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/custom_board_usbpd_pwr.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/TCPP/Target/usbpd_ADC.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/usbpd_ADC.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/TCPP/Target/usbpd_GPIO.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/TCPP/Target/usbpd_GPIO.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/USBPD/App/usbpd.c</name>

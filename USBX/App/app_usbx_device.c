@@ -132,6 +132,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
                                  USBD_ChangeFunction) != UX_SUCCESS)
   {
     /* USER CODE BEGIN USBX_DEVICE_INITIALIZE_ERROR */
+    dbgprint("Failed to initialize USB device stack\r\n");
     return UX_ERROR;
     /* USER CODE END USBX_DEVICE_INITIALIZE_ERROR */
   }
@@ -184,6 +185,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
   }
 
   /* USER CODE BEGIN MX_USBX_Device_Init1 */
+  dbgprint("MX USB init %d\r\n", ret);
   /* USER CODE END MX_USBX_Device_Init1 */
 
   return ret;
@@ -197,6 +199,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
 static VOID app_ux_device_thread_entry(ULONG thread_input)
 {
   /* USER CODE BEGIN app_ux_device_thread_entry */
+  dbgprint("Device thread entry\r\n");
   MX_USB_PCD_Init();
   HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x00 , PCD_SNG_BUF, 0x40);
   HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x80 , PCD_SNG_BUF, 0x80);
@@ -205,6 +208,7 @@ static VOID app_ux_device_thread_entry(ULONG thread_input)
   HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x82, PCD_SNG_BUF, 0x140);
   ux_dcd_stm32_initialize((ULONG)USB_DRD_FS, (ULONG)&hpcd_USB_DRD_FS);
   HAL_PCD_Start(&hpcd_USB_DRD_FS);
+  dbgprint("Device thread exit\r\n");
   /* USER CODE END app_ux_device_thread_entry */
 }
 
@@ -227,6 +231,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DEVICE_ATTACHED:
 
       /* USER CODE BEGIN UX_DEVICE_ATTACHED */
+      dbgprint("Device attached\r\n");
       /* USER CODE END UX_DEVICE_ATTACHED */
 
       break;
@@ -234,6 +239,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DEVICE_REMOVED:
 
       /* USER CODE BEGIN UX_DEVICE_REMOVED */
+      dbgprint("Device removed\r\n");
       /* USER CODE END UX_DEVICE_REMOVED */
 
       break;
@@ -241,6 +247,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_CONNECTED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_CONNECTED */
+      dbgprint("Device connected\r\n");
       /* USER CODE END UX_DCD_STM32_DEVICE_CONNECTED */
 
       break;
@@ -248,6 +255,7 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_DEVICE_DISCONNECTED:
 
       /* USER CODE BEGIN UX_DCD_STM32_DEVICE_DISCONNECTED */
+      dbgprint("Device disconnected\r\n");
       /* USER CODE END UX_DCD_STM32_DEVICE_DISCONNECTED */
 
       break;
@@ -270,7 +278,6 @@ static UINT USBD_ChangeFunction(ULONG Device_State)
     case UX_DCD_STM32_SOF_RECEIVED:
 
       /* USER CODE BEGIN UX_DCD_STM32_SOF_RECEIVED */
-
       /* USER CODE END UX_DCD_STM32_SOF_RECEIVED */
 
       break;

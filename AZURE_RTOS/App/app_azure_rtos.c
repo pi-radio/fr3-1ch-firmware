@@ -103,8 +103,6 @@ VOID tx_application_define(VOID *first_unused_memory)
 
   fr3_1ch_hw_init();
 
-  lmx_init();
-
   /* USER CODE END  tx_application_define_1 */
 #if (USE_STATIC_ALLOCATION == 1)
   UINT status = TX_SUCCESS;
@@ -113,7 +111,7 @@ VOID tx_application_define(VOID *first_unused_memory)
   if (tx_byte_pool_create(&tx_app_byte_pool, "Tx App memory pool", tx_byte_pool_buffer, TX_APP_MEM_POOL_SIZE) != TX_SUCCESS)
   {
     /* USER CODE BEGIN TX_Byte_Pool_Error */
-
+    Error_Handler();
     /* USER CODE END TX_Byte_Pool_Error */
   }
   else
@@ -127,9 +125,7 @@ VOID tx_application_define(VOID *first_unused_memory)
     if (status != TX_SUCCESS)
     {
       /* USER CODE BEGIN  App_ThreadX_Init_Error */
-      while(1)
-      {
-      }
+      Error_Handler();
       /* USER CODE END  App_ThreadX_Init_Error */
     }
     /* USER CODE BEGIN  App_ThreadX_Init_Success */
@@ -141,7 +137,7 @@ VOID tx_application_define(VOID *first_unused_memory)
   if (tx_byte_pool_create(&ux_device_app_byte_pool, "Ux App memory pool", ux_device_byte_pool_buffer, UX_DEVICE_APP_MEM_POOL_SIZE) != TX_SUCCESS)
   {
     /* USER CODE BEGIN UX_Device_Byte_Pool_Error */
-
+    Error_Handler();
     /* USER CODE END UX_Device_Byte_Pool_Error */
   }
   else
@@ -155,9 +151,7 @@ VOID tx_application_define(VOID *first_unused_memory)
     if (status != UX_SUCCESS)
     {
       /* USER CODE BEGIN  MX_USBX_Device_Init_Error */
-      while(1)
-      {
-      }
+      Error_Handler();
       /* USER CODE END  MX_USBX_Device_Init_Error */
     }
     /* USER CODE BEGIN  MX_USBX_Device_Init_Success */
@@ -182,9 +176,7 @@ VOID tx_application_define(VOID *first_unused_memory)
     if (status != USBPD_OK)
     {
       /* USER CODE BEGIN  MX_USBPD_Init_Error */
-      while(1)
-      {
-      }
+      Error_Handler();
       /* USER CODE END  MX_USBPD_Init_Error */
     }
     /* USER CODE BEGIN  MX_USBPD_Init */

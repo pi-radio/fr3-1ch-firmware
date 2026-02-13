@@ -110,6 +110,8 @@ int spi_transfer(int device, int lenb, uint32_t *v)
 
   *v = req->data;
 
+  tx_block_release((void *)req);
+
   return 0;
 }
 
