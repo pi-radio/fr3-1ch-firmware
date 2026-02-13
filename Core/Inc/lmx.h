@@ -32,7 +32,7 @@ public:
   static const int N_REGS = 123;
 
 private:
-  uint32_t regs[N_REGS];
+  uint16_t regs[N_REGS];
   bitmap<N_REGS> dirty;
 
   void program_reg(int reg);

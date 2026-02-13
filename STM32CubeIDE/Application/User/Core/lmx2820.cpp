@@ -10,6 +10,8 @@
 
 extern uint16_t lmx_default_regs[LMX2820::N_REGS];
 
+extern "C" int dbgprint(const char *fmt, ...);
+
 LMX2820 lmx;
 
 LMX2820::LMX2820()
