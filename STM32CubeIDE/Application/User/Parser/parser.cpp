@@ -190,6 +190,20 @@ static void parse_set_statement() {
     parse_statement_end();
 
     return;
+  } else if (cur_tok == keywords::CLOCK) {
+    auto cur_tok = tokenizer.get_token();
+
+    if (cur_tok == keywords::EXT) {
+      HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_RESET);
+    } else if (cur_tok == keywords::INT) {
+      HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
+    } else {
+      throw SyntaxError();
+    }
+
+    parse_statement_end();
+
+    return;
   } else if (cur_tok == keywords::I_V) {
     // Parse a float
     double V = shift_float();
