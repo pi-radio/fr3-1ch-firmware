@@ -793,6 +793,7 @@
 									<listOptionValue builtIn="false" value="USBPDCORE_LIB_PD3_FULL"/>
 									<listOptionValue builtIn="false" value="UX_INCLUDE_USER_DEFINE_FILE"/>
 									<listOptionValue builtIn="false" value="USE_FULL_LL_DRIVERS"/>
+									<listOptionValue builtIn="false" value="OCTOLO"/>
 									<listOptionValue builtIn="false" value="TCPP0203_SUPPORT"/>
 								</option>
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard.1318010002" name="Language standard" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard" useByScannerDiscovery="true" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.languagestandard.value.gnupp20" valueType="enumerated"/>
