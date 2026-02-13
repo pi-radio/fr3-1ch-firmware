@@ -198,6 +198,8 @@ VOID app_thread_entry(ULONG _a)
     clear_exception();
   }
 
+  tx_thread_sleep(1000);
+
   printf("Programming LMX...\n");
   lmx_program();
 
