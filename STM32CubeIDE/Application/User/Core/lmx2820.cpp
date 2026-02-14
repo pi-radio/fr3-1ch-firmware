@@ -226,7 +226,7 @@ uint16_t lmx_default_regs[LMX2820::N_REGS] = {
 };
 
 #else
-// OctoLO, 100 MHz CLK. Generate 10 GHz, Pow 0.
+// OctoLO, 100 MHz CLK. Generate 10 GHz, Pow 7.
 uint16_t lmx_default_regs[LMX2820::N_REGS] = {
 		0x6070,
 		0xD7A0,
@@ -307,7 +307,7 @@ uint16_t lmx_default_regs[LMX2820::N_REGS] = {
 		0x0000,
 		0x0608,
 		0x0001,
-		0x0110,
+		0x011E,
 		0x0000,
 		0x0000,
 		0x0000,
