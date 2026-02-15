@@ -209,8 +209,8 @@ static void parse_set_statement() {
     double V = shift_float();
 
     parse_statement_end();
-
     ltc2668.setV(2, V);
+    return;
   } else if (cur_tok == keywords::Q_V) {
     // Parse a float
     double V = shift_float();
@@ -218,6 +218,7 @@ static void parse_set_statement() {
     parse_statement_end();
 
     ltc2668.setV(0, V);
+    return;
   } else if (cur_tok == keywords::IQ) {
     auto cur_tok = tokenizer.get_token();
 
@@ -232,7 +233,14 @@ static void parse_set_statement() {
     parse_statement_end();
 
     return;
+  } else {
+
+	  // Invalid SET token
+	throw SyntaxError();
+	parse_statement_end();
+	return;
   }
+
 }
 
 extern struct bootloader_vectable {

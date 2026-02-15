@@ -89,6 +89,12 @@ int spi_transmit(int device, int lenb, uint32_t w)
 
   req->data = w;
 
+  printf("cmd_flags %08x \n", req->cmd_flags);
+  printf("dev_flags_size %08x \n", req->dev_flags_size);
+  printf("data %08x \n", req->data);
+  printf("l %08x \n", req->l);
+  printf("\n");
+
   tx_queue_send(&hw_queue, &req, TX_WAIT_FOREVER);
 
   return 0;
@@ -103,6 +109,14 @@ int spi_transfer(int device, int lenb, uint32_t *v)
   req->dev_flags_size |= (lenb << SPI_LEN_BIT_START) & SPI_LEN_MASK;
 
   req->data = *v;
+
+  printf("cmd_flags %08x \n", req->cmd_flags);
+  printf("dev_flags_size %08x \n", req->dev_flags_size);
+  printf("data %08x \n", req->data);
+  printf("l %08x \n", req->l);
+  printf("\n");
+
+  tx_thread_sleep(100);
 
   tx_queue_send(&hw_queue, &req, TX_WAIT_FOREVER);
 
