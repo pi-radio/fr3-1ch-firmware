@@ -141,10 +141,19 @@ static void handle_spi_cmd(spi_req_t *req)
   uint32_t i, len;
   uint8_t tx_buf[4], rx_buf[4];
   uint8_t *pbyte;
-  int pin = GPIO_PIN_9;
+  int pin;
 
-  if (GET_SPI_DEV(req->dev_flags_size)) {
+  if (GET_SPI_DEV(req->dev_flags_size) == SPI_DEVICE_LTC) {
+    pin = GPIO_PIN_9;
+  } else if (GET_SPI_DEV(req->dev_flags_size) == SPI_DEVICE_LTC) {
     pin = GPIO_PIN_10;
+  } else {
+    printf("Invalid SPI device: %d\n", GET_SPI_DEV(req->dev_flags_size));
+    if (req->cmd_flags & CMD_FLAG_WAIT) {
+      req->data = 0xFFFFFFFF;
+
+      tx_event_flags_set(&hw_req_flags, (1 << hw_req_get_id((hw_req_t *)req)), TX_OR);
+    }
   }
 
   len = GET_SPI_LEN(req->dev_flags_size);
