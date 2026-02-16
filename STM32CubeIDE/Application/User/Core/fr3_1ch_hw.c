@@ -143,7 +143,7 @@ static void handle_spi_cmd(spi_req_t *req)
   uint8_t *pbyte;
   int pin;
 
-  if (GET_SPI_DEV(req->dev_flags_size) == SPI_DEVICE_LTC) {
+  if (GET_SPI_DEV(req->dev_flags_size) == SPI_DEVICE_LMX) {
     pin = GPIO_PIN_9;
   } else if (GET_SPI_DEV(req->dev_flags_size) == SPI_DEVICE_LTC) {
     pin = GPIO_PIN_10;
