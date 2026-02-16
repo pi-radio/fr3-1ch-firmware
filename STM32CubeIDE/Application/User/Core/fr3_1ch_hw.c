@@ -89,11 +89,11 @@ int spi_transmit(int device, int lenb, uint32_t w)
 
   req->data = w;
 
-  printf("cmd_flags %08x \n", req->cmd_flags);
-  printf("dev_flags_size %08x \n", req->dev_flags_size);
+  //printf("cmd_flags %08x \n", req->cmd_flags);
+  //printf("dev_flags_size %08x \n", req->dev_flags_size);
   printf("data %08x \n", req->data);
-  printf("l %08x \n", req->l);
-  printf("\n");
+  //printf("l %08x \n", req->l);
+  //printf("\n");
 
   tx_queue_send(&hw_queue, &req, TX_WAIT_FOREVER);
 

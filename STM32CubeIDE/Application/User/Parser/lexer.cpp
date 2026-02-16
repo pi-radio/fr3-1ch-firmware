@@ -94,7 +94,9 @@ token_t get_number(std::string::const_iterator &cur)
     }
   }
 
-  d = i = neg * get_decimal_str(cur);
+  //d = i = neg * get_decimal_str(cur);
+  i = neg * get_decimal_str(cur);
+  d = get_decimal_str(cur);
 
   if (*cur == '.') {
     cur++;
@@ -109,6 +111,8 @@ token_t get_number(std::string::const_iterator &cur)
     int e = get_decimal_str(cur);
     d *= std::pow(10, e);
   }
+
+  d = d * neg;
 
   if (isfloat) {
     return token_t(new _FLOAT(d));

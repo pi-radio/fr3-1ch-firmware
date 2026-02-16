@@ -23,5 +23,7 @@ void LTC2668::initialize()
 
 void LTC2668::setV(int n, double V)
 {
-  spi_transmit(SPI_DEVICE_LTC, 3, (n << 16) | V2code(V));
+  spi_transmit(SPI_DEVICE_LTC, 3, 0xE00004);
+  tx_thread_sleep(100);
+  spi_transmit(SPI_DEVICE_LTC, 3, (n << 16) | V2code(V) | 0x300000);
 }
