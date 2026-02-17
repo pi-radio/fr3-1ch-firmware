@@ -158,6 +158,7 @@ static void handle_spi_cmd(spi_req_t *req)
     return;
   }
 
+
   len = GET_SPI_LEN(req->dev_flags_size);
 
   pbyte = &tx_buf[len - 1];
