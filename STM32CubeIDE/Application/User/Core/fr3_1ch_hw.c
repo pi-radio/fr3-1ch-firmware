@@ -129,6 +129,7 @@ static void handle_spi_cmd(spi_req_t *req)
   uint8_t *pbyte;
   int pin = GPIO_PIN_9;
 
+
   len = GET_SPI_LEN(req->dev_flags_size);
 
   pbyte = &tx_buf[len - 1];

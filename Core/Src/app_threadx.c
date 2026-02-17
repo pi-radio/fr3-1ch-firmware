@@ -182,7 +182,7 @@ VOID app_thread_entry(ULONG _a)
 
       FAULTPRINT("Exception SP: %08lx LR: %08lx\r\n", einfo->excSP, einfo->excLR);
 
-      FAULTPRINT("S(%d) DCRS(%d) FType(%d) Mode (%d) SPSEL(%d) ES(%d)\r\n",
+      FAULTPRINT("S(%ld) DCRS(%ld) FType(%ld) Mode (%ld) SPSEL(%ld) ES(%ld)\r\n",
           (einfo->excLR >> 6) & 1,
           (einfo->excLR >> 5) & 1,
           (einfo->excLR >> 4) & 1,
