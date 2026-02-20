@@ -18,6 +18,7 @@ class USBXX
 public:
   USBXX() : pool("USBX Pool") {};
   void start() {
+    pool.create();
     MX_USBX_Device_Init((void *)(TX_BYTE_POOL *)pool);
   }
 };

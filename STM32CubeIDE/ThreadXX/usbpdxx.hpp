@@ -18,6 +18,7 @@ class USBPD
 public:
   USBPD() : pool("USBPD Pool") {};
   void start() {
+    pool.create();
     MX_USBPD_Init((void *)(TX_BYTE_POOL *)pool);
   }
 };
