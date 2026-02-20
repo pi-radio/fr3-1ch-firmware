@@ -34,6 +34,9 @@
 #include "usbpd.h"
 #include "ux_api.h"
 
+#include "dbgstream.hpp"
+#include <lmx.h>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <config_data.h>
@@ -71,31 +74,51 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const char *clearscreen = "\e[2J\e[H";
 int dbg_ready = 0;
 
-static char serbuf[128];
 
-
-int dbgprint(const char *fmt, ...)
+STM32H563::STM32H563()
 {
-  size_t retval;
+    MPU_Config();
+    HAL_Init();
+    SystemClock_Config();
+    MPU_Config();
+}
 
-  va_list args;
+#ifdef OCTOLO
+static const int LMX_OSC_IN = 100e6;
+#else
+static const int LMX_OSC_IN = 10e6;
+#endif
 
-  va_start(args, fmt);
 
-  retval = vsnprintf(serbuf, 128, fmt, args);
 
-  va_end(args);
+UART::UART(UART_HandleTypeDef &h) : huart(h) {
+  MX_USART1_UART_Init();
 
-  HAL_UART_Transmit(&huart1, (uint8_t *)serbuf, retval, 0xFFFF);
-
-  return retval;
-
+  set_uart_ready();
 }
 
 
+
+PiRadioApp::PiRadioApp() : uart1(huart1), lmx(LMX_OSC_IN) {
+  MX_FLASH_Init();
+  init_config_data();
+  MX_GPIO_Init();
+  MX_GPDMA1_Init();
+  MX_SPI4_Init();
+  MX_UCPD1_Init();
+  MX_DCACHE1_Init();
+  MX_ICACHE_Init();
+  MX_FLASH_Init();
+  MX_DTS_Init();
+  MX_LPTIM1_Init();
+  USBPD_PreInitOs();
+
+  lmx.setup();
+}
+
+PiRadioApp main_app;
 /* USER CODE END 0 */
 
 /**
@@ -104,70 +127,7 @@ int dbgprint(const char *fmt, ...)
   */
 int main(void)
 {
-
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* MPU Configuration--------------------------------------------------------*/
-  MPU_Config();
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-  MPU_Config();
-
-
-  MX_FLASH_Init();
-  init_config_data();
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-
-  MX_USART1_UART_Init();
-
-  HAL_UART_Transmit(&huart1, (const uint8_t *)clearscreen, strlen(clearscreen), 0xFFFF);
-
-
-  MX_GPDMA1_Init();
-  MX_SPI4_Init();
-  MX_UCPD1_Init();
-  //MX_USB_PCD_Init();
-  MX_DCACHE1_Init();
-  MX_ICACHE_Init();
-  MX_FLASH_Init();
-  MX_DTS_Init();
-  MX_LPTIM1_Init();
-
-  /* Call PreOsInit function */
-  USBPD_PreInitOs();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  MX_ThreadX_Init();
-
-  /* We should never get here as control is now taken by the scheduler */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+  app.start();
 }
 
 /**

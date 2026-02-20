@@ -32,6 +32,10 @@ struct _uid {
 
 extern struct _uid U_ID;
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 extern void init_config_data(void);
 extern uint16_t config_get_flash_code(void);
 extern uint16_t config_get_package_code(void);
@@ -45,5 +49,10 @@ static inline uint32_t config_get_flash_size(void) {
 extern uint16_t config_read_word(uint32_t offset);
 
 extern int is_fr3_1ch_board(void);
+
+#if defined(__cplusplus)
+}
+#endif
+
 
 #endif /* __CONFIG_DATA_H__ */

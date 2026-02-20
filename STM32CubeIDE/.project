@@ -285,11 +285,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USBPD_Library/Core/src/usbpd_trace.c</locationURI>
 		</link>
 		<link>
-			<name>Application/User/Core/app_threadx.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/app_threadx.c</locationURI>
-		</link>
-		<link>
 			<name>Application/User/Core/custom_bus.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/custom_bus.c</locationURI>
@@ -328,11 +323,6 @@
 			<name>Application/User/Core/lptim.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/lptim.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/Core/main.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/main.c</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core/spi.c</name>

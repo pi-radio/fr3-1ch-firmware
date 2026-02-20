@@ -21,12 +21,13 @@
 #ifndef __USART_H__
 #define __USART_H__
 
+#include "main.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 
 /* USER CODE BEGIN Includes */
 

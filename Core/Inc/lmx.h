@@ -7,32 +7,225 @@
 #if defined(__cplusplus)
 extern "C" void lmx_program(void);
 
+#include <cassert>
+
 #include <vector>
+#include <array>
+#include <bitset>
 
+extern "C" int dbgprint(const char *fmt, ...);
 
-template <int N>
-class bitmap
+namespace LMX
 {
-  static const int NBYTES = (N+7)/8;
-  uint8_t bits[NBYTES];
 
-public:
-  bitmap() { memset(bits, 0, sizeof(bits)); };
+class LMX2820;
 
-  void set_all(void) { memset(bits, 0xFF, sizeof(bits)); }
-  void clear_all(void) { memset(bits, 0, sizeof(bits)); }
+struct drange {
+  double min;
+  double max;
 
-  void set(int bit) { bits[bit / 8] |= (1 << (bit & 7)); }
-  void clear(int bit) { bits[bit / 8] &= ~(1 << (bit & 7)); }
+  drange(const double &_min, const double &_max) : min(_min), max(_max) { }
 
-  bool get(int bit) { return (bits[bit / 8] >> (bit & 7)) & 1; }
+  template <typename T>
+  bool contains(T v) const {
+    return (v >= min && v < max);
+  }
+
+  double to_parametric(double v) const {
+    return (v - min) / (max - min);
+  }
+
+  double from_parametric(double t) const {
+    return (max - min) * t + min;
+  }
 };
 
+template <typename T>
+bool operator>(const drange &r, T o)
+{
+  return o >= r.max;
+}
+
+template <typename T>
+bool operator<(T o, const drange &r)
+{
+  return o < r.min;
+}
+
+
+struct reserved_bits {
+  const int reg;
+  const int sbit;
+  const int ebit;
+  uint16_t val;
+
+  reserved_bits(int r, uint16_t v) : reg(r), sbit(0), ebit(15), val(v) {
+  }
+
+  reserved_bits(int r, int s, uint16_t v) : reg(r), sbit(s), ebit(s), val(v) {
+  }
+  reserved_bits(int r, int s, int e, uint16_t v) : reg(r), sbit(s), ebit(e), val(v) {
+  }
+};
+
+struct reg_reserved {
+  uint16_t mask;
+  uint16_t value;
+
+  constexpr reg_reserved() : mask(0), value(0) {}
+  constexpr reg_reserved(uint16_t m, uint16_t v) : mask(m), value(v) {}
+
+  constexpr reg_reserved operator|(const reg_reserved &o) {
+    return reg_reserved(mask | o.mask, value | o.value);
+  }
+
+  reg_reserved &operator|=(const reg_reserved &o) {
+    mask |= o.mask;
+    value |= o.value;
+
+    return *this;
+  }
+};
+
+constexpr reg_reserved rsrvd(uint16_t v) {
+  return reg_reserved(0xFFFF, v);
+}
+
+constexpr uint16_t _to_mask(int sbit, int ebit) {
+  assert(ebit >= sbit);
+  return (uint16_t)(((1 << (ebit-sbit+1)) - 1) << sbit);
+}
+
+constexpr uint16_t _to_val(int sbit, uint16_t val) {
+  return (uint16_t)(val << sbit);
+}
+
+
+constexpr reg_reserved rsrvd(int bit, uint16_t v) {
+  const uint16_t mask = _to_mask(bit, bit);
+  const uint16_t val = _to_val(bit, v);
+  assert((val & ~mask) == 0);
+  return reg_reserved(mask, val);
+}
+
+constexpr reg_reserved rsrvd(int sbit, int ebit, uint16_t v) {
+  const uint16_t mask = _to_mask(sbit, ebit);
+  const uint16_t val = _to_val(sbit, v);
+  assert((val & ~mask) == 0);
+  return reg_reserved(mask, val);
+}
+
+struct reg {
+  uint16_t rnum;
+  uint16_t value;
+  reg_reserved rsrvd;
+  LMX2820 *lmx;
+
+  reg(int _rn) : rnum(_rn), value(0), rsrvd() {}
+
+  reg(const reg &r) : rnum(r.rnum), value(r.value), rsrvd(r.rsrvd) {
+  }
+
+  reg(int _rn, const reg_reserved &_rsrvd) : rnum(_rn), rsrvd(_rsrvd) {
+    value = rsrvd.value;
+  }
+
+  reg(int _rn, const std::initializer_list<reg_reserved> &_rsrvd) : rnum(_rn), rsrvd() {
+    for (auto r : _rsrvd) {
+      rsrvd |= r;
+    }
+
+    value = rsrvd.value;
+  }
+
+  operator uint16_t() {
+    return value;
+  }
+
+  reg &operator =(uint16_t v);
+  reg &operator |=(uint16_t v);
+  reg &operator &=(uint16_t v);
+};
+
+template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
+struct field
+{
+  LMX2820 *_lmx;
+
+  const static uint16_t mask = ((1 << (ebit - sbit + 1)) - 1);
+
+  field(LMX2820 *_pll);
+  field(LMX2820 *_pll, uint16_t val);
+
+  operator uint16_t() const;
+  field &operator =(uint16_t v);
+  field &operator =(int v) { return (*this = (uint16_t)v); }
+};
+
+template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
+struct rbfield
+{
+  LMX2820 *_lmx;
+  const static uint16_t mask = ((1 << (ebit - sbit + 1)) - 1);
+
+  rbfield(LMX2820 *_pll);
+
+  operator uint16_t() const;
+};
+
+
+template <uint32_t nreg, uint32_t sbit>
+struct bit
+{
+  LMX2820 *_lmx;
+
+  bit(LMX2820 *_pll) : _lmx(_pll) {}
+
+  operator bool() const;
+  bit &operator =(bool b);
+};
+
+template <uint32_t nreg>
+struct regname
+{
+  LMX2820 *_lmx;
+
+  regname(LMX2820 *_pll) : _lmx(_pll) {}
+
+  operator uint16_t() const;
+  regname &operator =(uint16_t v);
+};
+
+template <uint32_t hreg, uint32_t lreg>
+struct dreg
+{
+  regname<hreg> h;
+  regname<lreg> l;
+
+  dreg(LMX2820 *_pll) : h(_pll), l(_pll) {}
+
+  operator uint32_t() const {
+    return ((uint32_t)h << 16) | (uint16_t)l;
+  }
+
+  dreg &operator =(uint32_t v) {
+    h = (uint16_t)(v >> 16);
+    l = (uint16_t)(v & 0xFFFF);
+
+    return *this;
+  }
+};
 
 class LMX2820
 {
 public:
-  static const int N_REGS = 123;
+  static constexpr int N_REGS = 123;
+  static constexpr int N_VCOS = 7;
+  static constexpr double f_VCO_min = 5.65e9;
+  static constexpr double f_VCO_max = 11.3e9;
+
+  static const std::array<drange, N_VCOS> fVCO;
+  static const std::array<drange, N_VCOS> VCO_gain_range;
 
   typedef enum {
     DIVIDER = 0,
@@ -41,98 +234,30 @@ public:
   } output_mux_t;
 
 protected:
-  uint16_t regs[N_REGS];
-  bitmap<N_REGS> dirty;
+  friend class reg;
+  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
+  friend class field;
+  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
+  friend class rbfield;
+  template <uint32_t nreg, uint32_t sbit>
+  friend class bit;
+  template <uint32_t nreg>
+  friend class regname;
+
+  //uint16_t regs[N_REGS];
+  std::array<reg, N_REGS> regs;
+  std::bitset<N_REGS> dirty;
 
   output_mux_t outAmux;
   output_mux_t outBmux;
 
 
   double fOSC;
-  double kVCO;
 
   struct field_base;
 
   std::vector<field_base *> fields;
 
-  struct field_base
-  {
-    LMX2820 *lmx;
-    bool dirty;
-
-    field_base(LMX2820 *_lmx) : lmx(_lmx), dirty(false) {
-      lmx->fields.push_back(this);
-    }
-  };
-
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  struct field
-  {
-    LMX2820 *lmx;
-    const static uint16_t mask = ((1 << (ebit - sbit + 1)) - 1);
-
-    field(LMX2820 *_lmx) : lmx(_lmx) {}
-    field(LMX2820 *_lmx, uint16_t val) : lmx(_lmx) { *this = val; }
-
-    operator uint16_t() const {
-      return (lmx->regs[nreg] >> sbit) & mask;
-    }
-
-    field &operator =(uint16_t v) {
-      lmx->regs[nreg] &= ~(mask << sbit);
-      lmx->regs[nreg] |= (v & mask) << sbit;
-
-      lmx->dirty.set(nreg);
-
-      return *this;
-    }
-  };
-
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  struct rbfield
-  {
-    LMX2820 *lmx;
-    const static uint16_t mask = ((1 << (ebit - sbit + 1)) - 1);
-
-    rbfield(LMX2820 *_lmx) : lmx(_lmx) {}
-
-    operator uint16_t() const {
-      return (lmx->regs[nreg] >> sbit) & mask;
-    }
-  };
-
-
-  template <uint32_t nreg, uint32_t sbit>
-  struct bit : field<nreg, sbit, sbit>
-  {
-    bit(LMX2820 *_lmx) : field<nreg, sbit, sbit>(_lmx) {}
-  };
-
-  template <uint32_t nreg>
-  struct regname : field<nreg, 0, 15>
-  {
-    regname(LMX2820 *_lmx) : field<nreg, 0, 15>(_lmx) {}
-  };
-
-  template <uint32_t hreg, uint32_t lreg>
-  struct dreg
-  {
-    regname<hreg> h;
-    regname<lreg> l;
-
-    dreg(LMX2820 *_lmx) : h(_lmx), l(_lmx) {}
-
-    operator uint16_t() const {
-      return ((uint32_t)h << 16) | (uint16_t)l;
-    }
-
-    dreg &operator =(uint32_t v) {
-      h = v >> 16;
-      l = v & 0xFFFF;
-
-      return *this;
-    }
-  };
 
 
   // Register 0
@@ -209,13 +334,13 @@ protected:
 
   dreg <40, 41> mash_seed;
 
-  dreg <42, 42> pll_num;
+  dreg <42, 43> pll_num;
 
   dreg <44, 45> instcal_pll_num;
 
   field <56, 0, 5> extpfd_div;
 
-  bit <56, 0> pfd_sel;
+  bit <57, 0> pfd_sel;
 
   dreg <62, 63> mash_rst_count;
 
@@ -272,7 +397,7 @@ protected:
 
   void program_reg(int reg);
 
-  void update_kVCO();
+  void update_fVCO(double _fVCO);
 
   void update_fcal() {
     if (get_fPD() <= 100e6) fcal_hpfd_adj = 0;
@@ -286,12 +411,18 @@ protected:
     else fcal_lpfd_adj = 3;
   }
 
+  void dirty_reg(int rno) {
+    dirty.set(rno);
+  }
+
 public:
   LMX2820(double OSC_IN);
 
   double get_fVCO();
-
+  double get_fOUTA();
   double get_fPD();
+
+  void set_fOUTA(double);
 
   output_mux_t get_OUTAMux() { return outAmux; };
   output_mux_t get_OUTBMux() { return outBmux; };
@@ -306,6 +437,10 @@ public:
   void reprogram();
   void program();
 
+  void setup();
+
+  void dump();
+
   void set_reg(int reg, uint16_t val);
   uint16_t get_reg(int reg);
 
@@ -315,10 +450,8 @@ public:
   int locked();
 };
 
-extern LMX2820 lmx;
+};
 
-#else
-void lmx_program(void);
 #endif
 
 #endif /* __LMX_H__ */

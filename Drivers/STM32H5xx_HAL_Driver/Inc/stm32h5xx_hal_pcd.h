@@ -609,7 +609,7 @@ __STATIC_INLINE uint16_t PCD_GET_EP_RX_CNT(const PCD_TypeDef *Instance, uint16_t
   /* WA: few cycles for RX PMA descriptor to update */
   while (count > 0U)
   {
-    count--;
+    count -= 1;
   }
 
   return (uint16_t)USB_DRD_GET_CHEP_RX_CNT((Instance), (bEpNum));
@@ -652,7 +652,7 @@ __STATIC_INLINE uint16_t PCD_GET_EP_DBUF0_CNT(const PCD_TypeDef *Instance, uint1
   /* WA: few cycles for RX PMA descriptor to update */
   while (count > 0U)
   {
-    count--;
+    count -= 1;
   }
 
   return (uint16_t)USB_DRD_GET_CHEP_DBUF0_CNT((Instance), (bEpNum));
@@ -672,7 +672,7 @@ __STATIC_INLINE uint16_t PCD_GET_EP_DBUF1_CNT(const PCD_TypeDef *Instance, uint1
   /* WA: few cycles for RX PMA descriptor to update */
   while (count > 0U)
   {
-    count--;
+    count -= 1;
   }
 
   return (uint16_t)USB_DRD_GET_CHEP_DBUF1_CNT((Instance), (bEpNum));

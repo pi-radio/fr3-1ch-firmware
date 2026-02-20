@@ -18,6 +18,7 @@
   */
 /* USER CODE END Header */
 
+#if 0
 /* Includes ------------------------------------------------------------------*/
 #include "app_azure_rtos.h"
 /* Private includes ----------------------------------------------------------*/
@@ -78,12 +79,6 @@ static TX_BYTE_POOL usbpd_app_byte_pool;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-char tracebuf[256*1024];
-
-VOID tracex_buffer_full(VOID *buffer)
-{
-
-}
 
 /* USER CODE END PFP */
 
@@ -95,13 +90,6 @@ VOID tracex_buffer_full(VOID *buffer)
 VOID tx_application_define(VOID *first_unused_memory)
 {
   /* USER CODE BEGIN  tx_application_define_1*/
-  terminal_init();
-
-  dbg_ready = 1;
-
-  console_init();
-
-  fr3_1ch_hw_init();
 
   /* USER CODE END  tx_application_define_1 */
 #if (USE_STATIC_ALLOCATION == 1)
@@ -180,13 +168,7 @@ VOID tx_application_define(VOID *first_unused_memory)
       /* USER CODE END  MX_USBPD_Init_Error */
     }
     /* USER CODE BEGIN  MX_USBPD_Init */
-#if DUMP_TRACEX
-    tx_trace_enable(tracebuf, sizeof(tracebuf), 512);
 
-    tx_trace_buffer_full_notify(tracex_buffer_full);
-
-    tx_trace_event_filter(UX_TRACE_ALL_EVENTS);
-#endif
     /* USER CODE END  MX_USBPD_Init */
   }
 #else
@@ -225,3 +207,4 @@ VOID tx_application_define(VOID *first_unused_memory)
 #endif
 
 }
+#endif

@@ -104,7 +104,7 @@ static void parse_config_statement()
 static void parse_lmx_prog() {
   parse_statement_end();
 
-  lmx.reprogram();
+  main_app.get_lmx().reprogram();
 }
 
 
@@ -126,7 +126,7 @@ static void parse_lmx_read() {
 
   parse_statement_end();
 
-  result = lmx.read_reg(reg, &val);
+  result = main_app.get_lmx().read_reg(reg, &val);
 
   if (result == 0) {
     printf("LMX reg %d: %04x\n", reg, val);
@@ -278,8 +278,6 @@ static void parse_bootloader_statement() {
 
 int parser_parse_statement()
 {
-  int retval;
-
   parser_set_error("NOT SET");
 
   try {
