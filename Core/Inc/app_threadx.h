@@ -21,6 +21,42 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __APP_THREADX_H
 #define __APP_THREADX_H
+
+
+#if defined(__cplusplus)
+
+#include <txx.hpp>
+#include <usbxx.hpp>
+#include <usbpdxx.hpp>
+
+#define APP_THREAD_STACK_SIZE  4096
+
+class AppThread : public TXX::Thread<APP_THREAD_STACK_SIZE>
+{
+  virtual void main();
+
+public:
+  AppThread();
+};
+
+class TXPirApp : public TXX::ThreadXApp
+{
+  USBXX usbxx;
+  USBPD usbpd;
+  AppThread app_thread;
+
+  void start_app(void) override;
+  void error_handler(const char *file, int line) override;
+
+public:
+  TXPirApp();
+};
+
+extern TXPirApp app;
+
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -66,8 +102,7 @@ extern "C" {
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-UINT App_ThreadX_Init(VOID *memory_ptr);
-void MX_ThreadX_Init(void);
+
 
 /* USER CODE BEGIN EFP */
 extern void usb_connect(void);
