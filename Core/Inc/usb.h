@@ -21,12 +21,13 @@
 #ifndef __USB_H__
 #define __USB_H__
 
+#include <main.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 
 /* USER CODE BEGIN Includes */
 

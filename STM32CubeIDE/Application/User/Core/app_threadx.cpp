@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include <txx.hpp>
+#include <threadxx/txx.hpp>
 
 #include <console.h>
 #include <terminal.hpp>
@@ -85,6 +85,13 @@ TXPirApp::TXPirApp() : app_thread()
 
 void TXPirApp::start_app(void)
 {
+  USBXX::DeviceInfo desc(0x0483, 0x5710,
+      "Pi Radio",
+      "FR3 1ch",
+      "000000000");
+
+  auto cls = desc.add_class(USBXX::Descriptors::CDC_ACM, 0x2, 0);
+
   usbxx.start();
   usbpd.start();
 
@@ -98,6 +105,37 @@ void TXPirApp::error_handler(const char *file, int line)
   dbgout << "FATAL ERROR: " << file << ":" << line << std::endl;
   while(1);
 }
+
+USBSerial::USBSerial()
+{
+
+}
+
+uint32_t USBSerial::on_attached()
+{
+  dbgout << "USB Attached" << std::endl;
+  return UX_SUCCESS;
+}
+
+uint32_t USBSerial::on_removed()
+{
+  dbgout << "USB Removed" << std::endl;
+  return UX_SUCCESS;
+}
+
+uint32_t USBSerial::on_connected()
+{
+  dbgout << "USB Connected" << std::endl;
+  return UX_SUCCESS;
+}
+
+uint32_t USBSerial::on_disconnected()
+{
+  dbgout << "USB Disconnected" << std::endl;
+  return UX_SUCCESS;
+}
+
+
 
 AppThread::AppThread() : Thread<APP_THREAD_STACK_SIZE>("Application Thread")
 {

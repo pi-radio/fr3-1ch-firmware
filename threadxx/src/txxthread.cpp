@@ -5,7 +5,7 @@
  *      Author: zapman
  */
 
-#include <txxthread.hpp>
+#include <threadxx/thread.hpp>
 #include <dbgstream.hpp>
 
 TXX::ThreadBase::ThreadBase(const std::string &name,
