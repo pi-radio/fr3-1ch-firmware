@@ -40,6 +40,21 @@
 			<locationURI>PARENT-1-PROJECT_LOC/fr31chfw.ioc</locationURI>
 		</link>
 		<link>
+			<name>halxx</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>threadxx</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>usbxx</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>Utilities/tracer_emb.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Utilities/TRACER_EMB/tracer_emb.c</locationURI>
@@ -48,6 +63,36 @@
 			<name>Utilities/tracer_emb_hw.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Utilities/TRACER_EMB/tracer_emb_hw.c</locationURI>
+		</link>
+		<link>
+			<name>halxx/include</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>halxx/src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>threadxx/src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>usbxx/src</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>Drivers/CMSIS/system_stm32h5xx.c</name>
@@ -283,6 +328,66 @@
 			<name>Middlewares/USBPD/usbpd_trace.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USBPD_Library/Core/src/usbpd_trace.c</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/clocking.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/clocking.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>halxx/src/stm32h5</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include/threadxx</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>threadxx/src/txx.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/src/txx.cpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/src/txxeventflags.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/src/txxeventflags.cpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/src/txxthread.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/src/txxthread.cpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>usbxx/src/cdcacm.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/cdcacm.cpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/src/descriptor.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/descriptor.cpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/src/system.cxx</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/system.cxx</locationURI>
+		</link>
+		<link>
+			<name>usbxx/src/usbxx.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/usbxx.cpp</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core/custom_bus.c</name>
@@ -1825,9 +1930,79 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_uninitialize.c</locationURI>
 		</link>
 		<link>
-			<name>Application/User/AZURE_RTOS/App/app_azure_rtos.c</name>
+			<name>halxx/include/stm32h5/csr</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/memory_map.hpp</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/AZURE_RTOS/App/app_azure_rtos.c</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/memory_map.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/rcc.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/rcc.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/src/stm32h5/clocking.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/src/stm32h5/clocking.cpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include/threadxx/txx.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txx.hpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include/threadxx/txxbytepool.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txxbytepool.hpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include/threadxx/txxeventflags.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txxeventflags.hpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include/threadxx/txxthread.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txxthread.hpp</locationURI>
+		</link>
+		<link>
+			<name>threadxx/include/threadxx/usbpdxx.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/usbpdxx.hpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx/cdcacm.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/cdcacm.hpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx/descriptor.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/descriptor.hpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx/device.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/device.hpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx/system.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/system.hpp</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx/system.hpp~</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/system.hpp~</locationURI>
+		</link>
+		<link>
+			<name>usbxx/include/usbxx/usbxx.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/usbxx.hpp</locationURI>
 		</link>
 		<link>
 			<name>Application/User/USBPD/App/usbpd.c</name>
@@ -1878,6 +2053,146 @@
 			<name>Application/User/USBX/App/ux_device_descriptors.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/USBX/App/ux_device_descriptors.c</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/aes.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/aes.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/crc.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/crc.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/crs.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/crs.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/csr.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/csr.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/dac.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dac.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/dbgmcu.h</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dbgmcu.h</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/dcache.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dcache.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/dcmi.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dcmi.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/dma.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dma.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/eth.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/eth.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/exti.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/exti.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/flash.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/flash.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/fmac.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/fmac.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/gpio.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/gpio.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/gtzc.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/gtzc.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/hash.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/hash.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/i2c.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/i2c.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/i3c.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/i3c.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/icache.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/icache.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/octospi.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/octospi.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/otfdec.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/otfdec.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/pka.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/pka.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/pssi.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/pssi.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/pwr.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/pwr.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/ramcfg.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/ramcfg.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/rcc.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/rcc.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/rng.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/rng.hpp</locationURI>
+		</link>
+		<link>
+			<name>halxx/include/stm32h5/csr/timer.hpp</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/timer.hpp</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

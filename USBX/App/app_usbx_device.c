@@ -132,7 +132,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
                                  USBD_ChangeFunction) != UX_SUCCESS)
   {
     /* USER CODE BEGIN USBX_DEVICE_INITIALIZE_ERROR */
-    dbgprint("Failed to initialize USB device stack\r\n");
+    dbgprint("Failed to initialize USB device stack\n");
     return UX_ERROR;
     /* USER CODE END USBX_DEVICE_INITIALIZE_ERROR */
   }
@@ -160,6 +160,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
                                      &cdc_acm_parameter) != UX_SUCCESS)
   {
     /* USER CODE BEGIN USBX_DEVICE_CDC_ACM_REGISTER_ERROR */
+    dbgprint("Failed to register device class\n");
     return UX_ERROR;
     /* USER CODE END USBX_DEVICE_CDC_ACM_REGISTER_ERROR */
   }
@@ -180,6 +181,7 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
                        UX_DEVICE_APP_THREAD_START_OPTION) != TX_SUCCESS)
   {
     /* USER CODE BEGIN MAIN_THREAD_CREATE_ERROR */
+    dbgprint("Failed to create main USB thread\n");
     return TX_THREAD_ERROR;
     /* USER CODE END MAIN_THREAD_CREATE_ERROR */
   }

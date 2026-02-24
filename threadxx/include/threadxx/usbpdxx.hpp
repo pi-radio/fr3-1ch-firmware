@@ -8,7 +8,7 @@
 #ifndef USBPDXX_HPP_
 #define USBPDXX_HPP_
 
-#include <txx.hpp>
+#include <threadxx/txx.hpp>
 #include <usbpd.h>
 
 class USBPD

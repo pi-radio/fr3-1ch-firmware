@@ -25,9 +25,9 @@
 
 #if defined(__cplusplus)
 
-#include <txx.hpp>
-#include <usbxx.hpp>
-#include <usbpdxx.hpp>
+#include <threadxx/txx.hpp>
+#include <usbxx/usbxx.hpp>
+#include <threadxx/usbpdxx.hpp>
 
 #define APP_THREAD_STACK_SIZE  4096
 
@@ -39,9 +39,21 @@ public:
   AppThread();
 };
 
+class USBSerial : public USBXX::CDCACM
+{
+public:
+  USBSerial();
+
+  uint32_t on_attached() override;
+  uint32_t on_removed() override;
+
+  uint32_t on_connected() override;
+  uint32_t on_disconnected() override;
+};
+
 class TXPirApp : public TXX::ThreadXApp
 {
-  USBXX usbxx;
+  USBSerial usbxx;
   USBPD usbpd;
   AppThread app_thread;
 

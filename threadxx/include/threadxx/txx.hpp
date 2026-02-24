@@ -8,10 +8,11 @@
 #ifndef TXX_HPP_
 #define TXX_HPP_
 
-#include <txxbytepool.hpp>
-#include <txxthread.hpp>
+#include <threadxx/bytepool.hpp>
+#include <threadxx/thread.hpp>
+#include <threadxx/eventflags.hpp>
 
-#include "app_azure_rtos_config.h"
+#include "txx_config.h"
 
 namespace TXX {
   class ThreadXApp

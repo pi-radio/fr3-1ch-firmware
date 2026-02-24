@@ -215,7 +215,6 @@
 					</fileInfo>
 					<sourceEntries>
 						<entry excluding="ThreadXX|Application/User/TCPP" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ThreadXX"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -412,7 +411,6 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="ThreadXX" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ThreadXX"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -511,7 +509,6 @@
 									<listOptionValue builtIn="false" value="../../Drivers/CMSIS/Device/ST/STM32H5xx/Include"/>
 									<listOptionValue builtIn="false" value="../../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../Application/User/ThreadSafe"/>
-									<listOptionValue builtIn="false" value="../../AZURE_RTOS/App"/>
 									<listOptionValue builtIn="false" value="../../USBPD/App"/>
 									<listOptionValue builtIn="false" value="../../USBPD/Target"/>
 									<listOptionValue builtIn="false" value="../../USBX/App"/>
@@ -538,6 +535,10 @@
 								<option id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.optimization.level.1615497361" name="Optimization level" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.optimization.level" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths.1907659550" name="Include paths (-I)" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.option.includepaths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../Core/Inc"/>
+									<listOptionValue builtIn="false" value="&quot;../../threadxx/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../../usbxx/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../../halxx/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/ThreadXX/USBXX}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/ThreadXX}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Application/User/Parser}&quot;"/>
 									<listOptionValue builtIn="false" value="${workspace_loc:/${ProjName}/Application/User/Console}"/>
@@ -546,7 +547,6 @@
 									<listOptionValue builtIn="false" value="../../Drivers/CMSIS/Device/ST/STM32H5xx/Include"/>
 									<listOptionValue builtIn="false" value="../../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../Application/User/ThreadSafe"/>
-									<listOptionValue builtIn="false" value="../../AZURE_RTOS/App"/>
 									<listOptionValue builtIn="false" value="../../USBPD/App"/>
 									<listOptionValue builtIn="false" value="../../USBPD/Target"/>
 									<listOptionValue builtIn="false" value="../../USBX/App"/>
@@ -637,7 +637,6 @@
 					</fileInfo>
 					<sourceEntries>
 						<entry excluding="ThreadXX" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ThreadXX"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -859,7 +858,6 @@
 					</fileInfo>
 					<sourceEntries>
 						<entry excluding="ThreadXX|Application/User/TCPP" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ThreadXX"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
