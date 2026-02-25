@@ -76,7 +76,63 @@ namespace clocking
     int f() override { return clocks[i]->f(); };
   };
 
+  static volatile CSR::rcc *rcc_csr = CSR::periph_nsec.rcc.ptr();
 
+  template <uint32_t CSR::rcc::* reg, int bit>
+  struct clk_en
+  {
+    static void set(bool b)
+    {
+      if (b) {
+        rcc_csr->*reg |= (1 << bit);
+      } else {
+        rcc_csr->*reg &= ~(1 << bit);
+      }
+    }
+  };
+
+  namespace enables {
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 0> gpdma1;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 1> gpdma2;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 8> flash;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 12> crc;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 14> cordic;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 15> fmac;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 17> ramcfg;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 19> eth;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 20> eth_tx;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 21> eth_rx;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 24> tzsc;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 28> bkpram;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 30> dcache;
+    static constexpr clk_en<&CSR::rcc::AHB1ENR, 21> sram1;
+
+
+    static constexpr clk_en<&CSR::rcc::APB1LENR, 0> tim2;
+    
+    static constexpr clk_en<&CSR::rcc::APB2ENR, 14> usart1;
+
+    static auto usart = std::make_tuple(0, usart1);
+  };
+  
+  template <uint32_t n>
+  struct usart_clk_sel
+  {
+    static inline volatile uint32_t &reg() { return (n <= 10) ? CSR::periph_nsec.rcc.ptr()->CCIPR1 : CSR::periph_nsec.rcc.ptr()->CCIPR2; };
+    static constexpr uint32_t sbit = (n <= 10) ? ((n-1)*3) : ((n-11)*3);
+    
+    static uint32_t get()
+    {
+      return CSR::field<sbit, 3>(reg()).get();
+    }
+
+    static void set(uint32_t v)
+    {
+      return CSR::field<sbit, 3>(reg()).set(v);
+    }
+  };
+
+  
 
   class _sysclk : public clock_mux {
   public:

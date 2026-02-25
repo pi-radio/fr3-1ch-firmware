@@ -67,12 +67,12 @@
 		<link>
 			<name>halxx/include</name>
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/halxx/include</location>
 		</link>
 		<link>
 			<name>halxx/src</name>
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/halxx/src</location>
 		</link>
 		<link>
 			<name>threadxx/include</name>
@@ -328,21 +328,6 @@
 			<name>Middlewares/USBPD/usbpd_trace.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USBPD_Library/Core/src/usbpd_trace.c</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/clocking.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/clocking.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>halxx/src/stm32h5</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>threadxx/include/threadxx</name>
@@ -1385,569 +1370,549 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_trace_object_unregister.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_system_error_handler.c</name>
+			<name>Utilities/USBX/Core System/ux_system_error_handler.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_system_error_handler.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_system_initialize.c</name>
+			<name>Utilities/USBX/Core System/ux_system_initialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_system_initialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_system_uninitialize.c</name>
+			<name>Utilities/USBX/Core System/ux_system_uninitialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_system_uninitialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_debug_callback_register.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_debug_callback_register.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_debug_callback_register.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_debug_log.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_debug_log.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_debug_log.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_delay_ms.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_delay_ms.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_delay_ms.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_descriptor_pack.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_descriptor_pack.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_descriptor_pack.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_descriptor_parse.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_descriptor_parse.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_descriptor_parse.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_error_callback_register.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_error_callback_register.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_error_callback_register.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_event_flags_create.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_event_flags_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_event_flags_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_event_flags_delete.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_event_flags_delete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_event_flags_delete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_event_flags_get.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_event_flags_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_event_flags_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_event_flags_set.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_event_flags_set.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_event_flags_set.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_long_get.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_long_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_long_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_long_get_big_endian.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_long_get_big_endian.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_long_get_big_endian.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_long_put.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_long_put.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_long_put.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_long_put_big_endian.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_long_put_big_endian.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_long_put_big_endian.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_allocate.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_allocate.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_allocate.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_allocate_add_safe.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_allocate_add_safe.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_allocate_add_safe.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_allocate_mulc_safe.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_allocate_mulc_safe.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_allocate_mulc_safe.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_allocate_mulv_safe.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_allocate_mulv_safe.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_allocate_mulv_safe.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_byte_pool_create.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_byte_pool_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_byte_pool_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_byte_pool_search.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_byte_pool_search.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_byte_pool_search.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_compare.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_compare.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_compare.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_copy.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_copy.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_copy.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_free.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_free.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_free.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_memory_set.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_memory_set.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_memory_set.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_mutex_create.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_mutex_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_mutex_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_mutex_delete.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_mutex_delete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_mutex_delete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_mutex_off.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_mutex_off.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_mutex_off.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_mutex_on.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_mutex_on.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_mutex_on.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_pci_class_scan.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_pci_class_scan.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_pci_class_scan.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_pci_read.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_pci_read.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_pci_read.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_pci_write.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_pci_write.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_pci_write.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_physical_address.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_physical_address.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_physical_address.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_semaphore_create.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_semaphore_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_semaphore_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_semaphore_delete.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_semaphore_delete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_semaphore_delete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_semaphore_get.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_semaphore_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_semaphore_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_semaphore_put.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_semaphore_put.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_semaphore_put.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_set_interrupt_handler.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_set_interrupt_handler.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_set_interrupt_handler.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_short_get.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_short_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_short_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_short_get_big_endian.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_short_get_big_endian.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_short_get_big_endian.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_short_put.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_short_put.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_short_put.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_short_put_big_endian.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_short_put_big_endian.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_short_put_big_endian.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_string_length_check.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_string_length_check.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_string_length_check.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_string_length_get.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_string_length_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_string_length_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_string_to_unicode.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_string_to_unicode.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_string_to_unicode.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_create.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_delete.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_delete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_delete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_identify.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_identify.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_identify.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_relinquish.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_relinquish.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_relinquish.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_resume.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_resume.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_resume.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_schedule_other.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_schedule_other.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_schedule_other.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_sleep.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_sleep.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_sleep.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_thread_suspend.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_thread_suspend.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_thread_suspend.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_timer_create.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_timer_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_timer_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_timer_delete.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_timer_delete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_timer_delete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_unicode_to_string.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_unicode_to_string.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_unicode_to_string.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/Core System/ux_utility_virtual_address.c</name>
+			<name>Utilities/USBX/Core System/ux_utility_virtual_address.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_virtual_address.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_activate.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_activate.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_activate.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_bulkin_thread.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_bulkin_thread.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_bulkin_thread.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_bulkout_thread.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_bulkout_thread.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_bulkout_thread.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_control_request.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_control_request.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_control_request.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_deactivate.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_deactivate.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_deactivate.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_entry.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_entry.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_entry.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_initialize.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_initialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_initialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_ioctl.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_ioctl.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_ioctl.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_read.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_read.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_read.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_unitialize.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_unitialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_unitialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_write.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_write.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_write.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_write_with_callback.c</name>
+			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_write_with_callback.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_write_with_callback.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_callback.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_callback.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_callback.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_create.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_create.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_endpoint_create.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_destroy.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_destroy.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_endpoint_destroy.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_reset.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_reset.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_endpoint_reset.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_stall.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_stall.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_endpoint_stall.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_status.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_endpoint_status.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_endpoint_status.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_frame_number_get.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_frame_number_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_frame_number_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_function.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_function.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_function.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_initialize.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_initialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_initialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_initialize_complete.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_initialize_complete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_initialize_complete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_interrupt_handler.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_interrupt_handler.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_interrupt_handler.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_transfer_abort.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_transfer_abort.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_transfer_abort.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_transfer_request.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_transfer_request.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_transfer_request.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device Controllers/ux_dcd_stm32_uninitialize.c</name>
+			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_uninitialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_uninitialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_alternate_setting_get.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_alternate_setting_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_alternate_setting_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_alternate_setting_set.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_alternate_setting_set.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_alternate_setting_set.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_class_register.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_class_register.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_class_register.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_class_unregister.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_class_unregister.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_class_unregister.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_clear_feature.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_clear_feature.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_clear_feature.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_configuration_get.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_configuration_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_configuration_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_configuration_set.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_configuration_set.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_configuration_set.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_control_request_process.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_control_request_process.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_control_request_process.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_descriptor_send.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_descriptor_send.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_descriptor_send.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_disconnect.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_disconnect.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_disconnect.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_endpoint_stall.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_endpoint_stall.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_endpoint_stall.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_get_status.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_get_status.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_get_status.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_host_wakeup.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_host_wakeup.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_host_wakeup.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_initialize.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_initialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_initialize.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_interface_delete.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_interface_delete.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_interface_delete.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_interface_get.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_interface_get.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_interface_get.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_interface_set.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_interface_set.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_interface_set.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_interface_start.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_interface_start.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_interface_start.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_microsoft_extension_register.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_microsoft_extension_register.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_microsoft_extension_register.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_set_feature.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_set_feature.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_set_feature.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_transfer_abort.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_transfer_abort.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_transfer_abort.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_transfer_all_request_abort.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_transfer_all_request_abort.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_transfer_all_request_abort.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_transfer_request.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_transfer_request.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_transfer_request.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USBX/UX Device CoreStack/ux_device_stack_uninitialize.c</name>
+			<name>Utilities/USBX/UX Device CoreStack/ux_device_stack_uninitialize.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_uninitialize.c</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/memory_map.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/memory_map.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/rcc.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/rcc.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/src/stm32h5/clocking.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/src/stm32h5/clocking.cpp</locationURI>
 		</link>
 		<link>
 			<name>threadxx/include/threadxx/txx.hpp</name>
@@ -2054,145 +2019,25 @@
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/USBX/App/ux_device_descriptors.c</locationURI>
 		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/aes.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/aes.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/crc.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/crc.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/crs.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/crs.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/csr.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/csr.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/dac.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dac.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/dbgmcu.h</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dbgmcu.h</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/dcache.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dcache.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/dcmi.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dcmi.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/dma.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/dma.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/eth.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/eth.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/exti.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/exti.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/flash.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/flash.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/fmac.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/fmac.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/gpio.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/gpio.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/gtzc.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/gtzc.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/hash.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/hash.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/i2c.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/i2c.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/i3c.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/i3c.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/icache.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/icache.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/octospi.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/octospi.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/otfdec.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/otfdec.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/pka.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/pka.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/pssi.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/pssi.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/pwr.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/pwr.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/ramcfg.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/ramcfg.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/rcc.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/rcc.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/rng.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/rng.hpp</locationURI>
-		</link>
-		<link>
-			<name>halxx/include/stm32h5/csr/timer.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/halxx/include/stm32h5/csr/timer.hpp</locationURI>
-		</link>
 	</linkedResources>
+	<filteredResources>
+		<filter>
+			<id>1771959212600</id>
+			<name>halxx/include</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.hpp</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>0</id>
+			<name>halxx/src</name>
+			<type>21</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.cpp</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
 </projectDescription>

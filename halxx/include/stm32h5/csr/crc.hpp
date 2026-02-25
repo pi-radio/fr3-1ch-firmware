@@ -1,6 +1,6 @@
 #pragma once
 
-#include <csr.hpp>
+#include <stm32h5/csr/csr.hpp>
 
 namespace CSR
 {
@@ -12,5 +12,5 @@ namespace CSR
     uint32_t RESERVED2;      /*!< Reserved,                                                    0x0C */
     uint32_t INIT;           /*!< Initial CRC value register,                  Address offset: 0x10 */
     uint32_t POL;            /*!< CRC polynomial register,                     Address offset: 0x14 */
-  }    
+  };
 };
