@@ -1,3 +1,4 @@
+#if 0
 #include <stm32h5/clocking.hpp>
 
 using namespace clocking;
@@ -33,7 +34,7 @@ void hsi_clock::set_divider(uint32_t n)
 {
 
 }
-
+#endif
 
 
 

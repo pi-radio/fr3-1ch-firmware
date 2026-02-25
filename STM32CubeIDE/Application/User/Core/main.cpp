@@ -37,6 +37,8 @@
 #include "dbgstream.hpp"
 #include <lmx.h>
 
+#include <halxx/usart.hpp>
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <config_data.h>

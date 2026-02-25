@@ -183,6 +183,9 @@ SECTIONS
   	KEEP(*(.noinitdata))
   } >NOINIT
 
+  .nonsec 0x40000000 : { _nsec_base = .; }
+  .nonsec 0x50000000 : { _sec_base = .; }
+
   .system_ro_data 0x08FFF800 : { _system_ro_data = .; }
   
   .config_data    0x09000000 : { _board_config_data = .; }
