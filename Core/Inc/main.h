@@ -22,6 +22,8 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+
+
 #ifdef __cplusplus
 #define EXTERN_C extern "C"
 #else
@@ -33,8 +35,8 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32h5xx_hal.h"
 
+#include "stm32h5xx_hal.h"
 #include "stm32h5xx_ll_ucpd.h"
 #include "stm32h5xx_ll_bus.h"
 #include "stm32h5xx_ll_cortex.h"
@@ -56,14 +58,6 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
-
-
-extern int dbg_ready;
-
-extern int dbgprint(const char *fmt, ...);
-
-extern int expected_voltage;
 
 /* USER CODE END ET */
 
@@ -98,8 +92,8 @@ void power_off();
 
 #ifdef __cplusplus
 
+#include <threadxx/app.hpp>
 #include "lmx.h"
-
 
 class STM32H563 {
 public:
@@ -112,7 +106,7 @@ public:
   UART(UART_HandleTypeDef &h);
 };
 
-class PiRadioApp {
+class PiRadioApp : TXX::App {
   STM32H563 cpu;
   UART uart1;
   LMX::LMX2820 lmx;

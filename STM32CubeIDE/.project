@@ -35,6 +35,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>consolexx</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/consolexx</locationURI>
+		</link>
+		<link>
 			<name>fr31chfw.ioc</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/fr31chfw.ioc</locationURI>
@@ -47,12 +52,12 @@
 		<link>
 			<name>threadxx</name>
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/threadxx</locationURI>
 		</link>
 		<link>
 			<name>usbxx</name>
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/usbxx</locationURI>
 		</link>
 		<link>
 			<name>Utilities/tracer_emb.c</name>
@@ -67,32 +72,12 @@
 		<link>
 			<name>halxx/include</name>
 			<type>2</type>
-			<location>/home/zapman/piradio/fr3-1ch-firmware/halxx/include</location>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/include</locationURI>
 		</link>
 		<link>
 			<name>halxx/src</name>
 			<type>2</type>
-			<location>/home/zapman/piradio/fr3-1ch-firmware/halxx/src</location>
-		</link>
-		<link>
-			<name>threadxx/include</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>threadxx/src</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>usbxx/src</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/halxx/src</locationURI>
 		</link>
 		<link>
 			<name>Drivers/CMSIS/system_stm32h5xx.c</name>
@@ -328,51 +313,6 @@
 			<name>Middlewares/USBPD/usbpd_trace.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USBPD_Library/Core/src/usbpd_trace.c</locationURI>
-		</link>
-		<link>
-			<name>threadxx/include/threadxx</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>threadxx/src/txx.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/src/txx.cpp</locationURI>
-		</link>
-		<link>
-			<name>threadxx/src/txxeventflags.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/src/txxeventflags.cpp</locationURI>
-		</link>
-		<link>
-			<name>threadxx/src/txxthread.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/src/txxthread.cpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>usbxx/src/cdcacm.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/cdcacm.cpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/src/descriptor.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/descriptor.cpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/src/system.cxx</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/system.cxx</locationURI>
-		</link>
-		<link>
-			<name>usbxx/src/usbxx.cpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/src/usbxx.cpp</locationURI>
 		</link>
 		<link>
 			<name>Application/User/Core/custom_bus.c</name>
@@ -1915,61 +1855,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_device_stack_uninitialize.c</locationURI>
 		</link>
 		<link>
-			<name>threadxx/include/threadxx/txx.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txx.hpp</locationURI>
-		</link>
-		<link>
-			<name>threadxx/include/threadxx/txxbytepool.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txxbytepool.hpp</locationURI>
-		</link>
-		<link>
-			<name>threadxx/include/threadxx/txxeventflags.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txxeventflags.hpp</locationURI>
-		</link>
-		<link>
-			<name>threadxx/include/threadxx/txxthread.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/txxthread.hpp</locationURI>
-		</link>
-		<link>
-			<name>threadxx/include/threadxx/usbpdxx.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/threadxx/include/threadxx/usbpdxx.hpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx/cdcacm.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/cdcacm.hpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx/descriptor.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/descriptor.hpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx/device.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/device.hpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx/system.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/system.hpp</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx/system.hpp~</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/system.hpp~</locationURI>
-		</link>
-		<link>
-			<name>usbxx/include/usbxx/usbxx.hpp</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/usbxx/include/usbxx/usbxx.hpp</locationURI>
-		</link>
-		<link>
 			<name>Application/User/USBPD/App/usbpd.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/USBPD/App/usbpd.c</locationURI>
@@ -2021,6 +1906,51 @@
 		</link>
 	</linkedResources>
 	<filteredResources>
+		<filter>
+			<id>1772040046578</id>
+			<name>threadxx</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.hpp</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1772040046585</id>
+			<name>threadxx</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.cpp</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1772040046638</id>
+			<name>threadxx</name>
+			<type>6</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*~</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1772039513614</id>
+			<name>usbxx</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.cpp</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1772039513619</id>
+			<name>usbxx</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.hpp</arguments>
+			</matcher>
+		</filter>
 		<filter>
 			<id>1771959212600</id>
 			<name>halxx/include</name>

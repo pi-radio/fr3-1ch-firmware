@@ -68,7 +68,7 @@
 #endif /* _TRACE */
 /* USER CODE BEGIN POWER_Private_Macros */
 #if 1
-#define TRACE_FUNC()  if(dbg_ready) dbgprint("%s:%d\r\n", __FILE__, __LINE__)
+#define TRACE_FUNC()  dbgprint("%s:%d\r\n", __FILE__, __LINE__)
 #else
 #define TRACE_FUNC()  {}
 #endif

@@ -6,7 +6,7 @@
  */
 
 #include <threadxx/thread.hpp>
-#include <dbgstream.hpp>
+#include <threadxx/dbgstream.hpp>
 
 TXX::ThreadBase::ThreadBase(const std::string &name,
     uint8_t *stack,

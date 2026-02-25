@@ -18,7 +18,7 @@
 
 #include <format>
 
-#include <dbgstream.hpp>
+#include <threadxx/dbgstream.hpp>
 
 extern std::array<uint16_t, LMX::LMX2820::N_REGS> lmx_default_regs;
 
@@ -167,7 +167,7 @@ std::array<reg, LMX2820::N_REGS> template_regs {
 
 reg &reg::operator =(uint16_t v) {
   if ((v & rsrvd.mask) != rsrvd.value) {
-    dbgout << std::format("WARNING: Incorrect register assignment: register: {} val: {:04x} mask: {:04x} value: {:04x} masked assignment: {:04x}\n", rnum, v, rsrvd.mask, rsrvd.value, v & rsrvd.mask);
+    dbg::dbgout << std::format("WARNING: Incorrect register assignment: register: {} val: {:04x} mask: {:04x} value: {:04x} masked assignment: {:04x}\n", rnum, v, rsrvd.mask, rsrvd.value, v & rsrvd.mask);
   } else {
     value = v;
   }
@@ -182,7 +182,7 @@ reg &reg::operator |=(uint16_t v) {
   value |= v;
 
   if ((value & rsrvd.mask) != rsrvd.value) {
-    dbgout << std::format("WARNING: Incorrect register assignment: register: {} val: {:04x} mask: {:04x} value: {:04x} masked assignment: {:04x}\n", rnum, v, rsrvd.mask, rsrvd.value, v & rsrvd.mask);
+    dbg::dbgout << std::format("WARNING: Incorrect register assignment: register: {} val: {:04x} mask: {:04x} value: {:04x} masked assignment: {:04x}\n", rnum, v, rsrvd.mask, rsrvd.value, v & rsrvd.mask);
   }
 
   if (lmx) lmx->dirty_reg(rnum);
@@ -194,7 +194,7 @@ reg &reg::operator &=(uint16_t v) {
   value &= v;
 
   if ((value & rsrvd.mask) != rsrvd.value) {
-    dbgout << std::format("WARNING: Incorrect register assignment: register: {} val: {:04x} mask: {:04x} value: {:04x} masked assignment: {:04x}\n", rnum, v, rsrvd.mask, rsrvd.value, v & rsrvd.mask);
+    dbg::dbgout << std::format("WARNING: Incorrect register assignment: register: {} val: {:04x} mask: {:04x} value: {:04x} masked assignment: {:04x}\n", rnum, v, rsrvd.mask, rsrvd.value, v & rsrvd.mask);
   }
 
   if (lmx) lmx->dirty_reg(rnum);
@@ -506,7 +506,7 @@ void LMX2820::setup()
 
   for (int i = 0; i < N_REGS; i++) {
     if (regs[i] != lmx_default_regs[i]) {
-      dbgout << std::format("Error: default regs difference: register {}: {:04x} default: {:04x}\n", i, (uint16_t)regs[i], (uint16_t)lmx_default_regs[i]);
+      dbg::dbgout << std::format("Error: default regs difference: register {}: {:04x} default: {:04x}\n", i, (uint16_t)regs[i], (uint16_t)lmx_default_regs[i]);
     }
   }
 }
@@ -556,7 +556,7 @@ void LMX2820::update_fVCO(double f)
   kVCO = VCO_gain_range[vco - 1].from_parametric(t);
   vco_sel = (uint16_t)vco;
 
-  dbgout << "kVCO: " << kVCO << std::endl;
+  dbg::dbgout << "kVCO: " << kVCO << std::endl;
 
   vco_capctl = (uint16_t)(191 * (1 - t));
 
@@ -569,7 +569,7 @@ void LMX2820::update_fVCO(double f)
 
   pll_n = (int)intp;
 
-  dbgout << "Setting PLL N to: " << pll_n << " frac: " << frac << std::endl;
+  dbg::dbgout << "Setting PLL N to: " << pll_n << " frac: " << frac << std::endl;
 
   if (std::fabs(frac) < 1.0 / max_denom) {
     pll_num = 0;
@@ -612,10 +612,10 @@ void LMX2820::update_fVCO(double f)
     pll_num = result.num;
     pll_den = result.den;
 
-    dbgout << "Setting fractional-N to " << (uint32_t)pll_num << "/" << (uint32_t)pll_den << std::endl;
+    dbg::dbgout << "Setting fractional-N to " << (uint32_t)pll_num << "/" << (uint32_t)pll_den << std::endl;
   }
 
-  dbgout << "Computed fVCO: " << (fPD * (pll_n + (double)pll_num / pll_den)) << std::endl;
+  dbg::dbgout << "Computed fVCO: " << (fPD * (pll_n + (double)pll_num / pll_den)) << std::endl;
 }
 
 
@@ -688,61 +688,61 @@ std::ostream &operator<<(std::ostream &os, bit<r, b> &f)
 
 void LMX2820::dump()
 {
-  dbgout << "LMX2820 dump" << std::endl;
+  dbg::dbgout << "LMX2820 dump" << std::endl;
 
-  dbgout << "Control: " << std::endl;
-  dbgout << " dblr_cal_en: " << dblr_cal_en << " fcal_en: " << fcal_en << " reset: " << reset << " powerdown: " << powerdown << std::endl;
-  dbgout << " instcal_skip_acal: " << instcal_skip_acal << " phase_sync_en: " << phase_sync_en << " ld_vtune_en:" << ld_vtune_en << std::endl;
-  dbgout << " instcal_dblr_en: " << instcal_dblr_en << " instcal_en: " << instcal_en << " cal_clk_div: " << cal_clk_div << " instcal_dly: " << instcal_dly << std::endl;
-  dbgout << " acal_cmp_dly: " << acal_cmp_dly << " quick_recal_en: " << quick_recal_en << " pfd_dly_manual: " << pfd_dly_manual << " vco_daciset_force: " << vco_daciset_force << std::endl;
-  dbgout << " vco_capctl_force: " << vco_capctl_force << " cpg: " << cpg << " ld_type: " << ld_type << " ld_dly: " << ld_dly << std::endl;
-  dbgout << " tempsense_en: " << tempsense_en << std::endl;
-  dbgout << " dblbuf_outmux_en: " << dblbuf_outmux_en << " dblbuf_outbuf_en: " << dblbuf_outbuf_en << " dblbuf_chdiv_en: " << dblbuf_chdiv_en << " dblbuf_pll_en: " << dblbuf_pll_en << std::endl;
+  dbg::dbgout << "Control: " << std::endl;
+  dbg::dbgout << " dblr_cal_en: " << dblr_cal_en << " fcal_en: " << fcal_en << " reset: " << reset << " powerdown: " << powerdown << std::endl;
+  dbg::dbgout << " instcal_skip_acal: " << instcal_skip_acal << " phase_sync_en: " << phase_sync_en << " ld_vtune_en:" << ld_vtune_en << std::endl;
+  dbg::dbgout << " instcal_dblr_en: " << instcal_dblr_en << " instcal_en: " << instcal_en << " cal_clk_div: " << cal_clk_div << " instcal_dly: " << instcal_dly << std::endl;
+  dbg::dbgout << " acal_cmp_dly: " << acal_cmp_dly << " quick_recal_en: " << quick_recal_en << " pfd_dly_manual: " << pfd_dly_manual << " vco_daciset_force: " << vco_daciset_force << std::endl;
+  dbg::dbgout << " vco_capctl_force: " << vco_capctl_force << " cpg: " << cpg << " ld_type: " << ld_type << " ld_dly: " << ld_dly << std::endl;
+  dbg::dbgout << " tempsense_en: " << tempsense_en << std::endl;
+  dbg::dbgout << " dblbuf_outmux_en: " << dblbuf_outmux_en << " dblbuf_outbuf_en: " << dblbuf_outbuf_en << " dblbuf_chdiv_en: " << dblbuf_chdiv_en << " dblbuf_pll_en: " << dblbuf_pll_en << std::endl;
 
-  dbgout << std::endl;
-  dbgout << "Input Path:" << std::endl;
-  dbgout << " Osc 2x: " << osc_2x << std::endl;
-  dbgout << " fcal hpfd adj: " << fcal_hpfd_adj << " lpfd adj: " << fcal_lpfd_adj << std::endl;
-  dbgout << " Pre R Divider: " << (uint16_t)pll_r_pre << " Post R divider: " << (uint16_t)pll_r << std::endl;
-  dbgout << " PFD delay: " << pfd_delay << " pfd sel: " << pfd_sel << " ext PFD div: " << extpfd_div << std::endl;
+  dbg::dbgout << std::endl;
+  dbg::dbgout << "Input Path:" << std::endl;
+  dbg::dbgout << " Osc 2x: " << osc_2x << std::endl;
+  dbg::dbgout << " fcal hpfd adj: " << fcal_hpfd_adj << " lpfd adj: " << fcal_lpfd_adj << std::endl;
+  dbg::dbgout << " Pre R Divider: " << (uint16_t)pll_r_pre << " Post R divider: " << (uint16_t)pll_r << std::endl;
+  dbg::dbgout << " PFD delay: " << pfd_delay << " pfd sel: " << pfd_sel << " ext PFD div: " << extpfd_div << std::endl;
 
-  dbgout << std::endl;
-  dbgout << "fPD: " << get_fPD() / 1.0e6 << " MHz" << std::endl;
+  dbg::dbgout << std::endl;
+  dbg::dbgout << "fPD: " << get_fPD() / 1.0e6 << " MHz" << std::endl;
 
-  dbgout << std::endl;
-  dbgout << "PLL Path:" << std::endl;
-  dbgout << " loopback_en: " << loopback_en << " extvcd_div: " << extvco_div << " extvco_en: " << extvco_en << std::endl;
-  dbgout << " pll_n: " << (uint16_t)pll_n << std::endl;
-  dbgout << " pll_den: " << pll_den << std::endl;
-  dbgout << " pll_num: " << pll_num << std::endl;
-  dbgout << " vco_sel: " << vco_sel << " vco_sel_force: " << vco_sel_force << std::endl;
-  dbgout << " vco_capctl: " << vco_capctl << std::endl;
-  dbgout << " vco_daciset: " << vco_daciset << std::endl;
+  dbg::dbgout << std::endl;
+  dbg::dbgout << "PLL Path:" << std::endl;
+  dbg::dbgout << " loopback_en: " << loopback_en << " extvcd_div: " << extvco_div << " extvco_en: " << extvco_en << std::endl;
+  dbg::dbgout << " pll_n: " << (uint16_t)pll_n << std::endl;
+  dbg::dbgout << " pll_den: " << pll_den << std::endl;
+  dbg::dbgout << " pll_num: " << pll_num << std::endl;
+  dbg::dbgout << " vco_sel: " << vco_sel << " vco_sel_force: " << vco_sel_force << std::endl;
+  dbg::dbgout << " vco_capctl: " << vco_capctl << std::endl;
+  dbg::dbgout << " vco_daciset: " << vco_daciset << std::endl;
 
-  dbgout << " mash_reset_n: " << mash_reset_n << " mash_order: " << mash_order << " mash_seed_en: " << mash_seed_en << " mash_rst_count: " << mash_rst_count << " mash_seed: " << mash_seed << std::endl;
+  dbg::dbgout << " mash_reset_n: " << mash_reset_n << " mash_order: " << mash_order << " mash_seed_en: " << mash_seed_en << " mash_rst_count: " << mash_rst_count << " mash_seed: " << mash_seed << std::endl;
 
-  dbgout << " instcal_pll_num: " << instcal_pll_num << std::endl;
+  dbg::dbgout << " instcal_pll_num: " << instcal_pll_num << std::endl;
 
   double frac = pll_n + (double)pll_num/pll_den;
 
-  dbgout << std::endl;
-  dbgout << "VCO freq: " << frac * get_fPD() / 1e9 << " GHz" << std::endl;
+  dbg::dbgout << std::endl;
+  dbg::dbgout << "VCO freq: " << frac * get_fPD() / 1e9 << " GHz" << std::endl;
 
-  dbgout << std::endl;
-  dbgout << "Output: " << std::endl;
-  dbgout << " chdivA: " << chdivA << " outa_mux: " << outa_mux << " outa_pwr: "  << outa_pwr << " outa_pd: " << outa_pd << std::endl;
-  dbgout << " chdivB: " << chdivB << " outb_mux: " << outb_mux << " outb_pwr: "  << outb_pwr << " outb_pd: " << outb_pd << std::endl;
+  dbg::dbgout << std::endl;
+  dbg::dbgout << "Output: " << std::endl;
+  dbg::dbgout << " chdivA: " << chdivA << " outa_mux: " << outa_mux << " outa_pwr: "  << outa_pwr << " outa_pd: " << outa_pd << std::endl;
+  dbg::dbgout << " chdivB: " << chdivB << " outb_mux: " << outb_mux << " outb_pwr: "  << outb_pwr << " outb_pd: " << outb_pd << std::endl;
 
-  dbgout << std::endl;
-  dbgout << "JESD:" << std::endl;
-  dbgout << " sysref_en: " << sysref_en << " srout_pd: " << srout_pd << " sysref_inp_fmt: " << sysref_inp_fmt << std::endl;
-  dbgout << " sysref_div_pre: " << sysref_div_pre << " sysref_div: " << sysref_div  << std::endl;
-  dbgout << " sysref_pulse: " << sysref_pulse << " sysref_pulse_cnt: " << sysref_pulse_cnt << std::endl;
-  dbgout << " sysref_repeat: " << sysref_repeat << " sysref_repeat_ns: " << sysref_repeat_ns <<  std::endl;
+  dbg::dbgout << std::endl;
+  dbg::dbgout << "JESD:" << std::endl;
+  dbg::dbgout << " sysref_en: " << sysref_en << " srout_pd: " << srout_pd << " sysref_inp_fmt: " << sysref_inp_fmt << std::endl;
+  dbg::dbgout << " sysref_div_pre: " << sysref_div_pre << " sysref_div: " << sysref_div  << std::endl;
+  dbg::dbgout << " sysref_pulse: " << sysref_pulse << " sysref_pulse_cnt: " << sysref_pulse_cnt << std::endl;
+  dbg::dbgout << " sysref_repeat: " << sysref_repeat << " sysref_repeat_ns: " << sysref_repeat_ns <<  std::endl;
 
-  dbgout << " jesd_dac1_ctrl: " << jesd_dac1_ctrl << " jesd_dac2_ctrl: " <<  jesd_dac2_ctrl << " jesd_dac3_ctrl: " << jesd_dac3_ctrl << " jesd_dac4_ctrl: " << jesd_dac4_ctrl << std::endl;
+  dbg::dbgout << " jesd_dac1_ctrl: " << jesd_dac1_ctrl << " jesd_dac2_ctrl: " <<  jesd_dac2_ctrl << " jesd_dac3_ctrl: " << jesd_dac3_ctrl << " jesd_dac4_ctrl: " << jesd_dac4_ctrl << std::endl;
 
-  dbgout << " inpin_ignore: " << inpin_ignore << " psync_inp_fmt: " << psync_inp_fmt << " pinmute_pol: " << pinmute_pol << std::endl;
+  dbg::dbgout << " inpin_ignore: " << inpin_ignore << " psync_inp_fmt: " << psync_inp_fmt << " pinmute_pol: " << pinmute_pol << std::endl;
 
 #if 0
 
