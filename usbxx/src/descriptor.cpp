@@ -5,7 +5,7 @@
  *      Author: zapman
  */
 
-#include <dbgstream.hpp>
+#include <threadxx/dbgstream.hpp>
 
 #include <ux_api.h>
 
@@ -27,7 +27,7 @@ uint8_t DeviceInfo::add_string(const std::string &str)
     str_table += (uint8_t)c;
   }
 
-  dbgout << "Added string " << (int)retval << ": " << str << std::endl;
+  dbg::dbgout << "Added string " << (int)retval << ": " << str << std::endl;
 
   return retval;
 }

@@ -26,7 +26,7 @@ void USBXX::SystemBase::start_system(uint8_t *stack, size_t n)
 
 void USBXX::DeviceBase::thread_entry()
 {
-  dbgout << "Initializing USB Hardware" << std::endl;
+  dbg::dbgout << "Initializing USB Hardware" << std::endl;
 
   MX_USB_PCD_Init();
   HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x00 , PCD_SNG_BUF, 0x40);
@@ -39,7 +39,7 @@ void USBXX::DeviceBase::thread_entry()
 
   // Call app thread, if desired
 
-  dbgout << "Hardware initialized" << std::endl;
+  dbg::dbgout << "Hardware initialized" << std::endl;
 }
 
 
@@ -74,7 +74,7 @@ uint32_t USBXX::DeviceBase::on_change(uint32_t new_state)
     case UX_DCD_STM32_SOF_RECEIVED:
       return on_sof();
     default:
-      dbgout << "Unknown state: " << new_state << std::endl;
+      dbg::dbgout << "Unknown state: " << new_state << std::endl;
       return UX_SUCCESS;
   }
 
@@ -130,9 +130,9 @@ void USBXX::DeviceBase::start()
     register_class();
     start_app();
   } catch(std::runtime_error &e) {
-    dbgout << "Exception in starting USB device: " << e.what() << std::endl;
+    dbg::dbgout << "Exception in starting USB device: " << e.what() << std::endl;
   } catch (...) {
-    dbgout << "Unknown exception in starting USB device!" << std::endl;
+    dbg::dbgout << "Unknown exception in starting USB device!" << std::endl;
   }
 
 }

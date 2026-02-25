@@ -17,6 +17,8 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <threadxx/dbgstream.hpp>
+
 #include "app_threadx.h"
 #include "main.h"
 #include "adc.h"
@@ -34,7 +36,6 @@
 #include "usbpd.h"
 #include "ux_api.h"
 
-#include "dbgstream.hpp"
 #include <lmx.h>
 
 #include <halxx/usart.hpp>
@@ -94,11 +95,20 @@ static const int LMX_OSC_IN = 10e6;
 #endif
 
 
+class HALUARTDBGRenderer : public dbg::renderer
+{
+  int render(const char *buffer, size_t size) override {
+    HAL_UART_Transmit(&huart1, (const uint8_t *)buffer, size, 0xFFFF);
+    return 0;
+  }
+};
+
+HALUARTDBGRenderer serdbg;
 
 UART::UART(UART_HandleTypeDef &h) : huart(h) {
   MX_USART1_UART_Init();
 
-  set_uart_ready();
+  dbg::add_renderer(&serdbg);
 }
 
 

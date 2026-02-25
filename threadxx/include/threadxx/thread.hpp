@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <string>
 
-#include <dbgstream.hpp>
+#include <threadxx/dbgstream.hpp>
 
 #include "tx_api.h"
 
@@ -36,7 +36,7 @@ namespace TXX {
       try {
         main();
       } catch (...) {
-        dbgout << "Uncaught exception in thread " << _name << std::endl;
+        dbg::dbgout << "Uncaught exception in thread " << _name << std::endl;
       }
     }
 

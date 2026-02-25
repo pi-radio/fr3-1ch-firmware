@@ -13,7 +13,7 @@
 
 #include <parser.h>
 #include <lexer.h>
-#include <terminal.hpp>
+#include <consolexx/terminal.hpp>
 #include <lmx.h>
 #include <ltc2668.h>
 

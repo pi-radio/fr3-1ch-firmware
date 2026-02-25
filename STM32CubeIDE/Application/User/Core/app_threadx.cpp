@@ -26,7 +26,7 @@
 #include <tx_trace.h>
 
 #include <iostream>
-#include <dbgstream.hpp>
+#include <threadxx/dbgstream.hpp>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -38,7 +38,7 @@
 #include <threadxx/txx.hpp>
 
 #include <console.h>
-#include <terminal.hpp>
+#include <consolexx/terminal.hpp>
 #include <fr3_1ch_hw.h>
 
 /* USER CODE END Includes */
@@ -102,7 +102,7 @@ void TXPirApp::start_app(void)
 
 void TXPirApp::error_handler(const char *file, int line)
 {
-  dbgout << "FATAL ERROR: " << file << ":" << line << std::endl;
+  dbg::dbgout << "FATAL ERROR: " << file << ":" << line << std::endl;
   while(1);
 }
 
@@ -113,25 +113,25 @@ USBSerial::USBSerial()
 
 uint32_t USBSerial::on_attached()
 {
-  dbgout << "USB Attached" << std::endl;
+  dbg::dbgout << "USB Attached" << std::endl;
   return UX_SUCCESS;
 }
 
 uint32_t USBSerial::on_removed()
 {
-  dbgout << "USB Removed" << std::endl;
+  dbg::dbgout << "USB Removed" << std::endl;
   return UX_SUCCESS;
 }
 
 uint32_t USBSerial::on_connected()
 {
-  dbgout << "USB Connected" << std::endl;
+  dbg::dbgout << "USB Connected" << std::endl;
   return UX_SUCCESS;
 }
 
 uint32_t USBSerial::on_disconnected()
 {
-  dbgout << "USB Disconnected" << std::endl;
+  dbg::dbgout << "USB Disconnected" << std::endl;
   return UX_SUCCESS;
 }
 
@@ -144,8 +144,6 @@ AppThread::AppThread() : Thread<APP_THREAD_STACK_SIZE>("Application Thread")
 void AppThread::main()
 {
   terminal_init();
-
-  dbg_ready = 1;
 
   console_init();
 

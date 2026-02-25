@@ -5,7 +5,7 @@
  *      Author: zapman
  */
 
-#include <dbgstream.hpp>
+#include <threadxx/dbgstream.hpp>
 
 #include <ux_api.h>
 
