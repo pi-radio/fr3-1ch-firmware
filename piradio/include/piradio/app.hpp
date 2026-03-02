@@ -4,7 +4,7 @@
 #include <consolexx/terminal.hpp>
 #include <usbxx/usbxx.hpp>
 #include <threadxx/usbpdxx.hpp>
-#include "lmx.h"
+#include <piradio/lmx2820.hpp>
 
 class USBSerial : public USBXX::CDCACM
 {

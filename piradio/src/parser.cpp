@@ -6,7 +6,7 @@
 #include <threadxx/config_data.hpp>
 
 #include <consolexx/terminal.hpp>
-#include <lmx.h>
+#include <piradio/lmx2820.hpp>
 #include <ltc2668.h>
 
 #include <piradio/parser.hpp>
@@ -93,6 +93,14 @@ void Parser::parse_config_statement()
   throw SyntaxError();
 }
 
+void Parser::parse_lmx_powerdown() {
+	lmx.write_reg(0, 0x4071);
+}
+
+void Parser::parse_lmx_powerup() {
+	lmx.write_reg(0, 0x4070);
+}
+
 void Parser::parse_lmx_prog() {
   parse_statement_end();
 
@@ -177,6 +185,16 @@ void Parser::parse_lmx_write() {
   parse_statement_end();
 }
 
+void Parser::parse_lmx_tune() {
+  double f = shift_float() * 1e9;
+
+  if (f < 6e9 || f > 24e9) {
+    throw GeneralError::fmt("Invalid frequency {}", f);
+  }
+
+  main_app.get_lmx().tune(f);
+}
+
 void Parser::parse_lmx_statement() {
   auto cur_tok = tokenizer.get_token();
 
@@ -187,17 +205,18 @@ void Parser::parse_lmx_statement() {
   } else if (cur_tok == keywords::READ) {
     parse_lmx_read();
   } else if (cur_tok == keywords::POWERUP) {
-	  parse_lmx_powerup();
+    parse_lmx_powerup();
   } else if (cur_tok == keywords::POWERDOWN) {
-	  parse_lmx_powerdown();
+    parse_lmx_powerdown();
   } else if (cur_tok == keywords::DRIVE) {
-	  parse_lmx_drive();
+    parse_lmx_drive();
+  } else if (cur_tok == keywords::TUNE) {
+    parse_lmx_tune();
   } else {
     throw SyntaxError();
   }
 }
 
-<<<<<<< HEAD:STM32CubeIDE/Application/User/Parser/parser.cpp
 GPIO_PinState pin_value(uint32_t v)
 {
 	if (v == 0)
@@ -206,11 +225,7 @@ GPIO_PinState pin_value(uint32_t v)
 		return GPIO_PIN_SET;
 }
 
-static void parse_set_statement() {
-=======
 void Parser::parse_set_statement() {
->>>>>>> 65dda3d (Massive refactoring and cleaning of code, now working again):piradio/src/parser.cpp
-
   auto cur_tok = tokenizer.get_token();
 
   if (cur_tok == keywords::LO) {

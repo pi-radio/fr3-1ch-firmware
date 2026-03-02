@@ -6,7 +6,6 @@
  */
 #include <stdint.h>
 #include <fr3_1ch_hw.h>
-#include <lmx.h>
 
 #include <initializer_list>
 #include <array>
@@ -20,150 +19,10 @@
 
 #include <threadxx/dbgstream.hpp>
 
-extern std::array<uint16_t, LMX::LMX2820::N_REGS> lmx_default_regs;
-
-
-
-
-
+#include <piradio/rational.hpp>
+#include <piradio/lmx2820.hpp>
 
 namespace LMX {
-
-std::array<reg, LMX2820::N_REGS> template_regs {
-    reg({ 0, { rsrvd(14, 15, 1), rsrvd(11, 12, 0), rsrvd(5, 1), rsrvd(2, 3, 0) } }),
-    reg({ 1, { rsrvd(6, 14, 0x15E), rsrvd(2, 4, 0) } }),
-    reg({ 2, { rsrvd(15, 1) } }),
-    reg({ 3, rsrvd(0x41) }),
-    reg({ 4, rsrvd(0x4204) }),
-    reg({ 5, rsrvd(0x0032) }),
-    reg({ 6, rsrvd(0, 7, 0x43) }),
-    reg({ 7, rsrvd(0) }),
-    reg({ 8, rsrvd(0xC802) }),
-    reg({ 9, rsrvd(5) }),
-
-    reg({ 10, { rsrvd(13, 15, 0), rsrvd(8, 10, 0), rsrvd(0, 6, 0) } }),
-    reg({ 11, { rsrvd(5, 15, 0x30), rsrvd(0, 3, 0x2) } }),
-    reg({ 12, { rsrvd(13, 15, 0), rsrvd(0, 9, 0x8) } }),
-    reg({ 13, { rsrvd(13, 15, 0), rsrvd(0, 4, 0x18) } }),
-    reg({ 14, rsrvd(12, 15, 0x3) }),
-    reg({ 15, { rsrvd(12, 15, 0x2), rsrvd(0, 8, 0x1) } }),
-    reg({ 16, { rsrvd(5, 15, 0xB8), rsrvd(0, 0) } }),
-    reg({ 17, { rsrvd(0, 5, 0), rsrvd(7, 15, 0x2B) } }),
-    reg({ 18 }),
-    reg({ 19, { rsrvd(5, 15, 0x109), rsrvd(0, 2, 0) } }),
-    reg({ 20, rsrvd(9, 15, 0x13) }),
-
-    reg({ 21, rsrvd(0x1C64) }),
-    reg({ 22, rsrvd(8, 12, 0x2) }),
-    reg({ 23, rsrvd(1, 15, 0x881) }),
-    reg({ 24, rsrvd(0xE34) }),
-    reg({ 25, rsrvd(0x624) }),
-    reg({ 26, rsrvd(0xDB0) }),
-    reg({ 27, rsrvd(0x8001) }),
-    reg({ 28, rsrvd(0x639) }),
-    reg({ 29, rsrvd(0x318C) }),
-
-    reg({ 30, rsrvd(0xB18C) }),
-    reg({ 31, rsrvd(0x0401) }),
-    reg({ 32, { rsrvd(12, 15, 0x01), rsrvd(0, 5, 1), rsrvd(0, 15, 0) } }),
-    reg({ 33 }),
-    reg({ 34, { rsrvd(12, 15, 0), rsrvd(5, 10, 0), rsrvd(1, 3, 0) } }),
-    reg({ 35, { rsrvd(13, 15, 0x1), rsrvd(9, 11, 0), rsrvd(0, 5, 0) } }),
-    reg({ 36, rsrvd(15, 0) }),
-    reg({ 37, { rsrvd(15, 0), rsrvd(0, 8, 0x100) } }),
-    reg({ 38 }),
-    reg({ 39 }),
-
-    reg({ 40 }),
-    reg({ 41 }),
-    reg({ 42 }),
-    reg({ 43 }),
-    reg({ 44 }),
-    reg({ 45 }),
-    reg({ 46, rsrvd(0x300) }),
-    reg({ 47, rsrvd(0x300) }),
-    reg({ 48, rsrvd(0x4180) }),
-    reg({ 49, rsrvd(0) }),
-
-    reg({ 50, rsrvd(0X80) }),
-    reg({ 51, rsrvd(0X203F) }),
-    reg({ 52, rsrvd(0) }),
-    reg({ 53, rsrvd(0) }),
-    reg({ 54, rsrvd(0) }),
-    reg({ 55, rsrvd(0x2) }),
-    reg({ 56, rsrvd(1, 15, 0) }),
-    reg({ 57, rsrvd(1, 15, 0) }),
-    reg({ 58, rsrvd(0) }),
-    reg({ 59, rsrvd(0x1388) }),
-
-    reg({ 60, rsrvd(0x01F4) }),
-    reg({ 61, rsrvd(0x03E8) }),
-    reg({ 62 }),
-    reg({ 63 }),
-    reg({ 64, { rsrvd(10, 15, 0x10), rsrvd(0, 0) } }),
-    reg({ 65, rsrvd(11, 15, 0) }),
-    reg({ 66, rsrvd(12, 15, 0) }),
-    reg({ 67 }),
-    reg({ 68, { rsrvd(6, 15, 0), rsrvd(1, 4, 0) } }),
-    reg({ 69, { rsrvd(5, 15, 0), rsrvd(0, 3, 0x1) } }),
-
-    reg({ 70, { rsrvd(8, 15, 0), rsrvd(0, 3, 0xE) }}),
-    reg({ 71, rsrvd(0) }),
-    reg({ 72, rsrvd(0) }),
-    reg({ 73, rsrvd(0) }),
-    reg({ 74, { rsrvd(13, 0), rsrvd(0, 1, 0) } }),
-    reg({ 75, rsrvd(9, 15, 0) }),
-    reg({ 76, rsrvd(11, 15, 0) }),
-    reg({ 77, { rsrvd(9, 15, 0x3), rsrvd(0, 7, 0x8) } }),
-    reg({ 78, { rsrvd(5, 15, 0), rsrvd(2, 3, 0) } }),
-    reg({ 79, { rsrvd(9, 15, 0), rsrvd(6, 7, 0), rsrvd(0, 0) } }),
-
-    reg({ 80, { rsrvd(9, 15, 0), rsrvd(0, 5, 0) } }),
-    reg({ 81, rsrvd(0) }),
-    reg({ 82, rsrvd(0) }),
-    reg({ 83, rsrvd(0xF00) }),
-    reg({ 84, rsrvd(0x40) }),
-    reg({ 85, rsrvd(0) }),
-    reg({ 86, rsrvd(0x40) }),
-    reg({ 87, rsrvd(0xFF00) }),
-    reg({ 88, rsrvd(0x3FF) }),
-    reg({ 89, rsrvd(0) }),
-
-    reg({ 90, rsrvd(0) }),
-    reg({ 91, rsrvd(0) }),
-    reg({ 92, rsrvd(0) }),
-    reg({ 93, rsrvd(0x1000) }),
-    reg({ 94, rsrvd(0) }),
-    reg({ 95, rsrvd(0) }),
-    reg({ 96, rsrvd(0x17F8) }),
-    reg({ 97, rsrvd(0) }),
-    reg({ 98, rsrvd(0x1C80) }),
-    reg({ 99, rsrvd(0x19B9) }),
-    reg({ 100, rsrvd(0x0533) }),
-    reg({ 101, rsrvd(0x3E8) }),
-    reg({ 102, rsrvd(0x28) }),
-    reg({ 103, rsrvd(0x14) }),
-    reg({ 104, rsrvd(0x14) }),
-    reg({ 105, rsrvd(0xA) }),
-    reg({ 106, rsrvd(0) }),
-    reg({ 107, rsrvd(0) }),
-    reg({ 108, rsrvd(0) }),
-    reg({ 109, rsrvd(0) }),
-    reg({ 110, rsrvd(0x1F) }),
-    reg({ 111, rsrvd(0) }),
-    reg({ 112, rsrvd(0xFFFF) }),
-    reg({ 113, rsrvd(0) }),
-    reg({ 114, rsrvd(0) }),
-    reg({ 115, rsrvd(0) }),
-    reg({ 116, rsrvd(0) }),
-    reg({ 117, rsrvd(0) }),
-    reg({ 118, rsrvd(0) }),
-    reg({ 119, rsrvd(0) }),
-    reg({ 120, rsrvd(0) }),
-    reg({ 121, rsrvd(0) }),
-    reg({ 122, rsrvd(0) }),
-};
-
 
 reg &reg::operator =(uint16_t v) {
   if ((v & rsrvd.mask) != rsrvd.value) {
@@ -293,9 +152,133 @@ const std::array<drange, 7> LMX2820::VCO_gain_range {
    drange {121.2635, 141.9561}
  };
 
+uint16_t reg_reserved_data[][2] = {
+  { 0xd82c, 0x4020 },
+  { 0x7fdc, 0x5780 },
+  { 0x8000, 0x8000 },
+  { 0xffff, 0x0041 },
+  { 0xffff, 0x4204 },
+  { 0xffff, 0x0032 },
+  { 0x00ff, 0x0043 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0xc802 },
+  { 0xffff, 0x0005 },
+  { 0xe77f, 0x0000 },
+  { 0xffef, 0x0602 },
+  { 0xe3ff, 0x0008 },
+  { 0xe01f, 0x0018 },
+  { 0xf000, 0x3000 },
+  { 0xf1ff, 0x2001 },
+  { 0xffe1, 0x1700 },
+  { 0xffbf, 0x1580 },
+  { 0x0000, 0x0000 },
+  { 0xffe7, 0x2120 },
+  { 0xfe00, 0x2600 },
+  { 0xffff, 0x1c64 },
+  { 0x1f00, 0x0200 },
+  { 0xfffe, 0x1102 },
+  { 0xffff, 0x0e34 },
+  { 0xffff, 0x0624 },
+  { 0xffff, 0x0db0 },
+  { 0xffff, 0x8001 },
+  { 0xffff, 0x0639 },
+  { 0xffff, 0x318c },
+  { 0xffff, 0xb18c },
+  { 0xffff, 0x0401 },
+  { 0xffff, 0x1001 },
+  { 0x0000, 0x0000 },
+  { 0xf7ee, 0x0000 },
+  { 0xee3f, 0x2000 },
+  { 0x8000, 0x0000 },
+  { 0x81ff, 0x0100 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0xffff, 0x0300 },
+  { 0xffff, 0x0300 },
+  { 0xffff, 0x4180 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0080 },
+  { 0xffff, 0x203f },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0002 },
+  { 0xfffe, 0x0000 },
+  { 0xfffe, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x1388 },
+  { 0xffff, 0x01f4 },
+  { 0xffff, 0x03e8 },
+  { 0x0000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0xfc01, 0x4000 },
+  { 0xf800, 0x0000 },
+  { 0xf000, 0x0000 },
+  { 0x0000, 0x0000 },
+  { 0xffde, 0x0000 },
+  { 0xffef, 0x0001 },
+  { 0xff0f, 0x000e },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0x2003, 0x0000 },
+  { 0xfe00, 0x0000 },
+  { 0xf800, 0x0000 },
+  { 0xfeff, 0x0608 },
+  { 0xffec, 0x0000 },
+  { 0xfec1, 0x0000 },
+  { 0xfe3f, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0f00 },
+  { 0xffff, 0x0040 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0040 },
+  { 0xffff, 0xff00 },
+  { 0xffff, 0x03ff },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x1000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x17f8 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x1c80 },
+  { 0xffff, 0x19b9 },
+  { 0xffff, 0x0533 },
+  { 0xffff, 0x03e8 },
+  { 0xffff, 0x0028 },
+  { 0xffff, 0x0014 },
+  { 0xffff, 0x0014 },
+  { 0xffff, 0x000a },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x001f },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0xffff },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 },
+  { 0xffff, 0x0000 }
+};
 
 LMX2820::LMX2820(double _fOSC) :
-    regs(template_regs),
     outAmux(DIRECT),
     outBmux(DIRECT),
     instcal_skip_acal(this),
@@ -381,7 +364,9 @@ LMX2820::LMX2820(double _fOSC) :
 
   for (int i = 0; i < N_REGS; i++) {
     regs[i].lmx = this;
-    //regs[i] = lmx_default_regs[i];
+    regs[i].rsrvd.mask = reg_reserved_data[i][0];
+    regs[i].value = regs[i].rsrvd.value =
+      reg_reserved_data[i][1];
   }
 
   /***
@@ -505,28 +490,11 @@ void LMX2820::setup()
   outb_pd = 1;
 
   for (int i = 0; i < N_REGS; i++) {
-    if (regs[i] != lmx_default_regs[i]) {
-      dbg::dbgout << std::format("Error: default regs difference: register {}: {:04x} default: {:04x}\n", i, (uint16_t)regs[i], (uint16_t)lmx_default_regs[i]);
+    if (regs[i] != default_regs[i]) {
+      dbg::dbgout << std::format("Error: default regs difference: register {}: {:04x} default: {:04x}\n", i, (uint16_t)regs[i], (uint16_t)default_regs[i]);
     }
   }
 }
-
-template <typename T>
-struct rational
-{
-  T num;
-  T den;
-
-  rational(T n = 0, T d = 0) : num(n), den(d) {}
-
-  rational mediant(const rational &o)
-  {
-    return rational(num + o.num, den + o.den);
-  }
-
-  operator double() const { return (double)num/den; }
-};
-
 
 void LMX2820::update_fVCO(double f)
 {
@@ -575,39 +543,7 @@ void LMX2820::update_fVCO(double f)
     pll_num = 0;
     pll_den = 1000;
   } else {
-    rational<uint32_t> low(0,1), high(1,1), result;
-
-    while (true) {
-      auto mediant = low.mediant(high);
-
-      if (mediant.den > max_denom) {
-        if (frac - low < high - frac) {
-          result = low;
-        } else {
-          result = high;
-        }
-
-        break;
-      }
-      // We're already close enough, so we take the simplest fraction
-      if (std::fabs(frac - mediant) < 1.0/max_denom) {
-        result = mediant;
-        break;
-      }
-
-      double n1 = frac * low.den - low.num;
-      double n2 = high.num - frac * high.den;
-
-      if (frac < (double)mediant) {
-        int K = std::floor(n2 / n1);
-        high.num = low.num + K * high.num;
-        high.den = low.den + K * high.den;
-      } else {
-        int K = std::floor(n1 / n2);
-        low.num = low.num + K * high.num;
-        low.den = low.den + K * high.den;
-      }
-    }
+    auto result = rational<uint32_t>::approximate(frac, max_denom);
 
     pll_num = result.num;
     pll_den = result.den;
@@ -819,395 +755,17 @@ int LMX2820::locked()
   return retval;
 }
 
+void LMX2820::tune(double f)
+{
+  if (f > f_VCO_max) {
+    chdivA = 1;
+    f /= 2;
+  }
+
+  chdivA = 0;
+  update_fVCO(f);
+
+  program();
+}
+
 };
-
-
-
-#ifndef OCTOLO
-
-// Default 10MHz registers
-std::array<uint16_t, LMX::LMX2820::N_REGS> lmx_default_regs{
-    0x6070,
-    0x57a0,
-    0x81f4,
-    0x0041,
-    0x4204,
-    0x0032,
-    0x0a43,
-    0x0000,
-    0xc802,
-    0x0005,
-    0x0000,
-    0x0612,
-    0x0408,
-    0x0038,
-    0x3001,
-    0x2001,
-    0x171c,
-    0x15c0,
-    0x0000,
-    0x2120,
-    0x272c,
-    0x1c64,
-    0xe2bf,
-    0x1102,
-    0x0e34,
-    0x0624,
-    0x0db0,
-    0x8001,
-    0x0639,
-    0x318c,
-    0xb18c,
-    0x0401,
-    0x1001,
-    0x0000,
-    0x0010,
-    0x3100,
-    0x01f4,
-    0x0500,
-    0x0000,
-    0x03e8,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0300,
-    0x0300,
-    0x4180,
-    0x0000,
-    0x0080,
-    0x203f,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0002,
-    0x0001,
-    0x0001,
-    0x0000,
-    0x1388,
-    0x01f4,
-    0x03e8,
-    0x0000,
-    0xc350,
-    0x0080,
-    0x0000,
-    0x003f,
-    0x1000,
-    0x0020,
-    0x0011,
-    0x000e,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0608,
-    0x0001,
-    0x011e,
-    0x01c0,
-    0x0000,
-    0x0000,
-    0x0f00,
-    0x0040,
-    0x0000,
-    0x0040,
-    0xff00,
-    0x03ff,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x1000,
-    0x0000,
-    0x0000,
-    0x17f8,
-    0x0000,
-    0x1c80,
-    0x19b9,
-    0x0533,
-    0x03e8,
-    0x0028,
-    0x0014,
-    0x0014,
-    0x000a,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x001f,
-    0x0000,
-    0xffff,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-    0x0000,
-};
-
-// Default 10MHz registers, 15 GHz output
-uint16_t lmx_default_regs_15GHz[LMX2820::N_REGS] = {
-		0x6070,
-		0xD7A0,
-		0x81F4,
-		0x0041,
-		0x4204,
-		0x0032,
-		0x0A43,
-		0x0000,
-		0xC802,
-		0x0005,
-		0x0000,
-		0x0602,
-		0x0408,
-		0x0038,
-		0x3001,
-		0x2001,
-		0x171C,
-		0x15C0,
-		0x0000,
-		0x2120,
-		0x272C,
-		0x1C64,
-		0xE2BF,
-		0x1102,
-		0x0E34,
-		0x0624,
-		0x0DB0,
-		0x8001,
-		0x0639,
-		0x318C,
-		0xB18C,
-		0x0401,
-		0x1401,
-		0x0000,
-		0x0010,
-		0x3100,
-		0x02EE,
-		0x0500,
-		0x0000,
-		0x03E8,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0300,
-		0x0300,
-		0x4180,
-		0x0000,
-		0x0080,
-		0x203F,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0002,
-		0x0001,
-		0x0001,
-		0x0000,
-		0x1388,
-		0x01F4,
-		0x03E8,
-		0x0000,
-		0xC350,
-		0x0080,
-		0x0000,
-		0x003F,
-		0x1000,
-		0x0000,
-		0x0011,
-		0x000E,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x8A2D,
-		0x0125,
-		0x0000,
-		0x0608,
-		0x0002,
-		0x011E,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0F00,
-		0x0040,
-		0x0000,
-		0x0040,
-		0xFF00,
-		0x03FF,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x1000,
-		0x0000,
-		0x0000,
-		0x17F8,
-		0x0000,
-		0x1C80,
-		0x19B9,
-		0x0533,
-		0x03E8,
-		0x0028,
-		0x0014,
-		0x0014,
-		0x000A,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x001F,
-		0x0000,
-		0xFFFF,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000,
-		0x0000
-};
-
-#else
-
-std::array<uint16_t, LMX::LMX2820::N_REGS> lmx_default_regs{
-     0x6470,
-     0x57a0,
-     0x81f4,
-     0x0041,
-     0x4204,
-     0x0032,
-     0x0a43,
-     0x0000,
-     0xc802,
-     0x0005,
-     0x0000,
-     0x0612,
-     0x0408,
-     0x0038,
-     0x3001,
-     0x2001,
-     0x171c,
-     0x15c0,
-     0x0000,
-     0x2120,
-     0x272c,
-     0x1c64,
-     0xe2bf,
-     0x1102,
-     0x0e34,
-     0x0624,
-     0x0db0,
-     0x8001,
-     0x0639,
-     0x318c,
-     0xb18c,
-     0x0401,
-     0x1001,
-     0x0000,
-     0x0010,
-     0x3100,
-     0x0032,
-     0x0500,
-     0x0000,
-     0x03e8,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0300,
-     0x0300,
-     0x4180,
-     0x0000,
-     0x0080,
-     0x203f,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0002,
-     0x0001,
-     0x0001,
-     0x0000,
-     0x1388,
-     0x01f4,
-     0x03e8,
-     0x0000,
-     0xc350,
-     0x0080,
-     0x0000,
-     0x003f,
-     0x1000,
-     0x0020,
-     0x0011,
-     0x000e,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0608,
-     0x0001,
-     0x011e,
-     0x01c0,
-     0x0000,
-     0x0000,
-     0x0f00,
-     0x0040,
-     0x0000,
-     0x0040,
-     0xff00,
-     0x03ff,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x1000,
-     0x0000,
-     0x0000,
-     0x17f8,
-     0x0000,
-     0x1c80,
-     0x19b9,
-     0x0533,
-     0x03e8,
-     0x0028,
-     0x0014,
-     0x0014,
-     0x000a,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x001f,
-     0x0000,
-     0xffff,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000,
-     0x0000
-};
-
-
-
-#endif
-

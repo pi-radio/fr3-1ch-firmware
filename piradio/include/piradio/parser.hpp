@@ -169,6 +169,7 @@ namespace parser
     void parse_lmx_prog();
     void parse_lmx_read();
     void parse_lmx_write();
+    void parse_lmx_tune();
     void parse_lmx_statement();
     void parse_lmx_powerup();
     void parse_lmx_powerdown();

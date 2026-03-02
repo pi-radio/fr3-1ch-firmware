@@ -36,8 +36,6 @@
 #include "usbpd.h"
 #include "ux_api.h"
 
-#include <lmx.h>
-
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
