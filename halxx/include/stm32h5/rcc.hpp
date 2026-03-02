@@ -1,12 +1,4 @@
-/*
- * rcc.hpp
- *
- *  Created on: Feb 23, 2026
- *      Author: zapman
- */
-
-#ifndef HALXX_INCLUDE_STM32H5_RCC_HPP_
-#define HALXX_INCLUDE_STM32H5_RCC_HPP_
+#pragma once
 
 struct RCC {
   volatile  uint32_t CR;            /*!< RCC clock control register                                               Address offset: 0x00 */
@@ -73,8 +65,3 @@ struct RCC {
   volatile  uint32_t SECCFGR;       /*!< RCC Secure mode configuration register                                   Address offset: 0x110 */
   volatile  uint32_t PRIVCFGR;      /*!< RCC Privilege configuration register                                     Address offset: 0x114 */
 };
-
-
-static constexpr RCC *rcc = (RCC *)aaaa;
-
-#endif /* HALXX_INCLUDE_STM32H5_RCC_HPP_ */

@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdarg.h>
 #include <stdio.h>
+#include <halxx/fault.hpp>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,56 +72,6 @@ extern UART_HandleTypeDef huart1;
 extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 extern TIM_HandleTypeDef htim1;
 
-/* USER CODE BEGIN EV */
-int exception_magic;
-char exception_msgbuf[256];
-
-exception_info_t __attribute__(( section(".noinitdata") )) _einfo;
-
-uint32_t __exc_stor[2];
-
-exception_info_t *get_exception_info()
-{
-  return &_einfo;
-}
-
-void save_exception(uint32_t exception_type)
-{
-  _einfo.excSP = __exc_stor[0];
-  _einfo.excLR = __exc_stor[1];
-
-  uint32_t *cp = (uint32_t *)_einfo.excSP;
-
-  _einfo.exception_type = exception_type;
-  _einfo.CONTROL = __get_CONTROL();
-  _einfo.CFSR = SCB->CFSR;
-  _einfo.HFSR = SCB->HFSR;
-  _einfo.SHCSR = SCB->SHCSR;
-  _einfo.VTOR = SCB->VTOR;
-
-  memcpy(&_einfo.base_ctx, cp, sizeof(_einfo.base_ctx));
-  cp += sizeof(_einfo.base_ctx) / 4;
-
-  _einfo.SP1 = *cp;
-
-  if (!(_einfo.excLR & (1 << 4))) {
-    memcpy(&_einfo.fp_ctx, cp, sizeof(_einfo.fp_ctx));
-    cp += sizeof(_einfo.fp_ctx) / 4;
-  }
-
-  _einfo.SP = *cp++;
-
-  _einfo.excbase = (uint32_t)cp;
-
-  dbgprint("Exception: Type: %08lx PC: %08lx\r\n", _einfo.exception_type, _einfo.base_ctx.PC);
-
-  for (int i = 0; i < 5000000; i++);
-}
-
-void clear_exception(void)
-{
-  memset(&_einfo, 0, sizeof(_einfo));
-}
 
 void handle_flash(void)
 {

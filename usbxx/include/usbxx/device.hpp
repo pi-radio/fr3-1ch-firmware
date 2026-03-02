@@ -11,6 +11,8 @@
 #include <usbxx/system.hpp>
 #include <usbxx/descriptor.hpp>
 
+#include <ux_api.h>
+
 namespace USBXX
 {
   extern UINT _usbxx_change_notification(ULONG);
@@ -28,6 +30,7 @@ namespace USBXX
 
     virtual void start_system() {}
     virtual void setup_device();
+    virtual void class_init() {}
     virtual void register_class() {}
     virtual void start_app() {}
 

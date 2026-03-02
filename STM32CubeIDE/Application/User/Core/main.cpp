@@ -38,11 +38,9 @@
 
 #include <lmx.h>
 
-#include <halxx/usart.hpp>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <config_data.h>
 
 #include <stdarg.h>
 /* USER CODE END Includes */
@@ -80,67 +78,12 @@ static void MPU_Config(void);
 int dbg_ready = 0;
 
 
-STM32H563::STM32H563()
-{
-    MPU_Config();
-    HAL_Init();
-    SystemClock_Config();
-    MPU_Config();
-}
-
-#ifdef OCTOLO
-static const int LMX_OSC_IN = 100e6;
-#else
-static const int LMX_OSC_IN = 10e6;
-#endif
-
-
-class HALUARTDBGRenderer : public dbg::renderer
-{
-  int render(const char *buffer, size_t size) override {
-    HAL_UART_Transmit(&huart1, (const uint8_t *)buffer, size, 0xFFFF);
-    return 0;
-  }
-};
-
-HALUARTDBGRenderer serdbg;
-
-UART::UART(UART_HandleTypeDef &h) : huart(h) {
-  MX_USART1_UART_Init();
-
-  dbg::add_renderer(&serdbg);
-}
-
-
-
-PiRadioApp::PiRadioApp() : uart1(huart1), lmx(LMX_OSC_IN) {
-  MX_FLASH_Init();
-  init_config_data();
-  MX_GPIO_Init();
-  MX_GPDMA1_Init();
-  MX_SPI4_Init();
-  MX_UCPD1_Init();
-  MX_DCACHE1_Init();
-  MX_ICACHE_Init();
-  MX_FLASH_Init();
-  MX_DTS_Init();
-  MX_LPTIM1_Init();
-  USBPD_PreInitOs();
-
-  lmx.setup();
-}
-
-PiRadioApp main_app;
 /* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
-{
-  app.start();
-}
 
 /**
   * @brief System Clock Configuration
@@ -273,39 +216,3 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void __error_handler(const char *file, int line)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-
-  exception_info_t *info = get_exception_info();
-
-  info->exception_type = EXCEPTION_ERROR_HANDLER;
-
-  info->excSP = (uint32_t)file;
-  info->excLR = line;
-
-  NVIC_SystemReset();
-
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
-}
-#ifdef USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */

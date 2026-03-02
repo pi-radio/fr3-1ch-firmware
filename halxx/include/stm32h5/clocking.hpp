@@ -132,7 +132,12 @@ namespace clocking
     }
   };
 
-  
+  enum class systick_src {
+    HCLK_DIV8 = 0x0,
+    LSI = 0x1,
+    LSE = 0x2,
+    HCLK = 0x4
+  };
 
   class _sysclk : public clock_mux {
   public:

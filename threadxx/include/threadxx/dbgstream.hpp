@@ -5,6 +5,8 @@
 #include <vector>
 #include <stdint.h>
 
+#include <threadxx/static.hpp>
+
 namespace dbg
 {
   struct renderer
@@ -16,10 +18,7 @@ namespace dbg
   
   extern std::ostream &dbgout;
 
-  static struct _dbginitializer {
-    _dbginitializer();
-    ~_dbginitializer();
-  } dbginitializer;
+  extern void initialize_dbgstream();
 };
 
 extern "C" int dbgprint(const char *fmt, ...);

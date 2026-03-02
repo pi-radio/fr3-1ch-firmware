@@ -16,9 +16,13 @@
 #include "tx_api.h"
 
 namespace TXX {
+  struct thread {
+  };
+
+  
   class ThreadBase {
     TX_THREAD _thread;
-    const std::string &_name;
+    const std::string _name;
     int _priority;
     int _preempt;
     bool _autostart;
@@ -69,6 +73,30 @@ namespace TXX {
         int timeslice = TX_NO_TIME_SLICE,
         bool autostart=true) : ThreadBase(name, __stack, stack_size,
             priority, preempt, timeslice, autostart) { }
+  };
+
+  template <class C, size_t stack_size, int priority=20, int preempt=20>
+  class MemberThread : public Thread<stack_size> {
+    C *_p;
+    void (C::*_mf)();
+
+    static void s_entry(ULONG _p) {
+      MemberThread *t = (MemberThread *)_p;
+      t->m_entry();
+    }
+    
+    void main() override {
+      (_p->*_mf)();
+    }
+
+  public:
+    MemberThread(const std::string &name, C *x, void (C::*mf)()) : Thread<stack_size>(name,
+										      priority,
+										      preempt)
+    {
+      _p = x;
+      _mf = mf;
+    }
   };
 };
 

@@ -61,9 +61,15 @@ int hw_req_get_id(const hw_req_t *req) {
 
 hw_req_t *hw_req_allocate(void)
 {
+  ULONG result;
+
   hw_req_t *retval;
 
-  tx_block_allocate(&hw_request_pool, (void **)&retval, TX_WAIT_FOREVER);
+  result = tx_block_allocate(&hw_request_pool, (void **)&retval, TX_WAIT_FOREVER);
+
+  if (result != TX_SUCCESS) {
+    Error_Handler();
+  }
 
   tx_event_flags_set(&hw_req_flags, ~(1 << hw_req_get_id(retval)), TX_AND);
 
