@@ -101,21 +101,14 @@ namespace dbg
 
   static int _counter;
 
-  
-  _dbginitializer::_dbginitializer()
+  void initialize_dbgstream()
   {
     using namespace std;
     if (_counter++ == 0) {
       new (&buffer) dbgbuffer<THREADXX_DEBUG_BUFFER_SIZE>();
       new (&dbgout) ostream (&buffer);
     }
-  }
-  
-  _dbginitializer::~_dbginitializer()
-  {
-    using namespace std;
-    if (--_counter == 0) dbgout.~ostream();
-  }
+  }  
 }
 
 extern "C" int dbgprint(const char *fmt, ...)

@@ -13,21 +13,35 @@
 
 #define DEFINE_TOKENS
 
-#include "lexer.h"
-
+#include <threadxx/dbgstream.hpp>
+#include <piradio/parser.hpp>
 
 using namespace parser;
 
+
 std::map<const std::string, token_t> __keywords;
 
-#define MAKE_KEYWORD(x)  token_t parser::keywords::x(new keyword(mklower(std::string{#x})))
-#include <keywords.h>
+#define MAKE_KEYWORD(x)  const token_t keywords::x(new keyword(#x));
+LIST_OF_KEYWORDS
+#undef MAKE_KEYWORD
 
 token_t EOL(new _EOL());
 
-keyword::keyword(const std::string &_kw) : token(KEYWORD, _kw)
+std::string mklower(const std::string &a)
 {
-  __keywords.emplace(_kw, this);
+  std::string retval;
+
+  retval.resize(a.size());
+
+  std::transform(a.begin(), a.end(), retval.begin(),
+      [](unsigned char c){ return std::tolower(c); });
+
+  return retval;
+}
+
+keyword::keyword(const std::string &_kw) : token(token_type::KEYWORD, mklower(_kw))
+{
+  __keywords.emplace(s, this);
 }
 
 
@@ -39,33 +53,23 @@ token_t _tokenizer::peek_token()
 
 token_t _tokenizer::get_token()
 {
+  dbg::dbgout << "tq size 1: " << tq.size() << std::endl;
+
   if (tq.empty()) {
     return EOL;
   }
 
   token_t retval = tq.front();
   tq.pop();
+
+  dbg::dbgout << "tq size 2: " << tq.size() << std::endl;
+
   return retval;
 }
 
-uint32_t get_hex_str(std::string::const_iterator &cur)
+void _tokenizer::push_token(token_t tok)
 {
-	uint32_t v = 0;
-	while(1)
-	{
-		if (*cur >= '0' && *cur <= '9')
-		{
-			v = v * 16 + (*cur++ - '0');
-		}
-		else if (toupper(*cur) >= 'A' && toupper(*cur) <= 'F')
-		{
-			v = v * 16 + (*cur++ - 'A' + 10);
-		}
-		else
-			break;
-	}
-
-	return v;
+  tq.push(tok);
 }
 
 int get_octal_str(std::string::const_iterator &cur)
@@ -90,21 +94,6 @@ int get_decimal_str(std::string::const_iterator &cur)
   return i;
 }
 
-token_t get_hex(std::string::const_iterator &cur)
-{
-	if (*cur == '0') {
-		cur++;
-	}
-
-	if (*cur == 'x') {
-		// Hexadecimal number
-	    cur++;
-	    return token_t(new _HEX(get_hex_str(cur)));
-    }
-
-	return token_t(new _HEX(0));
-}
-
 token_t get_number(std::string::const_iterator &cur)
 {
   int neg = 1;
@@ -122,8 +111,6 @@ token_t get_number(std::string::const_iterator &cur)
 
     if (*cur == 'x') {
       // Hexadecimal number
-    	cur++;
-    	return token_t(new _HEX(get_hex_str(cur)));
 
     } else if (*cur >= '0' && *cur <= '7') {
       // Octal number
@@ -131,9 +118,7 @@ token_t get_number(std::string::const_iterator &cur)
     }
   }
 
-  //d = i = neg * get_decimal_str(cur);
-  i = neg * get_decimal_str(cur);
-  d = get_decimal_str(cur);
+  d = i = neg * get_decimal_str(cur);
 
   if (*cur == '.') {
     cur++;
@@ -149,14 +134,11 @@ token_t get_number(std::string::const_iterator &cur)
     d *= std::pow(10, e);
   }
 
-  d = d * neg;
-
   if (isfloat) {
     return token_t(new _FLOAT(d));
   }
 
   return token_t(new _INT(i));
-
 }
 
 token_t get_id(std::string::const_iterator &cur)
@@ -176,12 +158,14 @@ token_t get_id(std::string::const_iterator &cur)
     return token_t(it->second);
   }
 
-  return token_t(new _STR(s));
+  return token_t(new _ID(s));
 }
 
 void _tokenizer::set_line(const std::string &line)
 {
   auto cur = line.begin();
+
+  dbg::dbgout << "Command: " << line << std::endl;
 
   while (!tq.empty()) tq.pop();
 
@@ -192,20 +176,15 @@ void _tokenizer::set_line(const std::string &line)
     }
 
     if (isalpha(*cur) || *cur == '_') {
-      tq.push(get_id(cur));
-    } else if (*cur == '0' && *(cur+1) == 'x') {
-    	// Hexadecimal number
-    	tq.push(get_hex(cur));
+      push_token(get_id(cur));
     } else if (isdigit(*cur) || *cur == '-') {
-      tq.push(get_number(cur));
+      push_token(get_number(cur));
     } else {
-      tq.push(token_t(new _ERROR()));
+      push_token(token_t(new _ERROR()));
       return;
     }
   }
 }
-
-_tokenizer parser::tokenizer;
 
 extern "C" int getentropy(void *buffer, size_t length)
 {

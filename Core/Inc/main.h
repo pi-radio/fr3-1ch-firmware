@@ -92,32 +92,6 @@ void power_off();
 
 #ifdef __cplusplus
 
-#include <threadxx/app.hpp>
-#include "lmx.h"
-
-class STM32H563 {
-public:
-  STM32H563();
-};
-
-class UART {
-  UART_HandleTypeDef &huart;
-public:
-  UART(UART_HandleTypeDef &h);
-};
-
-class PiRadioApp : TXX::App {
-  STM32H563 cpu;
-  UART uart1;
-  LMX::LMX2820 lmx;
-
-public:
-  PiRadioApp();
-
-  LMX::LMX2820 &get_lmx() { return lmx; }
-};
-
-extern PiRadioApp main_app;
 
 #endif
 

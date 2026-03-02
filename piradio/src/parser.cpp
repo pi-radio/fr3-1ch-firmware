@@ -1,57 +1,30 @@
-/*
- * parser.c
- *
- *  Created on: Jan 23, 2026
- *      Author: zapman
- */
-//#include <app_azure_rtos.h>
-
 #include <stdio.h>
 #include <stdarg.h>
 
 #include <format>
 
-#include <parser.h>
-#include <lexer.h>
+#include <threadxx/config_data.hpp>
+
 #include <consolexx/terminal.hpp>
 #include <lmx.h>
 #include <ltc2668.h>
 
-extern "C" {
-#include <config_data.h>
-}
+#include <piradio/parser.hpp>
+#include <piradio/app.hpp>
+
 
 using namespace parser;
-
-char parser_error[128];
-
-const char *parser_get_error_string(void)
-{
-  return parser_error;
-}
-
-void parser_set_error(const char *fmt, ...)
-{
-  va_list args;
-
-  va_start(args, fmt);
-
-  vsnprintf(parser_error, 127, fmt, args);
-  parser_error[128] = 0;
-
-  va_end(args);
-}
 
 
 // LL(1) for now -- go to LALR(1) only if needed
 
-static inline void parse_statement_end() {
+void Parser::parse_statement_end() {
   if (!tokenizer.get_token()->iseol()) {
     throw SyntaxError();
   }
 }
 
-int shift_int()
+int Parser::shift_int()
 {
   auto cur_tok = tokenizer.get_token();
 
@@ -62,7 +35,7 @@ int shift_int()
   return cur_tok->i;
 }
 
-double shift_float()
+double Parser::shift_float()
 {
   auto cur_tok = tokenizer.get_token();
 
@@ -93,13 +66,13 @@ uint32_t shift_hex()
 }
 
 
-static void parse_config_statement()
+void Parser::parse_config_statement()
 {
   auto cur_tok = tokenizer.get_token();
 
   if (cur_tok == keywords::ERASE) {
     parse_statement_end();
-    erase_config_data();
+    TXX::config_data::config.erase();
     return;
   }
 
@@ -110,7 +83,7 @@ static void parse_config_statement()
 
     uint16_t hw;
 
-    hw = config_read_word(reg);
+    hw = TXX::config_data::config.read_word(reg);
 
     printf("Config[%d]: %4.4x\n", reg, hw);
 
@@ -120,22 +93,14 @@ static void parse_config_statement()
   throw SyntaxError();
 }
 
-static void parse_lmx_powerdown() {
-	lmx.write_reg(0, 0x4071);
-}
-
-static void parse_lmx_powerup() {
-	lmx.write_reg(0, 0x4070);
-}
-
-static void parse_lmx_prog() {
+void Parser::parse_lmx_prog() {
   parse_statement_end();
 
   main_app.get_lmx().reprogram();
 }
 
 
-static void parse_lmx_read() {
+void Parser::parse_lmx_read() {
   int reg, result;
   uint16_t val;
   auto cur_tok = tokenizer.get_token();
@@ -190,7 +155,7 @@ static void parse_lmx_drive() {
 	lmx.write_reg(79, blob);
 }
 
-static void parse_lmx_write() {
+void Parser::parse_lmx_write() {
   int reg, val;
   auto cur_tok = tokenizer.get_token();
 
@@ -212,7 +177,7 @@ static void parse_lmx_write() {
   parse_statement_end();
 }
 
-static void parse_lmx_statement() {
+void Parser::parse_lmx_statement() {
   auto cur_tok = tokenizer.get_token();
 
   if (cur_tok == keywords::PROG) {
@@ -232,6 +197,7 @@ static void parse_lmx_statement() {
   }
 }
 
+<<<<<<< HEAD:STM32CubeIDE/Application/User/Parser/parser.cpp
 GPIO_PinState pin_value(uint32_t v)
 {
 	if (v == 0)
@@ -241,6 +207,9 @@ GPIO_PinState pin_value(uint32_t v)
 }
 
 static void parse_set_statement() {
+=======
+void Parser::parse_set_statement() {
+>>>>>>> 65dda3d (Massive refactoring and cleaning of code, now working again):piradio/src/parser.cpp
 
   auto cur_tok = tokenizer.get_token();
 
@@ -248,7 +217,7 @@ static void parse_set_statement() {
     auto cur_tok = tokenizer.get_token();
 
     if (cur_tok == keywords::EXT) {
-      HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
+
     } else if (cur_tok == keywords::INT) {
       HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
     } else {
@@ -327,7 +296,7 @@ extern struct bootloader_vectable {
   void (*reset_handler)(void);
 } bootloader;
 
-static void parse_bootloader_statement() {
+void Parser::parse_bootloader_statement() {
   int i;
   auto cur_tok = tokenizer.get_token();
 
@@ -360,55 +329,42 @@ static void parse_bootloader_statement() {
 
 
   /* Jump is done successfully */
-  Error_Handler();
+  dbg::dbgout << "Failed to reset device" << std::endl;
+
+  while(1);
 }
 
-int parser_parse_statement()
-{
-  parser_set_error("NOT SET");
-
-  try {
-    auto cur_tok = tokenizer.get_token();
-
-    if (cur_tok->iseol()) {
-      return PARSER_OK;
-    }
-
-    if (cur_tok == keywords::CONFIG) {
-        parse_config_statement();
-    } else if (cur_tok == keywords::LMX) {
-        parse_lmx_statement();
-    } else if (cur_tok == keywords::REDRAW) {
-        parse_statement_end();
-
-        terminal_send_command(TERMINAL_CMD_REDRAW);
-    } else if (cur_tok == keywords::CLEAR) {
-        parse_statement_end();
-
-        terminal_send_command(TERMINAL_CMD_CLEAR_OUTPUT);
-    } else if (cur_tok == keywords::BOOTLOADER){
-        parse_bootloader_statement();
-    } else if (cur_tok == keywords::SET){
-      parse_set_statement();
-    } else {
-      throw SyntaxError();
-    }
-
-    return PARSER_OK;
-  } catch (const SyntaxError &e) {
-    parser_set_error("Syntax Error");
-    return PARSER_SYNTAX_ERROR;
-  } catch (const GeneralError &e) {
-    parser_set_error(e.s.c_str());
-    return PARSER_GENERAL_ERROR;
-  } catch (...) {
-    parser_set_error("Unknown Exception!!?!?!?!?\n");
-    return PARSER_GENERAL_ERROR;
-  }
-}
-
-void lexer_set_line(const std::string &s)
+void Parser::set_line(const std::string &s)
 {
   tokenizer.set_line(s);
+}
+
+void Parser::parse()
+{
+  auto cur_tok = tokenizer.get_token();
+
+  if (cur_tok->iseol()) {
+    return;
+  }
+
+  if (cur_tok == keywords::CONFIG) {
+    parse_config_statement();
+  } else if (cur_tok == keywords::LMX) {
+    parse_lmx_statement();
+  } else if (cur_tok == keywords::REDRAW) {
+    parse_statement_end();
+
+    main_app.redraw();
+  } else if (cur_tok == keywords::CLEAR) {
+    parse_statement_end();
+
+    main_app.clear_output();
+  } else if (cur_tok == keywords::BOOTLOADER){
+    parse_bootloader_statement();
+  } else if (cur_tok == keywords::SET){
+    parse_set_statement();
+  } else {
+    throw SyntaxError();
+  }
 }
 
