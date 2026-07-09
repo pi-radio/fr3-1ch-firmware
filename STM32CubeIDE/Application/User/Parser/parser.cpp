@@ -101,6 +101,14 @@ static void parse_config_statement()
   throw SyntaxError();
 }
 
+static void parse_lmx_powerdown() {
+	lmx.write_reg(0, 0x4071);
+}
+
+static void parse_lmx_powerup() {
+	lmx.write_reg(0, 0x4070);
+}
+
 static void parse_lmx_prog() {
   parse_statement_end();
 
@@ -135,6 +143,33 @@ static void parse_lmx_read() {
   }
 }
 
+static void parse_lmx_drive() {
+	int val = shift_int();
+	uint16_t blob;
+
+	if (val == 7)
+		blob = 0x011E;
+	else if (val == 6)
+		blob = 0x011C;
+	else if (val == 5)
+		blob = 0x011A;
+	else if (val == 4)
+		blob = 0x0118;
+	else if (val == 3)
+		blob = 0x0116;
+	else if (val == 2)
+		blob = 0x0114;
+	else if (val == 1)
+		blob = 0x0112;
+	else if (val == 0)
+		blob = 0x0110;
+	else {
+		// Error
+		throw GeneralError::fmt("Invalid LMX drive {}", val);
+	}
+
+	lmx.write_reg(79, blob);
+}
 
 static void parse_lmx_write() {
   int reg, val;
@@ -167,6 +202,12 @@ static void parse_lmx_statement() {
     parse_lmx_write();
   } else if (cur_tok == keywords::READ) {
     parse_lmx_read();
+  } else if (cur_tok == keywords::POWERUP) {
+	  parse_lmx_powerup();
+  } else if (cur_tok == keywords::POWERDOWN) {
+	  parse_lmx_powerdown();
+  } else if (cur_tok == keywords::DRIVE) {
+	  parse_lmx_drive();
   } else {
     throw SyntaxError();
   }

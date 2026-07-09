@@ -47,7 +47,10 @@ public:
   uint16_t get_reg(int reg);
 
   int read_reg(int reg, uint16_t *v);
-  int write_reg(int reg, uint16_t v);
+  void write_reg(int reg, uint16_t v);
+
+  int powerup();
+  int powerdown();
 
   int locked();
 };
