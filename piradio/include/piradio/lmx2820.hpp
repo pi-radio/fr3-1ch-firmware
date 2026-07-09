@@ -193,8 +193,9 @@ protected:
   output_mux_t outBmux;
 
 
-  double fOSC;
-
+  double _fOSC;
+  double _fVCO;
+  
   struct field_base;
 
   std::vector<field_base *> fields;
@@ -338,6 +339,7 @@ protected:
 
   void program_reg(int reg);
 
+  void update_PLL(double);
   void update_fVCO(double _fVCO);
 
   void update_fcal() {
@@ -403,6 +405,8 @@ protected:
   
 public:
   LMX2820(double OSC_IN);
+
+  void set_OSCIN(double);
 
   double get_fVCO();
   double get_fOUTA();

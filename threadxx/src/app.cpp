@@ -1,4 +1,5 @@
 #include <threadxx/app.hpp>
+#include <threadxx/config_data.hpp>
 
 extern "C" {
 #include "tx_initialize.h"
@@ -18,6 +19,13 @@ AppBase::AppBase()
 void AppBase::start()
 {
   setup_clocks();
+
+  setup_memory();
+
+  setup_debug();
+
+  config_data::config.load();
+
   initialize_hardware();
 
   pre_kernel();

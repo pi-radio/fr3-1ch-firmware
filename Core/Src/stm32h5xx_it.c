@@ -73,12 +73,6 @@ extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 extern TIM_HandleTypeDef htim1;
 
 
-void handle_flash(void)
-{
-  FLASH_EccInfoTypeDef eccdata;
-
-  HAL_FLASHEx_GetEccInfo(&eccdata);
-}
 
 /* USER CODE END EV */
 
@@ -93,6 +87,7 @@ void __NMI_Handler(void)
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
   if (FLASH_NS->ECCDETR & FLASH_ECCR_ECCD){
     handle_flash();
+    return;
   }
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */

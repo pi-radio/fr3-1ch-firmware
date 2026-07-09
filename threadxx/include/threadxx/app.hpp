@@ -22,6 +22,8 @@ namespace TXX
     friend void ::tx_application_define(void *);
     
     virtual void setup_clocks() = 0;
+    virtual void setup_memory() = 0;
+    virtual void setup_debug() {};
     virtual void initialize_hardware() = 0;    
     virtual void pre_kernel() = 0;
     virtual void tx_init() = 0;

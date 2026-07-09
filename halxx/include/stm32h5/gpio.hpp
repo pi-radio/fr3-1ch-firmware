@@ -40,6 +40,7 @@ namespace gpio
 
       void enable();
       
+
       bool read();
       void set(bool);
 

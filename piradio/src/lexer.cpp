@@ -161,6 +161,26 @@ token_t get_id(std::string::const_iterator &cur)
   return token_t(new _ID(s));
 }
 
+token_t get_string(std::string::const_iterator &cur)
+{
+  char str_delim = *cur++;
+
+  std::string s;
+
+  while (true) {
+    if (*cur == str_delim) {
+      cur++;
+      break;
+    }
+
+    // TODO -- handle escapes if need be
+
+    s += *cur++;
+  }
+
+  return token_t(new _STR(s));
+}
+
 void _tokenizer::set_line(const std::string &line)
 {
   auto cur = line.begin();
@@ -179,6 +199,8 @@ void _tokenizer::set_line(const std::string &line)
       push_token(get_id(cur));
     } else if (isdigit(*cur) || *cur == '-') {
       push_token(get_number(cur));
+    } else if (*cur == '"') {
+      push_token(get_string(cur));
     } else {
       push_token(token_t(new _ERROR()));
       return;

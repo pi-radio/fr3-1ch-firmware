@@ -7,10 +7,12 @@
 
 #include <consolexx/terminal.hpp>
 #include <piradio/lmx2820.hpp>
+#include <piradio/lmx2820.hpp>
 #include <ltc2668.h>
 
 #include <piradio/parser.hpp>
 #include <piradio/app.hpp>
+#include <piradio/config.hpp>
 
 
 using namespace parser;
@@ -295,15 +297,62 @@ void Parser::parse_set_statement() {
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x04));
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x02));
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x01));
+  } else if (cur_tok == keywords::BOARD) {
+    auto cur_tok = tokenizer.get_token();
 
+    if (cur_tok == keywords::MODEL) {
+      auto cur_tok = tokenizer.get_token();
+
+      if (cur_tok->t != token::token_type::STR) {
+        throw SyntaxError();
+      }
+
+      std::string board_model = cur_tok->s;
+
+      cur_tok = tokenizer.get_token();
+
+      if (cur_tok->t != token::token_type::INT) {
+        throw SyntaxError();
+      }
+
+      parse_statement_end();
+
+      int rev = cur_tok->i;
+
+      bool found = false;
+
+      for (auto s : piradio::config::board_models) {
+        if (s == board_model) {
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        throw GeneralError::fmt("Invalid model '{}'", board_model);
+      }
+
+      if (board_model.size() > 32) {
+        throw GeneralError::fmt("Board model '{}' is too long", board_model);
+      }
+
+      dbg::dbgout << "Setting board model to " << board_model << " revision " << rev << std::endl;
+
+
+      piradio::config::board_model mdl(board_model, rev);
+
+      TXX::config_data::config.save(mdl);
+
+      return;
+    } else if (cur_tok == keywords::SERIAL) {
+
+    }
   } else {
-
 	  // Invalid SET token
 	throw SyntaxError();
 	parse_statement_end();
 	return;
   }
-
 }
 
 extern struct bootloader_vectable {
@@ -352,6 +401,16 @@ void Parser::parse_bootloader_statement() {
 void Parser::set_line(const std::string &s)
 {
   tokenizer.set_line(s);
+}
+
+void parse_lmx(int a, int b, int c)
+{
+
+}
+
+Parser::Parser()
+{
+  //rule<typeof(parse_lmx), ID<"LMX">, ID<"PROGRAM"> > r(parse_lmx);
 }
 
 void Parser::parse()

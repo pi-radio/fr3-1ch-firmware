@@ -5,6 +5,7 @@
 #include <usbxx/usbxx.hpp>
 #include <threadxx/usbpdxx.hpp>
 #include <piradio/lmx2820.hpp>
+#include <piradio/hardware.hpp>
 
 class USBSerial : public USBXX::CDCACM
 {
@@ -18,6 +19,26 @@ public:
   uint32_t on_disconnected() override;
 };
 
+class PowerTree
+{
+public:
+  virtual void power_up() = 0;
+  virtual void power_down() = 0;
+};
+
+class FR31CHPowerTree : public PowerTree
+{
+public:
+  virtual void power_up();
+  virtual void power_down();
+};
+
+class OctoLOCHPowerTree : public PowerTree
+{
+public:
+  virtual void power_up();
+  virtual void power_down();
+};
 
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
@@ -35,10 +56,20 @@ class PiRadioApp : public TXX::App<halxx::STM32H563>,
 
   TX_TIMER status_timer;
   
+  struct {
+    std::string model;
+    int revision;
+    std::string serial;
+  } board;
+
 public:
   PiRadioApp();
 
+  void initialize_gpios();
+
   void setup_clocks() override;
+  void setup_memory() override;
+  void setup_debug() override;
   void initialize_hardware() override;
   void pre_kernel() override;
   void tx_init() override;

@@ -26,6 +26,8 @@ EXTERN_C uint32_t __exc_stor[2];
 EXTERN_C void save_exception(uint32_t exception_type);
 EXTERN_C void __error_handler(const char *file, int line);
 
+#define Error_Handler()  __error_handler(__FILE__, __LINE__)
+
 #define EXCEPTION_HARD_FAULT    0xAD01FFCB
 #define EXCEPTION_DEBUG         0xDEADBEEF
 #define EXCEPTION_NMI           0xFEEDF00D

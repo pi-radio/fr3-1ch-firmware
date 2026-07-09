@@ -71,10 +71,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-/* Exported functions prototypes ---------------------------------------------*/
-#define Error_Handler()  __error_handler(__FILE__, __LINE__)
-void __error_handler(const char *file, int line);
-
 /* USER CODE BEGIN EFP */
 void schedule_power_on();
 void power_off();

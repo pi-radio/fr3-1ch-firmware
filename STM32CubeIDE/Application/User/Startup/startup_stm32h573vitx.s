@@ -124,7 +124,11 @@ NMI_Handler:
 	ldr r0, =__exc_stor
 	str sp, [r0]
 	str lr, [r0, #4]
-	b __NMI_Handler
+	push {r0, lr}
+	bl __NMI_Handler
+	pop {r0, lr}
+	dsb
+	bx lr
 
   .size NMI_Handler, .-NMI_Handler
 

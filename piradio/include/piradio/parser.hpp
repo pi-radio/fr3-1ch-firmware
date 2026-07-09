@@ -7,6 +7,8 @@
 #include <memory>
 #include <algorithm>
 #include <map>
+#include <concepts>
+#include <functional>
 
 #define LIST_OF_KEYWORDS			\
   MAKE_KEYWORD(ERASE);				\
@@ -36,6 +38,9 @@
   MAKE_KEYWORD(POWERDOWN);                      \
   MAKE_KEYWORD(DRIVE);                          \
   MAKE_KEYWORD(TXFILTER);                       \
+  MAKE_KEYWORD(BOARD);                          \
+  MAKE_KEYWORD(MODEL);                          \
+  MAKE_KEYWORD(SERIAL);                         \
 
 
 namespace parser
@@ -147,16 +152,11 @@ namespace parser
   };
 
 
-  class rule {
-    class INT;
-    class FLOAT;
-    class ID;
-  };
-
   struct ParserState
   {
+
   };
-  
+
   class Parser
   {
     _tokenizer tokenizer;
@@ -177,6 +177,8 @@ namespace parser
     void parse_bootloader_statement();
 
   public:
+    Parser();
+
     void set_line(const std::string &s);
     void parse();
   };

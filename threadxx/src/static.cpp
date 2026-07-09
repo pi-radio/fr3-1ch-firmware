@@ -1,6 +1,7 @@
 #include <threadxx/static.hpp>
 #include <threadxx/dbgstream.hpp>
 #include <threadxx/app.hpp>
+#include <threadxx/config_data.hpp>
 
 static int _counter = 0;
 
@@ -12,6 +13,7 @@ __txx_initializer::__txx_initializer()
     return;
 
   dbg::initialize_dbgstream();
+  config_data::initialize_config();
 }
 
 __txx_initializer::~__txx_initializer()
