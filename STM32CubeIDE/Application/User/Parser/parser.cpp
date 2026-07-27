@@ -73,6 +73,25 @@ double shift_float()
   return cur_tok->d;
 }
 
+std::string shift_string()
+{
+	auto cur_tok = tokenizer.get_token();
+	if (!cur_tok->isstring() ) {
+		throw SyntaxError();
+	}
+
+	return cur_tok->s;
+}
+
+uint32_t shift_hex()
+{
+	auto cur_tok = tokenizer.get_token();
+	if (!cur_tok->ishex())
+		throw SyntaxError();
+
+	return cur_tok->x;
+}
+
 
 static void parse_config_statement()
 {
@@ -213,6 +232,14 @@ static void parse_lmx_statement() {
   }
 }
 
+GPIO_PinState pin_value(uint32_t v)
+{
+	if (v == 0)
+		return GPIO_PIN_RESET;
+	else
+		return GPIO_PIN_SET;
+}
+
 static void parse_set_statement() {
 
   auto cur_tok = tokenizer.get_token();
@@ -274,6 +301,17 @@ static void parse_set_statement() {
     parse_statement_end();
 
     return;
+  } else if (cur_tok == keywords::TXFILTER) {
+	  uint32_t v = shift_hex();
+	  printf("Setting TX Filter to %x\n", (unsigned int)(v));
+
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, pin_value(v & 0x20));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, pin_value(v & 0x10));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9,  pin_value(v & 0x80));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x40));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x20));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x10));
+
   } else {
 
 	  // Invalid SET token
@@ -327,8 +365,6 @@ static void parse_bootloader_statement() {
 
 int parser_parse_statement()
 {
-  int retval;
-
   parser_set_error("NOT SET");
 
   try {

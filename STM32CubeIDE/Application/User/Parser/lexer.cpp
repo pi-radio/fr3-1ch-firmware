@@ -48,6 +48,26 @@ token_t _tokenizer::get_token()
   return retval;
 }
 
+uint32_t get_hex_str(std::string::const_iterator &cur)
+{
+	uint32_t v = 0;
+	while(1)
+	{
+		if (*cur >= '0' && *cur <= '9')
+		{
+			v = v * 16 + (*cur++ - '0');
+		}
+		else if (toupper(*cur) >= 'A' && toupper(*cur) <= 'F')
+		{
+			v = v * 16 + (*cur++ - 'A' + 10);
+		}
+		else
+			break;
+	}
+
+	return v;
+}
+
 int get_octal_str(std::string::const_iterator &cur)
 {
   int i = 0;
@@ -70,6 +90,19 @@ int get_decimal_str(std::string::const_iterator &cur)
   return i;
 }
 
+token_t get_hex(std::string::const_iterator &cur)
+{
+	if (*cur == '0') {
+		cur++;
+	}
+
+	if (*cur == 'x') {
+		// Hexadecimal number
+	    cur++;
+	    return token_t(new _HEX(get_hex_str(cur)));
+    }
+}
+
 token_t get_number(std::string::const_iterator &cur)
 {
   int neg = 1;
@@ -87,6 +120,8 @@ token_t get_number(std::string::const_iterator &cur)
 
     if (*cur == 'x') {
       // Hexadecimal number
+    	cur++;
+    	return token_t(new _INT(get_hex_str(cur)));
 
     } else if (*cur >= '0' && *cur <= '7') {
       // Octal number
@@ -120,38 +155,6 @@ token_t get_number(std::string::const_iterator &cur)
 
   return token_t(new _INT(i));
 
-#if 0
-
-  else if (*cur == '.') {
-        get_float_fractional(tok, 0);
-        return;
-      } else if (*cur == 'e') {
-        tok->d = 0;
-        get_float_exponent(tok);
-      } else {
-        return new _INT(0);
-      }
-
-  else {
-    tok->i = *cur++ - '0';
-
-    while (1) {
-      if (*cur >= '0' && *cur <= '9') {
-        tok->i = tok->i * 10 + (*cur++ - '0');
-      } else if (*cur == '.') {
-        get_float_fractional(tok, tok->i);
-        return;
-      } else if (c == 'e') {
-        tok->d = tok->i;
-        get_float_exponent(tok);
-      } else {
-        tok->token_type = TOK_INT;
-        tok->i = neg * tok->i;
-        return;
-      }
-    }
-  }
-#endif
 }
 
 token_t get_id(std::string::const_iterator &cur)
@@ -188,6 +191,9 @@ void _tokenizer::set_line(const std::string &line)
 
     if (isalpha(*cur) || *cur == '_') {
       tq.push(get_id(cur));
+    } else if (*cur == '0' && *(cur+1) == 'x') {
+    	// Hexadecimal number
+    	tq.push(get_hex(cur));
     } else if (isdigit(*cur) || *cur == '-') {
       tq.push(get_number(cur));
     } else {
@@ -204,132 +210,3 @@ extern "C" int getentropy(void *buffer, size_t length)
   return -ENOSYS;
 }
 
-
-#if 0
-
-
-
-token _peek_token;
-
-int token_pushc(token *tok, char c)
-{
-  if (tok->s.len >= sizeof(tok->s.str) - 1) {
-    return -1;
-  }
-
-  tok->s.str[tok->s.len++] = c;
-
-  return 0;
-}
-
-
-
-void get_float_fractional(token *tok, int ip) {
-  char c;
-
-  // c == '.'
-  c = rxchar();
-}
-
-void get_float_exponent(token *tok) {
-
-}
-
-
-void get_string_esc(token *tok)
-{
-  char c;
-
-  c = rxchar();
-
-  switch(c) {
-  case '"':
-  case '\\':
-    token_pushc(tok, c);
-    return;
-
-  case 'n':
-    token_pushc(tok, '\n');
-    return;
-
-  case 'r':
-    token_pushc(tok, '\r');
-    return;
-
-  case 't':
-    token_pushc(tok, '\t');
-    return;
-
-  case 'x':
-  {
-    int c1, c2;
-    c1 = rxchar();
-    c2 = rxchar();
-
-    token_pushc(tok, ((c1 - '0') << 4) + (c2 - '0'));
-    return;
-  }
-
-
-  default:
-    return;
-  }
-}
-
-void get_string(token *tok)
-{
-  char c;
-
-  // Get first "
-  rxchar();
-
-  while(1) {
-    c = rxchar();
-
-    if (c == '"') {
-      break;
-    } else if (c == '\\') {
-      get_string_esc(tok);
-    }
-  }
-}
-
-void _get_token(token *tok)
-{
-  int c = peekchar();
-
-  memset(tok, 0, sizeof(*tok));
-
-  while (isspace(c) && c != '\n' && c != '\r') {
-    rxchar();
-
-    c = peekchar();
-  }
-
-}
-
-void peek_token(token *tok)
-{
-  if (_peek_token.token_type != TOK_NONE) {
-    _get_token(&_peek_token);
-  }
-
-  memcpy(tok, &_peek_token, sizeof(*tok));
-}
-
-EXTERN_C void get_token(token *tok)
-{
-  if (_peek_token.token_type != TOK_NONE) {
-    memcpy(tok, &_peek_token, sizeof(*tok));
-    _peek_token.token_type = TOK_NONE;
-    return;
-  }
-
-  _get_token(tok);
-}
-
-EXTERN_C void init_lexer(void)
-{
-  _peek_token.token_type = TOK_NONE;
-}
-#endif

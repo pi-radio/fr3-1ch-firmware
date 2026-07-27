@@ -23,27 +23,33 @@ namespace parser
       EOL,
       ERROR,
       ID,
-      KEYWORD
+      KEYWORD,
+	  HEX
     } t;
 
     const std::string s;
     const int i;
     const double d;
+    const uint32_t x;
 
-    token(tok_type _t)  : t(_t), s(""), i(0), d(0.0) {}
-    token(tok_type _t, const std::string &_s)  : t(_t), s(_s), i(0), d(0.0) {}
-    token(tok_type _t, const int &_i)  : t(_t), s(""), i(_i), d(0.0) {}
-    token(tok_type _t, const double &_d)  : t(_t), s(""), i(0), d(_d) {}
+    token(tok_type _t)  : t(_t), s(""), i(0), d(0.0), x(0) {}
+    token(tok_type _t, const std::string &_s)  : t(_t), s(_s), i(0), d(0.0), x(0) {}
+    token(tok_type _t, const int &_i)  : t(_t), s(""), i(_i), d(0.0), x(0) {}
+    token(tok_type _t, const double &_d)  : t(_t), s(""), i(0), d(_d), x(0) {}
+    token(tok_type _t, const uint32_t &_x)  : t(_t), s(""), i(0), d(0.0), x(_x) {}
 
     bool isint() { return t == INT; }
     bool isfloat() { return t == FLOAT; }
     bool iseol() { return t == EOL; }
+    bool isstring() { return t == STR; }
+    bool ishex() { return t == HEX; }
 
     bool operator == (const token &o) {
       if (t != o.t) return false;
       if (s != o.s) return false;
       if (i != o.i) return false;
       if (d != o.d) return false;
+      if (x != o.x) return false;
       return true;
     }
   };
@@ -62,6 +68,10 @@ namespace parser
 
   struct _INT : public token {
     _INT(int _i) : token(INT, _i) {}
+  };
+
+  struct _HEX : public token {
+    _HEX(uint32_t _x) : token(HEX, _x) {}
   };
 
   struct _FLOAT : public token {
