@@ -307,10 +307,10 @@ static void parse_set_statement() {
 
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, pin_value(v & 0x20));
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, pin_value(v & 0x10));
-	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9,  pin_value(v & 0x80));
-	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x40));
-	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x20));
-	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x10));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9,  pin_value(v & 0x08));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x04));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x02));
+	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x01));
 
   } else {
 

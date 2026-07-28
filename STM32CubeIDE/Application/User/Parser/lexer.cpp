@@ -101,6 +101,8 @@ token_t get_hex(std::string::const_iterator &cur)
 	    cur++;
 	    return token_t(new _HEX(get_hex_str(cur)));
     }
+
+	return token_t(new _HEX(0));
 }
 
 token_t get_number(std::string::const_iterator &cur)
@@ -121,7 +123,7 @@ token_t get_number(std::string::const_iterator &cur)
     if (*cur == 'x') {
       // Hexadecimal number
     	cur++;
-    	return token_t(new _INT(get_hex_str(cur)));
+    	return token_t(new _HEX(get_hex_str(cur)));
 
     } else if (*cur >= '0' && *cur <= '7') {
       // Octal number
