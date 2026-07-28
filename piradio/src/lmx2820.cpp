@@ -556,6 +556,13 @@ namespace LMX {
     program();
   }
 
+  void LMX2820::write_reg(int reg, uint16_t val)
+  {
+    regs[reg] = val;
+
+    program_reg(reg);
+  }
+
   void LMX2820::program()
   {
     int i;
