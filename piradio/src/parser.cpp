@@ -48,25 +48,16 @@ double Parser::shift_float()
   return cur_tok->d;
 }
 
-std::string shift_string()
+std::string Parser::shift_string()
 {
 	auto cur_tok = tokenizer.get_token();
+
 	if (!cur_tok->isstring() ) {
 		throw SyntaxError();
 	}
 
 	return cur_tok->s;
 }
-
-uint32_t shift_hex()
-{
-	auto cur_tok = tokenizer.get_token();
-	if (!cur_tok->ishex())
-		throw SyntaxError();
-
-	return cur_tok->x;
-}
-
 
 void Parser::parse_config_statement()
 {
@@ -96,11 +87,11 @@ void Parser::parse_config_statement()
 }
 
 void Parser::parse_lmx_powerdown() {
-	lmx.write_reg(0, 0x4071);
+	main_app.get_lmx().write_reg(0, 0x4071);
 }
 
 void Parser::parse_lmx_powerup() {
-	lmx.write_reg(0, 0x4070);
+  main_app.get_lmx().write_reg(0, 0x4070);
 }
 
 void Parser::parse_lmx_prog() {
@@ -137,7 +128,7 @@ void Parser::parse_lmx_read() {
   }
 }
 
-static void parse_lmx_drive() {
+void Parser::parse_lmx_drive() {
 	int val = shift_int();
 	uint16_t blob;
 
@@ -162,7 +153,7 @@ static void parse_lmx_drive() {
 		throw GeneralError::fmt("Invalid LMX drive {}", val);
 	}
 
-	lmx.write_reg(79, blob);
+	main_app.get_lmx().write_reg(79, blob);
 }
 
 void Parser::parse_lmx_write() {
@@ -288,7 +279,7 @@ void Parser::parse_set_statement() {
 
     return;
   } else if (cur_tok == keywords::TXFILTER) {
-	  uint32_t v = shift_hex();
+	  uint32_t v = shift_int();
 	  printf("Setting TX Filter to %x\n", (unsigned int)(v));
 
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, pin_value(v & 0x20));

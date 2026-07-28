@@ -152,7 +152,7 @@ void PiRadioApp::initialize_hardware() {
   MX_LPTIM1_Init();
 }
 
-void setup_bank(GPIO_TypeDef *gpio, vector<uint32_t> &pins, vector<uint32_t> &set_pins)
+void setup_bank(GPIO_TypeDef *gpio, const std::vector<uint32_t> &pins, const std::vector<uint32_t> &set_pins)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -160,10 +160,10 @@ void setup_bank(GPIO_TypeDef *gpio, vector<uint32_t> &pins, vector<uint32_t> &se
     set_mask = 0;
   
   for(auto &i: pins) {
-    pins_mask |= (1 << i);
+    pin_mask |= (1 << i);
   }
   
-  GPIO_InitStruct.Pin = pins_mask;
+  GPIO_InitStruct.Pin = pin_mask;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -174,8 +174,8 @@ void setup_bank(GPIO_TypeDef *gpio, vector<uint32_t> &pins, vector<uint32_t> &se
     set_mask |= (1 << i);
   }
   
-  HAL_GPIO_WritePin(gpio, pins_mask & ~set_mask, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(gpio, pins_mask & set_mask, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(gpio, pin_mask & ~set_mask, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(gpio, pin_mask & set_mask, GPIO_PIN_SET);
 }
 
 /*
@@ -202,26 +202,27 @@ void PiRadioApp::initialize_gpios()
       __HAL_RCC_GPIOD_CLK_ENABLE();
       __HAL_RCC_GPIOE_CLK_ENABLE();
       
+      std::vector<uint32_t> a_pins, b_pins, c_pins, d_pins, e_pins;
+      std::vector<uint32_t> a_set, e_set;
+
       if (board.model == "FR3 1CH") {
-        std::vector<uint32_t> a_pins({ 0, 1, 2, 3 });  
-        std::vector<uint32_t> a_set({ 2 });
+        a_pins = { 0, 1, 2, 3 };
+        a_set = { 2 };
         
-        std::vector<uint32_t> b_pins({ 4, 6, 7, 8, 9 });
-        std::vector<uint32_t> c_pins({ 7, 8, 9 });
-        std::vector<uint32_t> d_pins({ 6, 7, 8, 9, 10, 11, 12, 13, 14 });
+        b_pins = { 4, 6, 7, 8, 9 };
+        c_pins = { 7, 8, 9 };
+        d_pins = { 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         
-        std::vector<uint32_t> e_pins({ 2, 5, 6, 8, 9, 10, 12, 13, 14 });
-        std::vector<uint32_t> e_set({ 9. 10 });
+        e_pins = { 2, 5, 6, 8, 9, 10, 12, 13, 14 };
+        e_set = { 9, 10 };
       } else if (board.model == "OctoLO") {
-        std::vector<uint32_t> a_pins({ 0, 1, 2, 3 });
-        std::vector<uint32_t> a_set({ });
+        a_pins = { 0, 1, 2, 3 };
         
-        std::vector<uint32_t> b_pins({ 7, 8, 9 });
-        std::vector<uint32_t> c_pins({ 8, 9 });
-        std::vector<uint32_t> d_pins({ 6, 7 });
+        b_pins = { 7, 8, 9 };
+        c_pins = { 8, 9 };
+        d_pins = { 6, 7 };
         
-        std::vector<uint32_t> e_pins({ 2, 5, 9, 13 });        
-        std::vector<uint32_t> e_set({ }); 
+        e_pins = { 2, 5, 9, 13 };
       }
       
       setup_bank(GPIOA, a_pins, a_set);

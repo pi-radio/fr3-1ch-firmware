@@ -439,8 +439,8 @@ public:
   int read_reg(int reg, uint16_t *v);
   void write_reg(int reg, uint16_t v);
 
-  int powerup();
-  int powerdown();
+  int power_up();
+  int power_down();
 
   int locked();
 };

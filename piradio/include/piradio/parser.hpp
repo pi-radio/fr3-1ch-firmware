@@ -69,6 +69,8 @@ namespace parser
     bool isint() const { return t == token_type::INT; }
     bool isfloat() const { return t == token_type::FLOAT; }
     bool iseol() const { return t == token_type::EOL; }
+    bool isstring() const { return t == token_type::STR; }
+
 
     bool operator == (const token &o) const {
       if (t != o.t) return false;
@@ -165,6 +167,9 @@ namespace parser
     void parse_statement_end();
     int shift_int();
     double shift_float();
+    std::string shift_string();
+
+
     void parse_config_statement();
     void parse_lmx_prog();
     void parse_lmx_read();
@@ -173,6 +178,7 @@ namespace parser
     void parse_lmx_statement();
     void parse_lmx_powerup();
     void parse_lmx_powerdown();
+    void parse_lmx_drive();
     void parse_set_statement();
     void parse_bootloader_statement();
 
