@@ -682,11 +682,7 @@ namespace LMX {
   {
     uint32_t v = (reg << 16) | regs[reg];
 
-#if 0
-    spi_transmit(SPI_DEVICE_LMX, 3, v);
-#else
     spi_transfer(SPI_DEVICE_LMX, 3, &v);
-#endif
 
     dirty.reset(reg);
   }

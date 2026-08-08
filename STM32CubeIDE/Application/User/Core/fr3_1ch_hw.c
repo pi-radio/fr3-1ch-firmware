@@ -116,12 +116,6 @@ int spi_transfer(int device, int lenb, uint32_t *v)
 
   req->data = *v;
 
-  printf("cmd_flags %08x \n", req->cmd_flags);
-  printf("dev_flags_size %08x \n", req->dev_flags_size);
-  printf("data %08x \n", req->data);
-  printf("l %08x \n", req->l);
-  printf("\n");
-
   //HAL_Delay(1);
   tx_thread_sleep(10);
 

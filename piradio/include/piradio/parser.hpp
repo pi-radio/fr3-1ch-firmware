@@ -41,10 +41,15 @@
   MAKE_KEYWORD(BOARD);                          \
   MAKE_KEYWORD(MODEL);                          \
   MAKE_KEYWORD(SERIAL);                         \
+  MAKE_KEYWORD(GET);        \
 
 
 namespace parser
 {
+  struct token_base {
+
+  };
+
   struct token {
     enum class token_type {
       STR,
@@ -81,15 +86,17 @@ namespace parser
     }
   };
 
+
+
   typedef std::shared_ptr<token> token_t;
 
 
-  struct _ID : public token {
-    _ID(std::string _s) : token(token_type::ID, _s) {}
+  struct ID : public token {
+    ID(std::string _s) : token(token_type::ID, _s) {}
   };
 
-  struct _STR : public token {
-    _STR(std::string _s) : token(token_type::STR, _s) {}
+  struct STR : public token {
+    STR(std::string _s) : token(token_type::STR, _s) {}
   };
 
 
@@ -97,22 +104,43 @@ namespace parser
     _INT(int _i) : token(token_type::INT, _i) {}
   };
 
-  struct _FLOAT : public token {
-    _FLOAT(double _d) : token(token_type::FLOAT, _d) {}
+  struct FLOAT : public token {
+    FLOAT(double _d) : token(token_type::FLOAT, _d) {}
   };
 
   struct _EOL : public token {
     _EOL() : token(token_type::EOL) {}
   };
 
-  struct _ERROR : public token {
-    _ERROR() : token(token_type::ERROR) {}
+  struct ERROR : public token {
+    ERROR() : token(token_type::ERROR) {}
   };
 
   struct keyword : public token {
     keyword(const std::string &_kw);
   };
   
+
+
+
+
+  template <typename t, typename... rest>
+  struct rule_fragment {
+    rule_fragment<rest...> remainder;
+  };
+
+  template <typename t>
+  struct rule_fragment<t> {
+  };
+
+  template <typename t, typename... rest>
+  struct rule {
+    rule_fragment<t, rest...> body;
+  };
+
+
+
+
 
 #define MAKE_KEYWORD(x) extern const token_t x; 
   namespace keywords {
@@ -154,7 +182,19 @@ namespace parser
   };
 
 
-  struct ParserState
+  struct ParserHandler
+  {
+
+  };
+
+  struct Nonterminal : public ParserHandler
+  {
+    std::map<token::token_type, ParserHandler *> children;
+
+    void add_rule();
+  };
+
+  struct Action : public ParserHandler
   {
 
   };
@@ -180,6 +220,7 @@ namespace parser
     void parse_lmx_powerdown();
     void parse_lmx_drive();
     void parse_set_statement();
+    void parse_get_statement();
     void parse_bootloader_statement();
 
   public:

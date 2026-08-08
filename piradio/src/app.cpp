@@ -28,9 +28,8 @@ extern "C" {
 using namespace piradio::config;
 using namespace TXX::config_data;
 
-PiRadioApp::PiRadioApp() : lmx(10e6),
-    term(usb_serial),
-    cmd_queue("App command queue")
+PiRadioApp::PiRadioApp() : term(usb_serial),
+      cmd_queue("App command queue")
 {
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
@@ -134,14 +133,36 @@ void PiRadioApp::initialize_hardware() {
   try {
     auto bm = config.get<board_model>();
 
-    board.model.append((char *)bm->model, bm->length);
-    board.revision = bm->revision;
+    if (bm != nullptr) {
+      board.model.append((char *)bm->model, bm->length);
+      board.revision = bm->revision;
+    } else {
+      dbg::dbgout << "Board model not found" << std::endl;
+    }
   } catch(...) {
     dbg::dbgout << "Board model not found" << std::endl;
   }
 
-  initialize_gpios();
+  if (board.model == "FR3 1CH") {
+    hardware = new piradio::hardware::FR31CHHardware();
+  } else if (board.model == "OctoLO") {
+    hardware = new piradio::hardware::OctoLOHardware();
+  } else if (board.model.size() == 0) {
+    std::cout << "Unprovisioned board. Please run 'set board model <model> <revision>' and restart" << std::endl;
+    hardware = new piradio::hardware::UnconfiguredHardware();
+  } else {
+    std::cout << "Unknown board model '" << board.model << "'.  We should never see this." << std::endl;
+    hardware = new piradio::hardware::UnconfiguredHardware();
+  }
 
+  if (hardware->configured()) {
+    std::cout << board.model << " starting..." << std::endl;
+  }
+
+  tx_thread_sleep(100);
+
+  //initialize_gpios();
+  hardware->initialize_gpios();
   
   MX_GPDMA1_Init();
   MX_SPI4_Init();
@@ -237,8 +258,6 @@ void PiRadioApp::initialize_gpios()
 void PiRadioApp::pre_kernel()
 {
   USBPD_PreInitOs();
-
-  lmx.setup();
 }
 
 void PiRadioApp::tx_init()
@@ -275,22 +294,10 @@ void PiRadioApp::tx_init()
 void PiRadioApp::app_main()
 {
   parser::Parser p;
-  
-  if (board.model.size()) {
-    std::cout << board.model << " starting..." << std::endl;
-  } else {
-    std::cout << "Unprovisioned board. Please run 'set board model <model> <revision>' and restart" << std::endl;
-  }
 
-  tx_thread_sleep(1000);
+  hardware->power_up();
 
-  if (board.model == "OctoLO") {
-    lmx.set_OSCIN(100e6);
-    lmx.dump();
-  }
-
-  printf("Programming LMX...\r\n");
-  lmx.program();
+  hardware->restore_settings();
 
   while (true) {
     std::string *ps = (std::string *)cmd_queue.recv();
@@ -359,46 +366,6 @@ void PiRadioApp::clear_output()
   output_win->clear();
 }
 
-void FR31CHPowerTree::power_up()
-{
-  // 1. Start the power-up sequence
-  // a. In-rush Enable
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8, GPIO_PIN_SET);
-  //tx_thread_sleep(100);
-  
-  // b. Enable BUCK_5V3
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-  //tx_thread_sleep(100);
-  
-  // c. Enable BUCK_3V7
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-  //tx_thread_sleep(100);
-  
-  // 2. Get the LO Working
-  // a. LO_CTRL_3V3. 0: Internal LMX. 1: External from SMA
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
-  
-  // b. Enable the TCXO.
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-  
-  // c. Select the Clock source.  0: External. 1: On-board
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
-  
-}
-
-void FR31CHPowerTree::power_down()
-{
-}
-
-void OctoLOCHPowerTree::power_up()
-{
-}
-
-void OctoLOCHPowerTree::power_down()
-{
-}
-
-
 
 PiRadioApp main_app;
 
@@ -436,26 +403,3 @@ EXTERN_C int _write(int file, char *ptr, int len)
   return main_app.writemsg(ptr, len);
 }
 
-#if 0
-
-EXTERN_C int terminal_send_command(int cmd)
-{
-  switch (cmd) {
-  case TERMINAL_CMD_NOOP:
-    return 0;
-  case TERMINAL_CMD_REDRAW:
-    term->enqueue_cmd(cmd);
-    return 0;
-  case TERMINAL_CMD_FLUSH:
-    // has to go through the character stream to be sure
-    // we flush to this point
-    term->flush();
-    return 0;
-  case TERMINAL_CMD_CLEAR_OUTPUT:
-    output_win->clear();
-    return 0;
-  default:
-    return -1;
-  }
-}
-#endif

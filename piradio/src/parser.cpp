@@ -87,17 +87,17 @@ void Parser::parse_config_statement()
 }
 
 void Parser::parse_lmx_powerdown() {
-	main_app.get_lmx().write_reg(0, 0x4071);
+	main_app.get_lmx()->write_reg(0, 0x4071);
 }
 
 void Parser::parse_lmx_powerup() {
-  main_app.get_lmx().write_reg(0, 0x4070);
+  main_app.get_lmx()->write_reg(0, 0x4070);
 }
 
 void Parser::parse_lmx_prog() {
   parse_statement_end();
 
-  main_app.get_lmx().reprogram();
+  main_app.get_lmx()->reprogram();
 }
 
 
@@ -119,7 +119,7 @@ void Parser::parse_lmx_read() {
 
   parse_statement_end();
 
-  result = main_app.get_lmx().read_reg(reg, &val);
+  result = main_app.get_lmx()->read_reg(reg, &val);
 
   if (result == 0) {
     printf("LMX reg %d: %04x\n", reg, val);
@@ -153,7 +153,7 @@ void Parser::parse_lmx_drive() {
 		throw GeneralError::fmt("Invalid LMX drive {}", val);
 	}
 
-	main_app.get_lmx().write_reg(79, blob);
+	main_app.get_lmx()->write_reg(79, blob);
 }
 
 void Parser::parse_lmx_write() {
@@ -185,7 +185,7 @@ void Parser::parse_lmx_tune() {
     throw GeneralError::fmt("Invalid frequency {}", f);
   }
 
-  main_app.get_lmx().tune(f);
+  main_app.get_lmx()->tune(f);
 }
 
 void Parser::parse_lmx_statement() {
@@ -216,6 +216,39 @@ GPIO_PinState pin_value(uint32_t v)
 		return GPIO_PIN_RESET;
 	else
 		return GPIO_PIN_SET;
+}
+
+using namespace piradio::config;
+using namespace TXX::config_data;
+
+void Parser::parse_get_statement() {
+  auto cur_tok = tokenizer.get_token();
+
+  if (cur_tok == keywords::BOARD) {
+      auto cur_tok = tokenizer.get_token();
+
+      if (cur_tok == keywords::MODEL) {
+        auto cur_tok = tokenizer.get_token();
+
+        parse_statement_end();
+
+        auto bm = config.get<board_model>();
+
+        if (bm != nullptr) {
+          std::string model;
+
+          model.append((char *)bm->model, bm->length);
+
+          std::cout << "Board model '" << model << "' revision " << bm->revision << std::endl;
+          return;
+        } else {
+          std::cout << "Board model not set" << std::endl;
+          return;
+        }
+      }
+  }
+
+  throw SyntaxError();
 }
 
 void Parser::parse_set_statement() {
@@ -327,7 +360,7 @@ void Parser::parse_set_statement() {
         throw GeneralError::fmt("Board model '{}' is too long", board_model);
       }
 
-      dbg::dbgout << "Setting board model to " << board_model << " revision " << rev << std::endl;
+      std::cout << "Setting board model to " << board_model << " revision " << rev << std::endl;
 
 
       piradio::config::board_model mdl(board_model, rev);
@@ -426,6 +459,8 @@ void Parser::parse()
     main_app.clear_output();
   } else if (cur_tok == keywords::BOOTLOADER){
     parse_bootloader_statement();
+  } else if (cur_tok == keywords::GET){
+    parse_get_statement();
   } else if (cur_tok == keywords::SET){
     parse_set_statement();
   } else {

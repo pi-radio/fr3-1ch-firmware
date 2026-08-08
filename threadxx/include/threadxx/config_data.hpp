@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <deque>
 #include <map>
 #include <format>
 #include <memory>
@@ -127,8 +128,9 @@ namespace TXX
       config_version version;
       uint32_t append_point;
       uint32_t read_pos;
+      uint32_t free_space;
 
-      page() : N(0xFFFFFFFF), serial(0xFFFFFFFF), version(CUR_VERSION), append_point(0), read_pos(0) {}
+      page() : N(0xFFFFFFFF),  serial(0xFFFFFFFF),  version(CUR_VERSION), append_point(0), read_pos(0), free_space(flash::HEFlash::SECTOR_SIZE) {}
 
       uint32_t area_offset(uint32_t off) { return  + off; }
 
@@ -160,10 +162,15 @@ namespace TXX
       static constexpr uint32_t NPAGES = flash::HEFlash::NSECTORS;
 
     private:
+      uint32_t next_serial;
       page pages[NPAGES];
       
-      std::map <uint32_t, page *> page_seq;
-      std::map <uint16_t, std::shared_ptr<tlv_base> > values;
+
+      std::deque<uint32_t> free_pages;
+
+      std::map<uint32_t, page *> page_seq;
+      std::map<uint16_t, std::pair<uint32_t, uint32_t> > addrs;
+      std::map<uint16_t, std::shared_ptr<tlv_base> > values;
 
       void scan_headers();
     public:
@@ -214,6 +221,8 @@ namespace TXX
         }
       }
       
+      uint32_t allocate_page();
+
       void save(const uint16_t *data, uint16_t length);
 
       template <typename Tv>

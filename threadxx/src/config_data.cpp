@@ -32,6 +32,8 @@ _config::_config() {
   for (uint32_t i = 0; i < NPAGES; i++) {
     pages[i].N = i;
   }
+
+  next_serial = 0;
 }
 
 void _config::scan_headers() {
@@ -44,6 +46,8 @@ void _config::scan_headers() {
       if (e.data != 0xFFFF)
         dbg::dbgout << std::format("Uncorrectible ECC: offset: {:08x} info: {:08x} addr: {:04x} data: {:04x}",
             i * HEFlash::SECTOR_SIZE / 2, e.error_info, e.addr, e.data) << std::endl;
+
+      free_pages.push_back(i);
       continue;
     } catch(InvalidLengthException e) {
       dbg::dbgout << std::format("Invalid config header length {} on page {}", e.found_len, i) << std::endl;
@@ -52,16 +56,18 @@ void _config::scan_headers() {
 
     dbg::dbgout << "Found data on page " << i << std::endl;
 
-    pages[i].N = hdr->page_serial;
+    pages[i].N = i;
+    pages[i].serial = hdr->page_serial;
     pages[i].version = hdr->version;
     pages[i].read_pos = hdr->l;
+    pages[i].free_space -= sizeof(hdr);
 
-    page_seq[pages[i].N] = &pages[i];
+    page_seq[pages[i].serial] = &pages[i];
 
     if (pages[i].version > CUR_VERSION)
     {
 
-      dbg::dbgout << std::format("WARNING: Firmware downgrade detected (my config ver: {}.{}.{} in flash: {}.{}.{}",
+      std::cout << std::format("WARNING: Firmware downgrade detected (my config ver: {}.{}.{} in flash: {}.{}.{}",
           CUR_VERSION.maj, CUR_VERSION.min, CUR_VERSION.rel, pages[i].version.maj, pages[i].version.min, pages[i].version.rel) << std::endl;
     }
 
@@ -73,19 +79,23 @@ void _config::load() {
   scan_headers();
 
   if (page_seq.size() == 0) {
+    uint32_t page = free_pages.front();
+    free_pages.pop_front();
+
     // Write the first page
     config_header hdr(0);
 
-    pages[0].N = 0;
+
+    pages[page].serial = 0;
 
     try {
-      write(0, hdr);
+      write(page, hdr);
     } catch(ProgramSequenceError e) {
       dbg::dbgout << std::format("ERROR: Unable to write header to sector {}", 0) << std::endl;
       return;
     }
 
-    page_seq[pages[0].N] = &pages[0];
+    page_seq[page] = &pages[page];
 
     scan_headers();
 
@@ -108,8 +118,19 @@ void _config::load() {
         break;
       }
 
+      if (addrs.contains(tag)) {
+        uint32_t page_no = addrs[tag].first;
+
+        pages[page_no].free_space += values[tag]->l;
+      }
+
+      addrs.insert_or_assign(tag, std::make_pair(page->N, page->read_pos));
+
       auto p = registry.read(tag, page->N, page->read_pos);
 
+      page->free_space -= p->l;
+
+      values.erase(tag);
       values.emplace(tag, p);
 
       page->read_pos += p->l;
@@ -120,12 +141,37 @@ void _config::load() {
 
 }
 
+uint32_t _config::allocate_page()
+{
+  if (free_pages.size() != 0) {
+    uint32_t serial = (*(--page_seq.end())).first + 1;
+
+    uint32_t page = free_pages.front();
+    free_pages.pop_front();
+
+    config_header hdr(serial);
+
+    try {
+      write(page, hdr);
+    } catch(ProgramSequenceError e) {
+      dbg::dbgout << std::format("ERROR: Unable to write header to sector {}", 0) << std::endl;
+      return -1;
+    }
+
+    page_seq[serial] = &pages[page];
+
+    return page;
+  }
+
+}
+
 void _config::save(const uint16_t *data, uint16_t length)
 {
   page *append_page = (*(--page_seq.end())).second;
 
   if (!append_page->has_room(length)) {
     // Allocate new page
+    allocate_page();
 
     append_page = (*(--page_seq.end())).second;
   }

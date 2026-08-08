@@ -4,7 +4,6 @@
 #include <consolexx/terminal.hpp>
 #include <usbxx/usbxx.hpp>
 #include <threadxx/usbpdxx.hpp>
-#include <piradio/lmx2820.hpp>
 #include <piradio/hardware.hpp>
 
 class USBSerial : public USBXX::CDCACM
@@ -19,32 +18,10 @@ public:
   uint32_t on_disconnected() override;
 };
 
-class PowerTree
-{
-public:
-  virtual void power_up() = 0;
-  virtual void power_down() = 0;
-};
-
-class FR31CHPowerTree : public PowerTree
-{
-public:
-  virtual void power_up();
-  virtual void power_down();
-};
-
-class OctoLOCHPowerTree : public PowerTree
-{
-public:
-  virtual void power_up();
-  virtual void power_down();
-};
-
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
                    public text_field_callbacks
 {
-  LMX::LMX2820 lmx;
   TXX::Queue<1, 16> cmd_queue;
   USBSerial usb_serial;
   USBPD usbpd;
@@ -55,7 +32,9 @@ class PiRadioApp : public TXX::App<halxx::STM32H563>,
   text_field *input_win = NULL;
 
   TX_TIMER status_timer;
-  
+
+  piradio::hardware::PiRadioHardware *hardware = NULL;
+
   struct {
     std::string model;
     int revision;
@@ -75,7 +54,9 @@ public:
   void tx_init() override;
   void app_main() override;
   
-  LMX::LMX2820 &get_lmx() { return lmx; }
+  LMX::LMX2820 *get_lmx() {
+    return hardware->get_lmx();
+  }
 
   int render(const char *buffer, size_t size) override;
 

@@ -135,7 +135,7 @@ token_t get_number(std::string::const_iterator &cur)
   }
 
   if (isfloat) {
-    return token_t(new _FLOAT(d));
+    return token_t(new FLOAT(d));
   }
 
   return token_t(new _INT(i));
@@ -158,7 +158,7 @@ token_t get_id(std::string::const_iterator &cur)
     return token_t(it->second);
   }
 
-  return token_t(new _ID(s));
+  return token_t(new ID(s));
 }
 
 token_t get_string(std::string::const_iterator &cur)
@@ -178,7 +178,7 @@ token_t get_string(std::string::const_iterator &cur)
     s += *cur++;
   }
 
-  return token_t(new _STR(s));
+  return token_t(new STR(s));
 }
 
 void _tokenizer::set_line(const std::string &line)
@@ -202,7 +202,7 @@ void _tokenizer::set_line(const std::string &line)
     } else if (*cur == '"') {
       push_token(get_string(cur));
     } else {
-      push_token(token_t(new _ERROR()));
+      push_token(token_t(new ERROR()));
       return;
     }
   }
