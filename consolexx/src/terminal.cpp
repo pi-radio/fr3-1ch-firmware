@@ -26,7 +26,8 @@ terminal::terminal(USBXX::CDCACM &cdc) :
     refresh_thread("Terminal Refresh Thread", this, &terminal::_refresh_thread),
     input_mutex("Terminal Input Mutex"),
     c_peek(0), last_dtr(0),
-    usb_cdc_acm(cdc)
+    usb_cdc_acm(cdc),
+    cmd_handler(nullptr)
 {
   //void *pstack;
   memset(input_buf, 0, sizeof(input_buf));
@@ -52,7 +53,9 @@ void terminal::startup()
 
 void terminal::on_command(const std::string &s)
 {
-
+  if (cmd_handler != nullptr) {
+    cmd_handler->on_command(s);
+  }
 }
 
 void terminal::draw(position p, const uint8_t *buf, size_t len)
@@ -129,12 +132,19 @@ void terminal::emit_cs(const char *fmt, ...)
   }
 }
 
+#include <threadxx/ring_buffer.hpp>
+
+TXX::ring_buffer_base<int, 32> tx_char_ring;
+TXX::ring_buffer_base<int, 32> rx_char_ring;
+
 void terminal::txchar(uint32_t c)
 {
   if(onlcr && c == 0x0A) {
     usb_cdc_acm.putc(0x0D);
+    tx_char_ring.pushc(0x0D);
   }
   
+  tx_char_ring.pushc(c);
   usb_cdc_acm.putc(c);
 }
 
@@ -142,7 +152,11 @@ void terminal::txchar(uint32_t c)
 void terminal::_rx_thread()
 {
   while(1) {
-    vtp.process(usb_cdc_acm.getc());
+    int c = usb_cdc_acm.getc();
+
+    rx_char_ring.pushc(c);
+
+    vtp.process(c);
   }
 }
 

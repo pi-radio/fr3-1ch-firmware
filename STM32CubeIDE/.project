@@ -1590,66 +1590,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_utility_virtual_address.c</locationURI>
 		</link>
 		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_activate.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_activate.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_bulkin_thread.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_bulkin_thread.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_bulkout_thread.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_bulkout_thread.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_control_request.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_control_request.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_deactivate.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_deactivate.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_entry.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_entry.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_initialize.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_initialize.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_ioctl.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_ioctl.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_read.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_read.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_unitialize.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_unitialize.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_write.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_write.c</locationURI>
-		</link>
-		<link>
-			<name>Utilities/USBX/UX Device Class CDC ACM/ux_device_class_cdc_acm_write_with_callback.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_device_classes/src/ux_device_class_cdc_acm_write_with_callback.c</locationURI>
-		</link>
-		<link>
 			<name>Utilities/USBX/UX Device Controllers/ux_dcd_stm32_callback.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/usbx_stm32_device_controllers/ux_dcd_stm32_callback.c</locationURI>

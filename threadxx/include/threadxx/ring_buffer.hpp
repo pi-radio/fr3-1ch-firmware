@@ -50,23 +50,23 @@ namespace TXX
     }
   };
   
-  template <size_t n>
-  class ring_buffer
+  template <typename T, size_t n>
+  class ring_buffer_base
   {
     using ptr = rbptr<n>;
     
     static constexpr ptr endbuf { n };
 
 
-    char buffer[n];
+    T buffer[n];
     ptr start, end;
 
-    char &operator[](const ptr &p) {
+    T &operator[](const ptr &p) {
       return buffer[p.p];
     }
 
   public:
-    int pushc(char c) {
+    int pushc(T c) {
       if (end + 1 == start) {
         ++start;
       }
@@ -84,7 +84,7 @@ namespace TXX
       return end + 1 == start;
     }
 
-    std::pair<const char *, size_t> get_seg() {
+    std::pair<const T *, size_t> get_seg() {
       const char *p = &(*this)[start];
       size_t l = 0;
 
@@ -98,5 +98,10 @@ namespace TXX
       return std::make_pair(p, l);
     }
 
+  };
+
+  template <size_t n>
+  class ring_buffer : public ring_buffer_base<char, n>
+  {
   };
 };

@@ -33,6 +33,10 @@
 
 #define TX_BUF_LEN 256
 
+struct command_handler {
+  virtual void on_command(const std::string &cmd) = 0;
+};
+
 class terminal : public text_field_callbacks,
                  public termbuf_render_engine {
   int rx_count;
@@ -84,6 +88,8 @@ class terminal : public text_field_callbacks,
 
   USBXX::CDCACM &usb_cdc_acm;
   
+  command_handler *cmd_handler;
+
 public:
   terminal(USBXX::CDCACM &_usb);
 
@@ -129,5 +135,7 @@ public:
   void set_focus(window *win) { _outbuf->set_focus(win); }
 
   void draw(position p, const uint8_t *buf, size_t len) override;
+
+  void set_command_handler(command_handler *handler) { cmd_handler = handler; }
 };
 

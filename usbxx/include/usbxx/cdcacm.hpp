@@ -19,9 +19,21 @@ namespace USBXX
     ULONG cdc_acm_interface_number;
     ULONG cdc_acm_configuration_number;
     UX_SLAVE_CLASS_CDC_ACM_PARAMETER cdc_acm_parameter;
-    UX_SLAVE_CLASS_CDC_ACM *cdc_acm;
+    //UX_SLAVE_CLASS_CDC_ACM cdc_acm;
     TX_EVENT_FLAGS_GROUP flags;
     
+    // replace cdc_acm soon enough
+    UX_SLAVE_INTERFACE *cdc_acm_interface;
+    TXX::Mutex ep_in_mutex;
+    TXX::Mutex ep_out_mutex;
+    ULONG baudrate;
+    UCHAR stop_bit;
+    UCHAR parity;
+    UCHAR data_bit;
+    UCHAR dtr_state;
+    UCHAR rts_state;
+
+
     static constexpr uint32_t FLAG_STARTED = 0x00000001;
     static constexpr uint32_t FLAG_CONNECTED = 0x00000002;
     static constexpr uint32_t FLAG_ATTACHED = 0x00000004;
@@ -30,11 +42,21 @@ namespace USBXX
     
     static CDCACM *stupid_global;
 
-    friend VOID ::USBD_CDC_ACM_Activate(VOID *cdc_acm_instance);
-    friend VOID ::USBD_CDC_ACM_Deactivate(VOID *cdc_acm_instance);
-    friend VOID ::USBD_CDC_ACM_ParameterChange(VOID *cdc_acm_instance);
-      
     void register_class() override;
+
+    UINT device_entry(UX_SLAVE_CLASS_COMMAND *);
+    UINT acm_initialize(UX_SLAVE_CLASS_COMMAND *);
+    UINT acm_uninitialize(UX_SLAVE_CLASS_COMMAND *);
+    UINT activate(UX_SLAVE_CLASS_COMMAND *);
+    UINT deactivate(UX_SLAVE_CLASS_COMMAND *);
+    UINT control_request(UX_SLAVE_CLASS_COMMAND *);
+
+    UINT ioctl(ULONG ioctl_function, VOID *parameter);
+
+    UINT read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length);
+    UINT write(UCHAR *buffer, ULONG requested_length, ULONG *actual_length);
+
+    static UINT _device_entry(UX_SLAVE_CLASS_COMMAND *);
 
     static constexpr int RX_QUEUE_LEN = 64;
     static constexpr int TX_QUEUE_LEN = 64;
@@ -63,7 +85,6 @@ namespace USBXX
 
     void set_dtr(bool);
     void set_rts(bool);
-    void set_instance(UX_SLAVE_CLASS_CDC_ACM *);
 
     
   public:

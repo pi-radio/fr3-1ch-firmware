@@ -34,7 +34,8 @@ struct Command
 
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
-                   public text_field_callbacks
+       public text_field_callbacks,
+       public command_handler
 {
   TXX::queue<Command> cmd_queue;
   USBSerial usb_serial;
@@ -83,7 +84,7 @@ public:
   void beep() override { term.beep(); }
 
   void on_cr(const uint8_t *s, size_t l) override;
-
+  void on_command(const std::string &) override;
   void status_update();
 };
 

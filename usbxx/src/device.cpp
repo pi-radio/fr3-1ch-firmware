@@ -43,8 +43,15 @@ UINT USBXX::_usbxx_change_notification(ULONG new_state)
   return _devbase->on_change(new_state);
 }
 
+#include <threadxx/ring_buffer.hpp>
+
+TXX::ring_buffer_base<int, 32> event_ring;
+
 uint32_t USBXX::DeviceBase::on_change(uint32_t new_state)
 {
+  if (new_state != UX_DCD_STM32_SOF_RECEIVED)
+    event_ring.pushc(new_state);
+
   switch (new_state)
   {
     case UX_DEVICE_ATTACHED:

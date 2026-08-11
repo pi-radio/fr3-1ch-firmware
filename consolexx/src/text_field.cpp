@@ -44,7 +44,6 @@ int text_field::on_input(int c)
     putc(c);
     return 0;
   } else {
-    printf("Unknown char 0x%2.2x\n", c);
     return -1;
   }
 

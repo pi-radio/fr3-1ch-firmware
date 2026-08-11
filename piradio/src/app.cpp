@@ -28,8 +28,8 @@ extern "C" {
 using namespace piradio::config;
 using namespace TXX::config_data;
 
-PiRadioApp::PiRadioApp() : term(usb_serial),
-      cmd_queue("App command queue")
+PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
+    term(usb_serial)
 {
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
@@ -323,6 +323,13 @@ void PiRadioApp::on_cr(const uint8_t *s, size_t l)
   std::shared_ptr<Command> cmd = std::make_shared<Command>(std::string((char *)s, l), Command::CONSOLE);
   
   output_win->printf("%.*s\n", l, s);
+
+  cmd_queue.push(cmd);
+}
+
+void PiRadioApp::on_command(const std::string &s)
+{
+  std::shared_ptr<Command> cmd = std::make_shared<Command>(s, Command::APPLICATION);
 
   cmd_queue.push(cmd);
 }
