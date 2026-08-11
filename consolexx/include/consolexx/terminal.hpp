@@ -47,6 +47,10 @@ class terminal : public text_field_callbacks,
   uint8_t *tx_cur;
   uint32_t tx_len;
 
+  enum {
+    NORMAL = 0,
+    COMMAND = 1,
+  } rx_mode;
 
   int echo;
   int onlcr;
@@ -69,25 +73,13 @@ class terminal : public text_field_callbacks,
   TXX::Mutex input_mutex;
   std::deque<std::string> input_lines;
 
-  //TX_THREAD rx_thread;
-  //TX_THREAD tx_thread;
-  //TX_THREAD refresh_thread;
-
   int c_peek;
   int last_dtr;
 
   friend int terminal_send_command(int cmd);
 
-  int rxchar_raw(void);
-
   void emit_cs(const char *fmt, ...);
 
-  void enqueue_cmd(int cmd) {
-    cmd_queue.send(cmd);
-  }
-
-  int peekchar();
-  int rxchar();
   void txchar(uint32_t c);
 
   USBXX::CDCACM &usb_cdc_acm;
@@ -103,6 +95,8 @@ public:
   void unlock() {};
 
   void on_input(int c) { _outbuf->on_input(c); };
+
+  void on_command(const std::string &s);
 
   void refresh(void);
 

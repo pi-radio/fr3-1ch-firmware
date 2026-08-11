@@ -9,7 +9,7 @@ namespace TXX
   class Semaphore
   {
     TX_SEMAPHORE sema;
-    const std::string &name;
+    std::string name;
   public:
     Semaphore(const std::string &_name) : name(_name) {}
 

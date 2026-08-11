@@ -24,13 +24,16 @@ void AppBase::start()
 
   setup_debug();
 
+  setup_tick();
+
   config_data::config.load();
 
   initialize_hardware();
 
-  pre_kernel();
-
   _tx_initialize_kernel_setup();
+
+
+  pre_kernel();
 
   for (auto cbp : setup_calls) {
     cbp.first(cbp.second);

@@ -18,8 +18,8 @@
 namespace TXX {
   struct thread {
   };
-
   
+
   class ThreadBase {
     TX_THREAD _thread;
     const std::string _name;

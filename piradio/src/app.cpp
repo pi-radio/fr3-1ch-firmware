@@ -128,8 +128,16 @@ void PiRadioApp::setup_debug()
   dbg::add_renderer(this);
 }
 
+void PiRadioApp::setup_tick()
+{
+  MX_DCACHE1_Init();
+  MX_ICACHE_Init();
+  MX_DTS_Init();
+  MX_LPTIM1_Init();
+}
 
-void PiRadioApp::initialize_hardware() {
+void PiRadioApp::initialize_hardware()
+{
   try {
     auto bm = config.get<board_model>();
 
@@ -159,18 +167,12 @@ void PiRadioApp::initialize_hardware() {
     std::cout << board.model << " starting..." << std::endl;
   }
 
-  tx_thread_sleep(100);
-
   //initialize_gpios();
   hardware->initialize_gpios();
   
   MX_GPDMA1_Init();
   MX_SPI4_Init();
   MX_UCPD1_Init();
-  MX_DCACHE1_Init();
-  MX_ICACHE_Init();
-  MX_DTS_Init();
-  MX_LPTIM1_Init();
 }
 
 void setup_bank(GPIO_TypeDef *gpio, const std::vector<uint32_t> &pins, const std::vector<uint32_t> &set_pins)
@@ -257,7 +259,7 @@ void PiRadioApp::initialize_gpios()
 
 void PiRadioApp::pre_kernel()
 {
-  USBPD_PreInitOs();
+  //USBPD_PreInitOs();
 }
 
 void PiRadioApp::tx_init()
@@ -300,12 +302,10 @@ void PiRadioApp::app_main()
   hardware->restore_settings();
 
   while (true) {
-    std::string *ps = (std::string *)cmd_queue.recv();
+    auto cmd = cmd_queue.pop();
 
-    p.set_line(*ps);
+    p.set_line(cmd->str);
     
-    delete ps;
-
     try {
       p.parse();
     } catch (const parser::SyntaxError &e) {
@@ -320,11 +320,11 @@ void PiRadioApp::app_main()
 
 void PiRadioApp::on_cr(const uint8_t *s, size_t l)
 {
-  uint32_t cmd = (uint32_t)new std::string((const char *)s, l);
+  std::shared_ptr<Command> cmd = std::make_shared<Command>(std::string((char *)s, l), Command::CONSOLE);
   
   output_win->printf("%.*s\n", l, s);
 
-  cmd_queue.send(cmd);
+  cmd_queue.push(cmd);
 }
 
 int PiRadioApp::render(const char *buffer, size_t size)

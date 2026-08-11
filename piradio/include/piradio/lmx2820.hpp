@@ -88,19 +88,40 @@ struct reg {
   reg &operator &=(uint16_t v);
 };
 
-template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-struct field
+struct field_base
 {
   LMX2820 *_lmx;
+  uint32_t nreg;
+  uint32_t sbit;
+  uint32_t ebit;
+  uint32_t mask;
 
-  const static uint16_t mask = ((1 << (ebit - sbit + 1)) - 1);
-
-  field(LMX2820 *_pll);
-  field(LMX2820 *_pll, uint16_t val);
+  field_base(LMX2820 *_pll, uint32_t _nreg, uint32_t _sbit, uint32_t _ebit);
 
   operator uint16_t() const;
-  field &operator =(uint16_t v);
-  field &operator =(int v) { return (*this = (uint16_t)v); }
+
+  uint16_t set(uint16_t v);
+
+  //field_base &operator =(const uint16_t &v);
+  //field_base &operator =(const int &v) { return (*this = (const uint16_t)v); }
+};
+
+struct bit_base
+{
+  LMX2820 *_lmx;
+  uint32_t nreg;
+  uint32_t sbit;
+
+  bit_base(LMX2820 *_pll, uint32_t _nreg, uint32_t _sbit);
+
+  bool set(bool b);
+  operator bool() const;
+};
+
+template <uint32_t _nreg, uint32_t _sbit, uint32_t _ebit>
+struct field : public field_base
+{
+  field(LMX2820 *_pll) : field_base(_pll, _nreg, _sbit, _ebit) {};
 };
 
 template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
@@ -115,15 +136,12 @@ struct rbfield
 };
 
 
-template <uint32_t nreg, uint32_t sbit>
-struct bit
+template <uint32_t _nreg, uint32_t _sbit>
+struct bit : public bit_base
 {
   LMX2820 *_lmx;
 
-  bit(LMX2820 *_pll) : _lmx(_pll) {}
-
-  operator bool() const;
-  bit &operator =(bool b);
+  bit(LMX2820 *_pll) : bit_base(_pll, _nreg, _sbit) {}
 };
 
 template <uint32_t nreg>
@@ -131,7 +149,7 @@ struct regname
 {
   LMX2820 *_lmx;
 
-  regname(LMX2820 *_pll) : _lmx(_pll) {}
+  explicit regname(LMX2820 *_pll) : _lmx(_pll) {}
 
   operator uint16_t() const;
   regname &operator =(uint16_t v);
@@ -176,17 +194,18 @@ public:
 
 protected:
   friend class reg;
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  friend class field;
+
+  friend class field_base;
+  friend class bit_base;
+
+
   template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
   friend class rbfield;
-  template <uint32_t nreg, uint32_t sbit>
-  friend class bit;
   template <uint32_t nreg>
   friend class regname;
 
   //uint16_t regs[N_REGS];
-  reg regs[N_REGS];
+  std::array<reg, N_REGS> regs;
   std::bitset<N_REGS> dirty;
 
   output_mux_t outAmux;
@@ -343,15 +362,15 @@ protected:
   void update_fVCO(double _fVCO);
 
   void update_fcal() {
-    if (get_fPD() <= 100e6) fcal_hpfd_adj = 0;
-    else if (get_fPD() <= 150e6) fcal_hpfd_adj = 1;
-    else if (get_fPD() <= 200e6) fcal_hpfd_adj = 2;
-    else fcal_hpfd_adj = 3;
+    if (get_fPD() <= 100e6) fcal_hpfd_adj.set(0);
+    else if (get_fPD() <= 150e6) fcal_hpfd_adj.set(1);
+    else if (get_fPD() <= 200e6) fcal_hpfd_adj.set(2);
+    else fcal_hpfd_adj.set(3);
 
-    if (get_fPD() >= 10e6) fcal_lpfd_adj = 0;
-    else if (get_fPD() >= 5e6) fcal_lpfd_adj = 1;
-    else if (get_fPD() >= 2.5e6) fcal_lpfd_adj = 2;
-    else fcal_lpfd_adj = 3;
+    if (get_fPD() >= 10e6) fcal_lpfd_adj.set(0);
+    else if (get_fPD() >= 5e6) fcal_lpfd_adj.set(1);
+    else if (get_fPD() >= 2.5e6) fcal_lpfd_adj.set(2);
+    else fcal_lpfd_adj.set(3);
   }
 
   void dirty_reg(int rno) {

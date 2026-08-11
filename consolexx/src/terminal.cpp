@@ -50,6 +50,10 @@ void terminal::startup()
   refresh_thread.create();
 }
 
+void terminal::on_command(const std::string &s)
+{
+
+}
 
 void terminal::draw(position p, const uint8_t *buf, size_t len)
 {
@@ -134,51 +138,9 @@ void terminal::txchar(uint32_t c)
   usb_cdc_acm.putc(c);
 }
 
-int terminal::rxchar_raw(void)
-{
-  ULONG c = usb_cdc_acm.getc();
-
-  if ((c < 0x20 || c > 0x7F) && c != 0x0A && c != 0x0D && c != 0x09) {
-    printf("Invalid character: %ld\n", c);
-    invalid_char++;
-  }
-
-  return c;
-}
-
-
-int terminal::peekchar(void)
-{
-  if (c_peek != 0) {
-    return c_peek;
-  }
-
-  c_peek = rxchar_raw();
-
-  return c_peek;
-}
-
-
-int terminal::rxchar(void)
-{
-  int c;
-
-  if (c_peek != 0) {
-    c = c_peek;
-    c_peek = 0;
-  } else {
-    c = rxchar_raw();
-  }
-
-  return c;
-}
-
-
 
 void terminal::_rx_thread()
 {
-  dbgprint("_rxthread\r\n");
-
   while(1) {
     vtp.process(usb_cdc_acm.getc());
   }
@@ -209,9 +171,4 @@ void terminal::_refresh_thread(void)
       _outbuf->refresh();
     }
   }
-}
-
-int input_on_nl(struct text_field *tf, const char *s, int l)
-{
-  return 0;
 }

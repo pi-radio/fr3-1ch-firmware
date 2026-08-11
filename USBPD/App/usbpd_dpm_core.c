@@ -351,7 +351,7 @@ DEF_TASK_FUNCTION(USBPD_CAD_Task)
 void USBPD_DPM_CADCallback(uint8_t PortNum, USBPD_CAD_EVENT State, CCxPin_TypeDef Cc)
 {
   USBPD_TRACE_Add(USBPD_TRACE_CADEVENT, PortNum, (uint8_t)State, NULL, 0);
-  USBPD_dbgprintf("CAD Callback %d %d\r\n", (int)PortNum, (int)State);
+  //USBPD_dbgprintf("CAD Callback %d %d\r\n", (int)PortNum, (int)State);
  /* _TRACE */
   (void)(Cc);
   switch (State)

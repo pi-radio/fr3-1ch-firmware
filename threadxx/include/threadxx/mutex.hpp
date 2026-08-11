@@ -9,7 +9,7 @@ namespace TXX
   class Mutex
   {
     TX_MUTEX mutex;
-    const std::string &name;
+    std::string name;
   public:
     Mutex(const std::string &_name) : name(_name) {}
     

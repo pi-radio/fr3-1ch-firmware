@@ -23,42 +23,38 @@
 #include <piradio/lmx2820.hpp>
 
 namespace LMX {
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  field<nreg, sbit, ebit>::field(LMX2820 *_pll) : _lmx(_pll)
+
+  field_base::field_base(LMX2820 *_pll, uint32_t _nreg, uint32_t _sbit, uint32_t _ebit) :
+   _lmx(_pll), nreg(_nreg), sbit(_sbit), ebit(_ebit), mask(((1 << (ebit - sbit + 1)) - 1))
+   {
+    assert(nreg < LMX2820::N_REGS);
+    assert(sbit < ebit);
+    assert(ebit < 16);
+   }
+
+  field_base::operator uint16_t() const
   {
-  }
-
-
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  field<nreg, sbit, ebit>::field(LMX2820 *_pll, uint16_t val) : _lmx(_pll)
-  {
-    *this = val;
-  }
-
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  field<nreg, sbit, ebit>::operator uint16_t() const {
     return (_lmx->regs[nreg] >> sbit) & mask;
   }
 
-  template <uint32_t nreg, uint32_t sbit, uint32_t ebit>
-  field<nreg, sbit, ebit> &field<nreg, sbit, ebit>::operator =(uint16_t v) {
+  uint16_t field_base::set(uint16_t v)
+  {
     _lmx->regs[nreg] &= (uint16_t)~(mask << sbit);
     _lmx->regs[nreg] |= (v & mask) << sbit;
 
     _lmx->dirty.set(nreg);
 
-    return *this;
+    return v;
   }
 
-  template <uint32_t nreg, uint32_t sbit>
-  bit<nreg, sbit>::operator bool() const
+  bit_base::bit_base(LMX2820 *_pll, const uint32_t _nreg, const uint32_t _sbit) :
+       _lmx(_pll), nreg(_nreg), sbit(_sbit)
   {
-    return (_lmx->regs[nreg] & (1 << sbit)) ? true : false;
+    assert(_nreg < LMX2820::N_REGS);
+    assert(_sbit < 16);
   }
 
-
-  template <uint32_t nreg, uint32_t sbit>
-  bit<nreg, sbit> &bit<nreg, sbit>::operator =(bool b)
+  bool bit_base::set(bool b)
   {
     if (b) {
       _lmx->regs[nreg] |= 1 << sbit;
@@ -68,8 +64,15 @@ namespace LMX {
 
     _lmx->dirty.set(nreg);
 
-    return *this;
+    return b;
   }
+
+
+  bit_base::operator bool() const
+  {
+    return (_lmx->regs[nreg] & (1 << sbit)) ? true : false;
+  }
+
 
   template <uint32_t nreg>
   regname<nreg>::operator uint16_t() const
@@ -325,6 +328,7 @@ namespace LMX {
     _fOSC = fOSC;
 
     for (int i = 0; i < N_REGS; i++) {
+      regs[i].rnum = i;
       regs[i].lmx = this;
       regs[i].rsrvd.mask = reg_reserved_data[i][0];
       regs[i].value = regs[i].rsrvd.value =
@@ -360,32 +364,32 @@ namespace LMX {
 
   void LMX2820::setup()
   {
-    dblr_cal_en = 1;
-    fcal_en = 1;
+    dblr_cal_en.set(1);
+    fcal_en.set(1);
     reset = 0;
     powerdown = 0;
 
-    instcal_skip_acal = 1;
+    instcal_skip_acal.set(1);
     phase_sync_en = 0;
-    ld_vtune_en = 1;
+    ld_vtune_en.set(1);
     instcal_dblr_en = 0;
     instcal_en = 0;
-    cal_clk_div = 0;
-    instcal_dly = 0xfa;
+    cal_clk_div.set(0);
+    instcal_dly.set(0xfa);
 
-    acal_cmp_dly = 0xa;
+    acal_cmp_dly.set(0xa);
     quick_recal_en = 0;
     pfd_dly_manual = 0;
 
-    vco_daciset = 0x12C;
+    vco_daciset.set(0x12C);
 
     vco_daciset_force = 0;
     vco_capctl_force = 0;
-    cpg = 0xe;
-    ld_type = 1;
+    cpg.set(0xe);
+    ld_type.set(1);
     ld_dly = 0;
 
-    tempsense_en = 0;
+    tempsense_en.set(0);
 
     dblbuf_outmux_en = 0;
     dblbuf_outbuf_en = 0;
@@ -393,19 +397,19 @@ namespace LMX {
     dblbuf_pll_en = 0;
 
     sysref_en = 0;
-    srout_pd = 1;
-    sysref_inp_fmt = 0;
-    sysref_div_pre = 0;
-    sysref_div = 0;
+    srout_pd.set(1);
+    sysref_inp_fmt.set(0);
+    sysref_div_pre.set(0);
+    sysref_div.set(0);
     sysref_pulse = 0;
-    sysref_pulse_cnt = 1;
+    sysref_pulse_cnt.set(1);
     sysref_repeat = 0;
     sysref_repeat_ns = 0;
-    jesd_dac1_ctrl = 0x3f;
-    jesd_dac2_ctrl = 0x0;
-    jesd_dac3_ctrl = 0x0;
-    jesd_dac4_ctrl = 0x0;
-    inpin_ignore = 1;
+    jesd_dac1_ctrl.set(0x3f);
+    jesd_dac2_ctrl.set(0x0);
+    jesd_dac3_ctrl.set(0x0);
+    jesd_dac4_ctrl.set(0x0);
+    inpin_ignore.set(1);
     psync_inp_fmt = 0;
     pinmute_pol = 0;
 
@@ -413,24 +417,24 @@ namespace LMX {
 
     /* Setup PFD */
 
-    osc_2x = 1;
-    pll_r_pre = 1;
-    pll_r = 1;
-    mult = 1;
-    pfd_delay = 0x500;
-    pfd_sel = 1;
-    extpfd_div = 1;
+    osc_2x.set(1);
+    pll_r_pre.set(1);
+    pll_r.set(1);
+    mult.set(1);
+    pfd_delay.set(0x500);
+    pfd_sel.set(1);
+    extpfd_div.set(1);
 
     update_fcal();
 
     /* Setup internal VCO */
 
     loopback_en = 0;
-    extvco_div = 1;
+    extvco_div.set(1);
     extvco_en = 0;
 
-    mash_reset_n = 1;
-    mash_order = 2;
+    mash_reset_n.set(1);
+    mash_order.set(2);
     mash_seed_en = 0;
     mash_rst_count = 50000;
     mash_seed = 0;
@@ -441,15 +445,15 @@ namespace LMX {
     update_fVCO(10e9);
     //update_fVCO(10e9 * 2 / 3);
 
-    chdivA = 0;
-    outa_mux = 1;
-    outa_pwr =7;
-    outa_pd = 0;
+    chdivA.set(0);
+    outa_mux.set(1);
+    outa_pwr.set(7);
+    outa_pd.set(0);
 
-    chdivB = 0;
-    outb_mux = 1;
-    outb_pwr =7;
-    outb_pd = 1;
+    chdivB.set(0);
+    outb_mux.set(1);
+    outb_pwr.set(7);
+    outb_pd.set(1);
 
     for (int i = 0; i < N_REGS; i++) {
       if (regs[i] != default_regs[i]) {
@@ -475,7 +479,7 @@ namespace LMX {
 
     double frac = std::modf(m, &intp);
 
-    pll_n = (int)intp;
+    pll_n.set(intp);
 
     dbg::dbgout << "Setting PLL N to: " << pll_n << " frac: " << frac << std::endl;
 
@@ -521,11 +525,11 @@ namespace LMX {
     }
 
     kVCO = VCO_gain_range[vco - 1].from_parametric(t);
-    vco_sel = (uint16_t)vco;
+    vco_sel.set(vco);
 
     dbg::dbgout << "kVCO: " << kVCO << std::endl;
 
-    vco_capctl = (uint16_t)(191 * (1 - t));
+    vco_capctl.set(191 * (1 - t));
     
     update_PLL(f);
   }
@@ -732,11 +736,11 @@ namespace LMX {
   void LMX2820::tune(double f)
   {
     if (f > f_VCO_max) {
-      chdivA = 1;
+      chdivA.set(1);
       f /= 2;
     }
 
-    chdivA = 0;
+    chdivA.set(0);
     update_fVCO(f);
 
     program();

@@ -32,7 +32,25 @@ namespace piradio
 
     struct board_serial : public TXX::config_data::tlv<board_serial>  {
       static constexpr uint16_t TAG = 0x1003;
+      uint16_t length;
       uint8_t  serno[32];
+
+      board_serial() : length(0) {
+        std::memset(serno, 0, sizeof(serno));
+      }
+
+      board_serial(const std::string &s) {
+        assert(s.size() <= 32);
+
+        std::memset(serno, 0, sizeof(serno));
+        length = s.size();
+        std::memcpy(serno, s.c_str(), length);
+      }
+    };
+
+    struct lo_frequency : public TXX::config_data::tlv<board_serial>  {
+      static constexpr uint16_t TAG = 0x1004;
+      float freq;
     };
 
     extern std::vector<std::string> board_models;

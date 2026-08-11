@@ -1,19 +1,65 @@
 #pragma once
 
 #include <string>
+#include <deque>
+#include <memory>
 
 #include <tx_api.h>
 
 #include <threadxx/ring_buffer.hpp>
 
 #include <threadxx/intr.hpp>
+#include <threadxx/mutex.hpp>
+#include <threadxx/eventflags.hpp>
+#include <threadxx/semaphore.hpp>
 
 namespace TXX
 {
   
-  template <class T, int depth>
+  template <class T>
   class queue
   {
+    Mutex mutex;
+    Semaphore sema;
+
+    std::deque<std::shared_ptr<T> > deque;
+
+  public:
+    queue(const std::string &_name) :
+      mutex(_name + " mutex"),
+      sema(_name + " semaphore") {
+
+    }
+
+    void create() {
+      mutex.create();
+      sema.create();
+    }
+
+    std::shared_ptr<T> pop() {
+      sema.get();
+
+      {
+        Mutex::guard g(mutex);
+
+        auto retval = deque.front();
+
+        deque.pop_front();
+
+        return retval;
+      }
+    }
+
+    void push(std::shared_ptr<T> obj)
+    {
+      {
+        Mutex::guard g(mutex);
+
+        deque.emplace_back(obj);
+      }
+
+      sema.put();
+    }
   };
 
   class QueueEmpty

@@ -8,8 +8,11 @@
 #ifndef APPLICATION_USER_CONSOLE_VTPARSER_HPP_
 #define APPLICATION_USER_CONSOLE_VTPARSER_HPP_
 
-#include <stdlib.h>
-#include <memory.h>
+//#include <stdlib.h>
+//#include <memory.h>
+
+#include <vector>
+#include <string>
 
 class terminal;
 
@@ -25,6 +28,8 @@ typedef enum {
   TERMINAL_STATE_CSI_ENTRY,
   TERMINAL_STATE_CSI_PARAM,
   TERMINAL_STATE_CSI_INTER,
+  TERMINAL_STATE_DLE,
+  TERMINAL_STATE_TEXT,
 
   NUM_TERMINAL_STATES
 } terminal_state_t;
@@ -34,25 +39,32 @@ typedef enum {
 class vtparser {
   struct terminal *term;
   terminal_state_t state;
+  terminal_state_t saved_state;
   int csi_count;
   int error_count;
   int error_char;
   terminal_state_t error_state;
 
-  terminal_handler_t handlers[NUM_TERMINAL_STATES];
+  std::string command;
 
   struct {
     int command;
     int private_leader;
-    int n_intermediates;
-    int intermediates[TERMINAL_MAX_CSI_INTERMEDIATES];
-    int intermediate_overflow;
-    int n_parameters;
-    int parameters[TERMINAL_MAX_CSI_PARAMETERS];
-    int parameter_overflow;
-  } csi;
+    std::vector<int> intermediates;
+    std::vector<int> parameters;
+    //int n_intermediates;
+    //int intermediates[TERMINAL_MAX_CSI_INTERMEDIATES];
+    //int intermediate_overflow;
+    //int n_parameters;
+    //int parameters[TERMINAL_MAX_CSI_PARAMETERS];
+    //int parameter_overflow;
 
-  void reset_csi() { memset(&csi, 0, sizeof(csi)); };
+    void reset() {
+      command = 0;
+      private_leader = 0;
+      intermediates.clear();
+    }
+  } csi;
 
   void set_state(terminal_state_t _state);
   void handle_vt100_esc(int c);
@@ -63,6 +75,8 @@ class vtparser {
   void handle_csi_inter(int c);
   void handle_csi_param(int c);
   void handle_csi_entry(int c);
+  void handle_dle(int c);
+  void handle_text(int c);
 
 public:
   vtparser(terminal *);

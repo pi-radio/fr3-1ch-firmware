@@ -18,11 +18,25 @@ public:
   uint32_t on_disconnected() override;
 };
 
+struct Command
+{
+  enum CommandOrigin {
+    CONSOLE,
+    APPLICATION
+  } origin;
+  std::string str;
+
+  Command(const std::string &_str, CommandOrigin _origin) :
+    str(_str), origin(_origin) {
+
+  }
+};
+
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
                    public text_field_callbacks
 {
-  TXX::Queue<1, 16> cmd_queue;
+  TXX::queue<Command> cmd_queue;
   USBSerial usb_serial;
   USBPD usbpd;
   terminal term;
@@ -48,6 +62,7 @@ public:
 
   void setup_clocks() override;
   void setup_memory() override;
+  void setup_tick() override;
   void setup_debug() override;
   void initialize_hardware() override;
   void pre_kernel() override;

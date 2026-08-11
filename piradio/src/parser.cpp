@@ -245,6 +245,21 @@ void Parser::parse_get_statement() {
           std::cout << "Board model not set" << std::endl;
           return;
         }
+      } else if(cur_tok == keywords::SERIAL) {
+        parse_statement_end();
+
+        auto ser = config.get<board_serial>();
+
+        if (ser == nullptr) {
+          std::cout << "Board serial not set" << std::endl;
+        }
+
+        std::string serial;
+
+        serial.append((const char *)ser->serno, ser->length);
+
+        std::cout << "Board model '" << serial << "'" << std::endl;
+        return;
       }
   }
 
@@ -369,7 +384,23 @@ void Parser::parse_set_statement() {
 
       return;
     } else if (cur_tok == keywords::SERIAL) {
+      auto cur_tok = tokenizer.get_token();
 
+      if (cur_tok->t != token::token_type::STR) {
+        throw SyntaxError();
+      }
+
+      std::string board_serial = cur_tok->s;
+
+      parse_statement_end();
+
+      std::cout << "Setting board serial to '" << board_serial << "'" << std::endl;
+
+      piradio::config::board_serial ser(board_serial);
+
+      TXX::config_data::config.save(ser);
+
+      return;
     }
   } else {
 	  // Invalid SET token
