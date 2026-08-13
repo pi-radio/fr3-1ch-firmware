@@ -15,8 +15,9 @@
 
 int force_redraw;
 
+using namespace consolexx;
 
-cooked_terminal::cooked_terminal(USBXX::CDCACM &cdc) :
+cooked_terminal::cooked_terminal(termio *_io) :
     rx_count(0), tx_count(0), invalid_char(0),
     buffer_input(1), input_len(0),
     tx_len(0),  echo(0), onlcr(1),
@@ -26,8 +27,8 @@ cooked_terminal::cooked_terminal(USBXX::CDCACM &cdc) :
     refresh_thread("Terminal Refresh Thread", this, &cooked_terminal::_refresh_thread),
     input_mutex("Terminal Input Mutex"),
     c_peek(0), last_dtr(0),
-    usb_cdc_acm(cdc),
-    cmd_handler(nullptr)
+    cmd_handler(nullptr),
+    io(_io)
 {
   //void *pstack;
   memset(input_buf, 0, sizeof(input_buf));
@@ -140,19 +141,19 @@ TXX::ring_buffer_base<int, 32> rx_char_ring;
 void cooked_terminal::txchar(uint32_t c)
 {
   if(onlcr && c == 0x0A) {
-    usb_cdc_acm.putc(0x0D);
     tx_char_ring.pushc(0x0D);
+    io->putc(0x0D);
   }
   
   tx_char_ring.pushc(c);
-  usb_cdc_acm.putc(c);
+  io->putc(c);
 }
 
 
 void cooked_terminal::_rx_thread()
 {
   while(1) {
-    int c = usb_cdc_acm.getc();
+    int c = io->getc();
 
     rx_char_ring.pushc(c);
 
@@ -170,7 +171,7 @@ void cooked_terminal::_refresh_thread(void)
   ULONG cmd;
   ULONG wait = 40;
 
-  usb_cdc_acm.wait_started();
+  io->wait_started();
 
   while (1) {
     try {

@@ -1,7 +1,7 @@
 #include <halxx/stm32h563.hpp>
 #include <threadxx/queue.hpp>
 #include <threadxx/app.hpp>
-#include <consolexx/cooked.hpp>
+#include <consolexx/adapter.hpp>
 #include <usbxx/usbxx.hpp>
 #include <threadxx/usbpdxx.hpp>
 #include <piradio/hardware.hpp>
@@ -23,12 +23,17 @@ public:
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
        public text_field_callbacks,
-       public command_handler
+       public consolexx::command_handler
 {
-  TXX::queue<parser::Command> cmd_queue;
+  TXX::objqueue<parser::Command> cmd_queue;
   USBSerial usb_serial;
+
+  consolexx::usb_io usb_io;
+
   USBPD usbpd;
-  cooked_terminal term;
+  consolexx::terminal_adapter term;
+
+  //consolexx::cooked_terminal term;
 
   window *output_win = NULL;
   window *status_win = NULL;

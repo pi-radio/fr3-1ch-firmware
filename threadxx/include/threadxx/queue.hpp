@@ -15,14 +15,13 @@
 
 namespace TXX
 {
-  
   template <class T>
   class queue
   {
     Mutex mutex;
     Semaphore sema;
 
-    std::deque<std::shared_ptr<T> > deque;
+    std::deque<T> deque;
 
   public:
     queue(const std::string &_name) :
@@ -36,7 +35,7 @@ namespace TXX
       sema.create();
     }
 
-    std::shared_ptr<T> pop() {
+    T pop() {
       sema.get();
 
       {
@@ -50,7 +49,7 @@ namespace TXX
       }
     }
 
-    void push(std::shared_ptr<T> obj)
+    void push(T obj)
     {
       {
         Mutex::guard g(mutex);
@@ -60,6 +59,18 @@ namespace TXX
 
       sema.put();
     }
+  };
+  
+  template <class T>
+  class objqueue : public queue<std::shared_ptr<T> >
+  {
+    //Mutex mutex;
+    //Semaphore sema;
+
+    //std::deque<std::shared_ptr<T> > deque;
+
+  public:
+    objqueue(const std::string &_name) : queue<std::shared_ptr<T> >(_name) {}
   };
 
   class QueueEmpty

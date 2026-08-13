@@ -1,1 +1,4 @@
 class raw_terminal
+{
+
+};

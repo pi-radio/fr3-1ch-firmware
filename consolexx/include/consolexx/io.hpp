@@ -2,7 +2,7 @@
 
 namespace consolexx
 {
-  struct io
+  struct termio
   {
     virtual void wait_started() { };
 
@@ -11,7 +11,7 @@ namespace consolexx
     virtual int getc() = 0;
   };
 
-  class usb_io : public io
+  class usb_io : public termio
   {
     USBXX::CDCACM &acm;
 

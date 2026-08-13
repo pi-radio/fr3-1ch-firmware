@@ -4,72 +4,83 @@
  *  Created on: Feb 20, 2026
  *      Author: zapman
  */
+#include <format>
+
 #include <threadxx/eventflags.hpp>
 
+using namespace TXX;
 
-TXX::EventFlagsGroup::EventFlagsGroup(const std::string &name,
+EventFlagsGroup::EventFlagsGroup(const std::string &name,
     bool create_immediate) : _name(name)
 {
   if (create_immediate) create();
 }
 
-void TXX::EventFlagsGroup::create()
+void EventFlagsGroup::create()
 {
   tx_event_flags_create(&_flags, (char *)_name.c_str());
 }
 
-TXX::EventFlag TXX::EventFlagsGroup::operator[](int n)
+EventFlag EventFlagsGroup::operator[](int n)
 {
-  return EventFlag(*this, n);
+  return EventFlag(this, n);
 }
 
-bool TXX::EventFlag::get()
+bool EventFlag::get()
+{
+  ULONG afp;
+
+  ULONG retval = tx_event_flags_get(&_evtflags->_flags, (1 << _n), TX_AND, &afp, TX_WAIT_FOREVER);
+
+  return retval == TX_SUCCESS;
+}
+
+bool EventFlag::get_nowait()
+{
+  ULONG afp;
+
+  ULONG retval = tx_event_flags_get(&_evtflags->_flags, (1 << _n), TX_AND, &afp, TX_NO_WAIT);
+
+  return retval == TX_SUCCESS;
+}
+
+bool EventFlag::get_clear()
+{
+  ULONG afp;
+
+  ULONG retval = tx_event_flags_get(&_evtflags->_flags, (1 << _n), TX_AND_CLEAR, &afp, TX_WAIT_FOREVER);
+
+  return retval == TX_SUCCESS;
+}
+
+void EventFlag::clear()
+{
+  tx_event_flags_set(&_evtflags->_flags, ~(1 << _n), TX_AND);
+}
+
+void EventFlag::set()
+{
+  tx_event_flags_set(&_evtflags->_flags, (1 << _n), TX_OR);
+}
+
+
+Events::Events() : cur_n(32)
 {
 }
 
-bool TXX::EventFlag::get_nowait()
+
+void Events::alloc_group()
 {
+  _evt_flag_grps.push_back(new EventFlagsGroup(std::format("Event Flag Group {}", _evt_flag_grps.size()), true));
 }
 
-bool TXX::EventFlag::get_clear()
+TXX::EventFlag TXX::Events::alloc()
 {
+  if (cur_n == 32) {
+    alloc_group();
+    cur_n = 0;
+  }
+
+  return (*_evt_flag_grps.back())[cur_n++];
 }
 
-void TXX::EventFlag::set(bool)
-{
-}
-
-#if 0
-
-  };
-
-  class EventFlag
-  {
-    friend class EventFlagsGroup;
-    EventFlagsGroup &_evtflags;
-    int _n;
-
-    EventFlag(EventFlagsGroup &evtflags, int n) : _evtflags(evtflags), _n(n) { }
-
-  public:
-    bool get();
-    bool get_nowait();
-    bool get_clear();
-    void set(bool);
-  };
-
-
-  class Events
-  {
-    std::vector<EventFlagsGroup *> _evt_flag_grps;
-
-  public:
-    Events();
-
-    EventFlag alloc();
-  };
-};
-
-
-
-#endif

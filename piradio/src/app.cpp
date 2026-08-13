@@ -29,7 +29,8 @@ using namespace piradio::config;
 using namespace TXX::config_data;
 
 PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
-    term(usb_serial)
+    usb_io(usb_serial),
+    term(&usb_io)
 {
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
@@ -277,12 +278,12 @@ void PiRadioApp::tx_init()
 
   term.startup();
 
-  output_win = term.create<window>(8, 0, 8, 132);
-  status_win = term.create<window>(20, 0, 1, 132);
+  output_win = term.get_cooked().create<window>(8, 0, 8, 132);
+  status_win = term.get_cooked().create<window>(20, 0, 1, 132);
 
-  input_win = term.create<text_field>(17, 0, 1, 132);
+  input_win = term.get_cooked().create<text_field>(17, 0, 1, 132);
 
-  term.set_focus(input_win);
+  term.get_cooked().set_focus(input_win);
 
   input_win->set_callbacks(this);
 
@@ -374,7 +375,7 @@ void PiRadioApp::status_update()
 
 void PiRadioApp::redraw()
 {
-  term.redraw();
+  term.get_cooked().redraw();
 }
 
 void PiRadioApp::clear_output()

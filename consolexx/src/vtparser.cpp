@@ -7,6 +7,8 @@
 #include <consolexx/cooked.hpp>
 #include <consolexx/vtparser.hpp>
 
+using namespace consolexx;
+
 vtparser::vtparser(cooked_terminal *_term) :
   term(_term),
   state(TERMINAL_STATE_GROUND),
