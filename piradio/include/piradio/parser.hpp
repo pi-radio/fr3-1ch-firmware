@@ -199,6 +199,20 @@ namespace parser
 
   };
 
+  struct Command
+  {
+    enum CommandOrigin {
+      CONSOLE,
+      APPLICATION
+    } origin;
+    std::string str;
+
+    Command(const std::string &_str, CommandOrigin _origin) :
+      str(_str), origin(_origin) {
+
+    }
+  };
+
   class Parser
   {
     _tokenizer tokenizer;
@@ -223,10 +237,12 @@ namespace parser
     void parse_get_statement();
     void parse_bootloader_statement();
 
+    std::shared_ptr<Command> current_command;
+
   public:
     Parser();
 
-    void set_line(const std::string &s);
+    void set_command(std::shared_ptr<Command> &cmd);
     void parse();
   };
   

@@ -1,10 +1,11 @@
 #include <halxx/stm32h563.hpp>
 #include <threadxx/queue.hpp>
 #include <threadxx/app.hpp>
-#include <consolexx/terminal.hpp>
+#include <consolexx/cooked.hpp>
 #include <usbxx/usbxx.hpp>
 #include <threadxx/usbpdxx.hpp>
 #include <piradio/hardware.hpp>
+#include <piradio/parser.hpp>
 
 class USBSerial : public USBXX::CDCACM
 {
@@ -18,29 +19,16 @@ public:
   uint32_t on_disconnected() override;
 };
 
-struct Command
-{
-  enum CommandOrigin {
-    CONSOLE,
-    APPLICATION
-  } origin;
-  std::string str;
-
-  Command(const std::string &_str, CommandOrigin _origin) :
-    str(_str), origin(_origin) {
-
-  }
-};
 
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
        public text_field_callbacks,
        public command_handler
 {
-  TXX::queue<Command> cmd_queue;
+  TXX::queue<parser::Command> cmd_queue;
   USBSerial usb_serial;
   USBPD usbpd;
-  terminal term;
+  cooked_terminal term;
 
   window *output_win = NULL;
   window *status_win = NULL;

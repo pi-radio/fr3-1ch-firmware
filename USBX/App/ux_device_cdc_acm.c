@@ -43,8 +43,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-UX_SLAVE_CLASS_CDC_ACM *cdc_acm;
-int parameter_calls = 0;
+//UX_SLAVE_CLASS_CDC_ACM *cdc_acm;
+//int parameter_calls = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

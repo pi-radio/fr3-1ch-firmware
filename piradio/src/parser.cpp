@@ -1,3 +1,4 @@
+#include <consolexx/cooked.hpp>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -5,7 +6,6 @@
 
 #include <threadxx/config_data.hpp>
 
-#include <consolexx/terminal.hpp>
 #include <piradio/lmx2820.hpp>
 #include <piradio/lmx2820.hpp>
 #include <ltc2668.h>
@@ -78,7 +78,7 @@ void Parser::parse_config_statement()
 
     hw = TXX::config_data::config.read_word(reg);
 
-    printf("Config[%d]: %4.4x\n", reg, hw);
+    std::cout << std::format("config[{}]: {:04x}", reg, hw) << std::endl;
 
     return;
   }
@@ -122,9 +122,9 @@ void Parser::parse_lmx_read() {
   result = main_app.get_lmx()->read_reg(reg, &val);
 
   if (result == 0) {
-    printf("LMX reg %d: %04x\n", reg, val);
+    std::cout << std::format("LMX reg {}: {:04x}", reg, val) << std::endl;
   } else {
-    printf("Failed to read reg: %d\n", result);
+    std::cout << std::format("LMX reg {}: FAILURE", reg, val) << std::endl;
   }
 }
 
@@ -328,7 +328,6 @@ void Parser::parse_set_statement() {
     return;
   } else if (cur_tok == keywords::TXFILTER) {
 	  uint32_t v = shift_int();
-	  printf("Setting TX Filter to %x\n", (unsigned int)(v));
 
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, pin_value(v & 0x20));
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, pin_value(v & 0x10));
@@ -336,6 +335,8 @@ void Parser::parse_set_statement() {
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x04));
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x02));
 	  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x01));
+          
+	  return;
   } else if (cur_tok == keywords::BOARD) {
     auto cur_tok = tokenizer.get_token();
 
@@ -453,9 +454,11 @@ void Parser::parse_bootloader_statement() {
   while(1);
 }
 
-void Parser::set_line(const std::string &s)
+void Parser::set_command(std::shared_ptr<Command> &cmd)
 {
-  tokenizer.set_line(s);
+  current_command = cmd;
+
+  tokenizer.set_line(cmd->str);
 }
 
 void parse_lmx(int a, int b, int c)

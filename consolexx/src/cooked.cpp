@@ -1,9 +1,9 @@
 #include <console.h>
+#include <consolexx/cooked.hpp>
 #include <main.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <dts.h>
-#include <consolexx/terminal.hpp>
 #include <consolexx/text_field.hpp>
 #include <consolexx/window.hpp>
 #include <consolexx/vtparser.hpp>
@@ -16,14 +16,14 @@
 int force_redraw;
 
 
-terminal::terminal(USBXX::CDCACM &cdc) :
+cooked_terminal::cooked_terminal(USBXX::CDCACM &cdc) :
     rx_count(0), tx_count(0), invalid_char(0),
     buffer_input(1), input_len(0),
     tx_len(0),  echo(0), onlcr(1),
     vtp(this),
     cmd_queue("Terminal Command Queue"),
-    rx_thread("Terminal RX Thread", this, &terminal::_rx_thread),
-    refresh_thread("Terminal Refresh Thread", this, &terminal::_refresh_thread),
+    rx_thread("Terminal RX Thread", this, &cooked_terminal::_rx_thread),
+    refresh_thread("Terminal Refresh Thread", this, &cooked_terminal::_refresh_thread),
     input_mutex("Terminal Input Mutex"),
     c_peek(0), last_dtr(0),
     usb_cdc_acm(cdc),
@@ -44,21 +44,21 @@ terminal::terminal(USBXX::CDCACM &cdc) :
   _outbuf->set_render_engine(this);
 }
 
-void terminal::startup()
+void cooked_terminal::startup()
 {
   rx_thread.create();
   //tx_thread.create();
   refresh_thread.create();
 }
 
-void terminal::on_command(const std::string &s)
+void cooked_terminal::on_command(const std::string &s)
 {
   if (cmd_handler != nullptr) {
     cmd_handler->on_command(s);
   }
 }
 
-void terminal::draw(position p, const uint8_t *buf, size_t len)
+void cooked_terminal::draw(position p, const uint8_t *buf, size_t len)
 {
   ord_t end = p.col + len;
   ord_t right = _outbuf->rlocal().right();
@@ -93,7 +93,7 @@ void terminal::draw(position p, const uint8_t *buf, size_t len)
 }
 
 
-position terminal::query_position()
+position cooked_terminal::query_position()
 {
   position pos;
 
@@ -103,7 +103,7 @@ position terminal::query_position()
 }
 
 
-void terminal::emit_cs(const char *fmt, ...)
+void cooked_terminal::emit_cs(const char *fmt, ...)
 {
   size_t n;
   const char prefix[] = { '\e', '[' };
@@ -137,7 +137,7 @@ void terminal::emit_cs(const char *fmt, ...)
 TXX::ring_buffer_base<int, 32> tx_char_ring;
 TXX::ring_buffer_base<int, 32> rx_char_ring;
 
-void terminal::txchar(uint32_t c)
+void cooked_terminal::txchar(uint32_t c)
 {
   if(onlcr && c == 0x0A) {
     usb_cdc_acm.putc(0x0D);
@@ -149,7 +149,7 @@ void terminal::txchar(uint32_t c)
 }
 
 
-void terminal::_rx_thread()
+void cooked_terminal::_rx_thread()
 {
   while(1) {
     int c = usb_cdc_acm.getc();
@@ -160,12 +160,12 @@ void terminal::_rx_thread()
   }
 }
 
-void terminal::redraw()
+void cooked_terminal::redraw()
 {
   cmd_queue.send(TERMINAL_CMD_REDRAW);
 }
 
-void terminal::_refresh_thread(void)
+void cooked_terminal::_refresh_thread(void)
 {
   ULONG cmd;
   ULONG wait = 40;

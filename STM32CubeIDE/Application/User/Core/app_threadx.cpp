@@ -37,7 +37,7 @@
 #include <threadxx/txx.hpp>
 
 #include <console.h>
-#include <consolexx/terminal.hpp>
+#include <consolexx/cooked.hpp>
 #include <fr3_1ch_hw.h>
 
 /* USER CODE END Includes */

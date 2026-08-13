@@ -4,10 +4,10 @@
  *  Created on: Jan 30, 2026
  *      Author: zapman
  */
+#include <consolexx/cooked.hpp>
 #include <consolexx/vtparser.hpp>
-#include <consolexx/terminal.hpp>
 
-vtparser::vtparser(terminal *_term) :
+vtparser::vtparser(cooked_terminal *_term) :
   term(_term),
   state(TERMINAL_STATE_GROUND),
   saved_state(TERMINAL_STATE_GROUND),

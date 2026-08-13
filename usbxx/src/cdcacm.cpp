@@ -24,6 +24,8 @@ CDCACM::CDCACM() : tx_queue("CDC ACM TX Queue"),
                    ep_out_mutex("CDCACM EP Out Mutex"),
                    ep_in_mutex("CDCACM EP In Mutex")
 {
+  add_class(USBXX::CLASS_TYPE_CDC_ACM);
+
   tx_event_flags_create(&flags, "CDCACM flags");
   
   if (stupid_global != NULL) {
@@ -179,20 +181,15 @@ void CDCACM::_tx_thread()
   }
 }
 
-
-Class_CDCACM::Class_CDCACM(DeviceInfo *_dev) : ClassInfo(_dev, Descriptors::CDC_ACM, 2, 0)
-{
-}
-
 #include <usbxx/descriptor.hpp>
 #include <usb.h>
 #include <ux_device_descriptors.h>
 
 void USBXX::CDCACM::register_class()
 {
-  cdc_acm_configuration_number = USBD_Get_Configuration_Number(CLASS_TYPE_CDC_ACM, 0);
+  cdc_acm_configuration_number = get_configuration_number(CLASS_TYPE_CDC_ACM, 0);
 
-  cdc_acm_interface_number = USBD_Get_Interface_Number(CLASS_TYPE_CDC_ACM, 0);
+  cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
 
   /* Initialize the device cdc acm class */
   if (ux_device_stack_class_register(_ux_system_slave_class_cdc_acm_name,

@@ -160,16 +160,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_lptim.c</locationURI>
 		</link>
 		<link>
-			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_pcd.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_pcd.c</locationURI>
-		</link>
-		<link>
-			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_pcd_ex.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_pcd_ex.c</locationURI>
-		</link>
-		<link>
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_hal_pwr.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_hal_pwr.c</locationURI>
@@ -258,11 +248,6 @@
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_ll_usart.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_ll_usart.c</locationURI>
-		</link>
-		<link>
-			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_ll_usb.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Drivers/STM32H5xx_HAL_Driver/Src/stm32h5xx_ll_usb.c</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32H5xx_HAL_Driver/stm32h5xx_ll_utils.c</name>
@@ -1813,21 +1798,6 @@
 			<name>Application/User/USBPD/Target/usbpd_vdm_user.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/USBPD/Target/usbpd_vdm_user.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/USBX/App/app_usbx_device.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/USBX/App/app_usbx_device.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/USBX/App/ux_device_cdc_acm.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/USBX/App/ux_device_cdc_acm.c</locationURI>
-		</link>
-		<link>
-			<name>Application/User/USBX/App/ux_device_descriptors.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/USBX/App/ux_device_descriptors.c</locationURI>
 		</link>
 	</linkedResources>
 	<filteredResources>

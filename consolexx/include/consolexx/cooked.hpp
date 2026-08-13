@@ -37,8 +37,8 @@ struct command_handler {
   virtual void on_command(const std::string &cmd) = 0;
 };
 
-class terminal : public text_field_callbacks,
-                 public termbuf_render_engine {
+class cooked_terminal : public text_field_callbacks,
+                        public termbuf_render_engine {
   int rx_count;
   int tx_count;
   int invalid_char;
@@ -71,8 +71,8 @@ class terminal : public text_field_callbacks,
 
   TXX::Queue<1, CMD_QUEUE_LEN> cmd_queue;
   
-  TXX::MemberThread<terminal, 4096> rx_thread;
-  TXX::MemberThread<terminal, 4096> refresh_thread;
+  TXX::MemberThread<cooked_terminal, 4096> rx_thread;
+  TXX::MemberThread<cooked_terminal, 4096> refresh_thread;
 
   TXX::Mutex input_mutex;
   std::deque<std::string> input_lines;
@@ -91,7 +91,7 @@ class terminal : public text_field_callbacks,
   command_handler *cmd_handler;
 
 public:
-  terminal(USBXX::CDCACM &_usb);
+  cooked_terminal(USBXX::CDCACM &_usb);
 
   void startup();
 

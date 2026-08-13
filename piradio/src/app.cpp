@@ -2,7 +2,7 @@
 #include <piradio/parser.hpp>
 #include <piradio/config.hpp>
 #include <threadxx/config_data.hpp>
-#include <consolexx/terminal.hpp>
+#include <consolexx/cooked.hpp>
 #include <halxx/fault.hpp>
 #include <stm32h5/flash.hpp>
 
@@ -163,9 +163,16 @@ void PiRadioApp::initialize_hardware()
     hardware = new piradio::hardware::UnconfiguredHardware();
   }
 
+  usb_serial.set_manufacturer("Pi Radio");
+
   if (hardware->configured()) {
     std::cout << board.model << " starting..." << std::endl;
+    usb_serial.set_product(board.model);
+  } else {
+    usb_serial.set_product("Unprovisioned");
   }
+
+
 
   //initialize_gpios();
   hardware->initialize_gpios();
@@ -304,7 +311,7 @@ void PiRadioApp::app_main()
   while (true) {
     auto cmd = cmd_queue.pop();
 
-    p.set_line(cmd->str);
+    p.set_command(cmd);
     
     try {
       p.parse();
@@ -320,6 +327,8 @@ void PiRadioApp::app_main()
 
 void PiRadioApp::on_cr(const uint8_t *s, size_t l)
 {
+  using namespace parser;
+
   std::shared_ptr<Command> cmd = std::make_shared<Command>(std::string((char *)s, l), Command::CONSOLE);
   
   output_win->printf("%.*s\n", l, s);
@@ -329,6 +338,8 @@ void PiRadioApp::on_cr(const uint8_t *s, size_t l)
 
 void PiRadioApp::on_command(const std::string &s)
 {
+  using namespace parser;
+
   std::shared_ptr<Command> cmd = std::make_shared<Command>(s, Command::APPLICATION);
 
   cmd_queue.push(cmd);
@@ -342,8 +353,6 @@ int PiRadioApp::render(const char *buffer, size_t size)
 
 int PiRadioApp::writemsg(const char *buffer, size_t size)
 {
-  render(buffer, size);
-
   if (output_win) output_win->write(buffer, size);
 
   return size;

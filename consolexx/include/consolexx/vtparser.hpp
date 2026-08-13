@@ -14,9 +14,9 @@
 #include <vector>
 #include <string>
 
-class terminal;
+class cooked_terminal;
 
-typedef void (*terminal_handler_t)(struct terminal *, int);
+typedef void (*terminal_handler_t)(struct cooked_terminal *, int);
 
 #define TERMINAL_MAX_CSI_INTERMEDIATES  16
 #define TERMINAL_MAX_CSI_PARAMETERS     16
@@ -37,7 +37,7 @@ typedef enum {
 
 
 class vtparser {
-  struct terminal *term;
+  struct cooked_terminal *term;
   terminal_state_t state;
   terminal_state_t saved_state;
   int csi_count;
@@ -79,7 +79,7 @@ class vtparser {
   void handle_text(int c);
 
 public:
-  vtparser(terminal *);
+  vtparser(cooked_terminal *);
 
   void process(int c);
 };
