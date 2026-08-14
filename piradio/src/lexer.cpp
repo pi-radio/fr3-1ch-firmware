@@ -2,6 +2,7 @@
 
 #include "console.h"
 
+#include <cctype>
 #include <ctype.h>
 #include <strings.h>
 
@@ -94,7 +95,31 @@ int get_decimal_str(std::string::const_iterator &cur)
   return i;
 }
 
-token_t get_number(std::string::const_iterator &cur)
+int get_hexadecimal_str(std::string::const_iterator &cur)
+{
+  int i = 0;
+
+  while (true) {
+    auto c = std::tolower(*cur);
+
+    if (!std::isxdigit(c)) {
+      return i;
+    }
+
+    cur++;
+
+    if (std::isdigit(c)) {
+      i = (i << 4) + (c - '0');
+    } else {
+      i = (i << 4) + 10 + (c - 'a');
+    }
+  }
+
+  return i;
+}
+
+
+token_t get_number_core(std::string::const_iterator &cur)
 {
   int neg = 1;
   bool isfloat = false;
@@ -111,7 +136,13 @@ token_t get_number(std::string::const_iterator &cur)
 
     if (*cur == 'x') {
       // Hexadecimal number
+      cur++;
+      
+      if (!std::isxdigit(*cur)) {
+        return token_t(new ERROR());
+      }
 
+      return token_t(new _INT(get_hexadecimal_str(cur)));
     } else if (*cur >= '0' && *cur <= '7') {
       // Octal number
       return token_t(new _INT(get_octal_str(cur)));
@@ -139,6 +170,17 @@ token_t get_number(std::string::const_iterator &cur)
   }
 
   return token_t(new _INT(i));
+}
+
+token_t get_number(std::string::const_iterator &cur)
+{
+  auto retval = get_number_core(cur);
+
+  if (!std::isspace(*cur)) {
+    return token_t(new ERROR());
+  }
+
+  return retval;
 }
 
 token_t get_id(std::string::const_iterator &cur)
