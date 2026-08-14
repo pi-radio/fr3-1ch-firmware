@@ -7,6 +7,7 @@
 #include <consolexx/geom.hpp>
 #include <main.h>
 
-const position pzero(0UL,0UL);
-const size szero(0UL,0UL);
-
+namespace consolexx {
+  const position pzero(0UL,0UL);
+  const size szero(0UL,0UL);
+}

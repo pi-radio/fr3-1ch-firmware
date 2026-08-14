@@ -2,6 +2,8 @@
 #include <threadxx/queue.hpp>
 #include <threadxx/app.hpp>
 #include <consolexx/adapter.hpp>
+#include <consolexx/window.hpp>
+#include <consolexx/text_field.hpp>
 #include <usbxx/usbxx.hpp>
 #include <threadxx/usbpdxx.hpp>
 #include <piradio/hardware.hpp>
@@ -22,8 +24,7 @@ public:
 
 class PiRadioApp : public TXX::App<halxx::STM32H563>,
 		   public dbg::renderer,
-       public text_field_callbacks,
-       public consolexx::command_handler
+       public consolexx::termobj
 {
   TXX::objqueue<parser::Command> cmd_queue;
   USBSerial usb_serial;
@@ -35,9 +36,9 @@ class PiRadioApp : public TXX::App<halxx::STM32H563>,
 
   //consolexx::cooked_terminal term;
 
-  window *output_win = NULL;
-  window *status_win = NULL;
-  text_field *input_win = NULL;
+  consolexx::window *output_win = NULL;
+  consolexx::window *status_win = NULL;
+  consolexx::text_field *input_win = NULL;
 
   TX_TIMER status_timer;
 
@@ -74,10 +75,10 @@ public:
   
   int writemsg(const char *buffer, size_t size);
 
-  void beep() override { term.beep(); }
+  //void beep() override { term.beep(); }
 
-  void on_cr(const uint8_t *s, size_t l) override;
-  void on_command(const std::string &) override;
+  void on_event(const consolexx::evt_ptr &evt) override;
+
   void status_update();
 };
 

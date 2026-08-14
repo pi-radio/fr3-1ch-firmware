@@ -3,12 +3,11 @@
 #include <halxx/extern.hpp>
 #include <threadxx/thread.hpp>
 #include <threadxx/mutex.hpp>
-#include <usbxx/cdcacm.hpp>
+#include <threadxx/queue.hpp>
+#include <threadxx/eventflags.hpp>
 #include <consolexx/io.hpp>
 #include <consolexx/cooked.hpp>
 #include <consolexx/raw.hpp>
-#include <threadxx/queue.hpp>
-#include <threadxx/eventflags.hpp>
 
 namespace consolexx
 {
@@ -30,7 +29,7 @@ namespace consolexx
     queue_io(terminal_adapter *_adapter, const std::string &_name, bool _drop) :
       in_mutex(_name + " in mutex"),
       in_sema(_name + " in sema"),
-      adapter(_adapter), name(_name), drop(_drop)  {
+      drop(_drop), adapter(_adapter), name(_name)  {
 
     }
 
@@ -45,7 +44,7 @@ namespace consolexx
     virtual int getc();
   };
 
-  class terminal_adapter
+  class terminal_adapter : public terminal
   {
     friend class queue_io;
 
@@ -53,8 +52,6 @@ namespace consolexx
       RAW,
       COOKED
     } mode;
-
-    termio *main_io;
 
     //raw_terminal raw;
     cooked_terminal cooked;
@@ -66,14 +63,16 @@ namespace consolexx
 
     void _rx_thread();
 
-    void flush() { main_io->flush(); }
-    void wait_started() { main_io->wait_started(); }
-    void putc(int c) { main_io->putc(c); };
+    void flush() { io->flush(); }
+    void wait_started() { io->wait_started(); }
+    void putc(int c) { io->putc(c); };
 
   public:
-    terminal_adapter(termio *_main_io);
+    terminal_adapter(termobj *parent, termio *_main_io);
 
     cooked_terminal &get_cooked() { return cooked; }
+
+    int output_handler(const char *buffer, size_t size) override;
 
     void startup();
     void beep();

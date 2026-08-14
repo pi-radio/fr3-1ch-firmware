@@ -6,9 +6,10 @@
  */
 #include <consolexx/text_field.hpp>
 
+using namespace consolexx;
+
 text_field::text_field(viewport *parent, const rect &r) :
-  window(parent, r),
-  _callbacks(NULL)
+  window(parent, r)
 {
 
 }
@@ -16,23 +17,21 @@ text_field::text_field(viewport *parent, const rect &r) :
 int text_field::on_input(int c)
 {
   if (c == '\n') {
-    if (_callbacks) {
-      _callbacks->on_nl(bufat(0, 0), cursor.col);
+    if (cursor.col != 0) {
+      emit<input_event>(std::string((char *)bufat(0,0), cursor.col));
     }
     clearline(0);
     cr();
   } else if (c == '\r') {
-    if (_callbacks) {
-      _callbacks->on_cr(bufat(0, 0), cursor.col);
+    if (cursor.col != 0) {
+      emit<input_event>(std::string((char *)bufat(0,0), cursor.col));
     }
 
     clearline(0);
     cr();
   } else if (c == '\b' || c == 0x7F) {
     if (cursor.col == 0) {
-      if (_callbacks) {
-        _callbacks->beep();
-      }
+      emit<error_event>();
       return 0;
     }
 

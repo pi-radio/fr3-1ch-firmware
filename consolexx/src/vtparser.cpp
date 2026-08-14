@@ -174,7 +174,8 @@ void vtparser::handle_dle(int c)
     set_state(TERMINAL_STATE_TEXT);
   } else if ((c == 0x03) && (saved_state == TERMINAL_STATE_TEXT)) {
     set_state(TERMINAL_STATE_GROUND);
-    term->on_command(command);
+
+    term->emit<input_event>(command);
   } else {
     handle_error(c);
   }

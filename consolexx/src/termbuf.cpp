@@ -8,8 +8,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <consolexx/termbuf.hpp>
+#include <consolexx/cooked.hpp>
 
-termbuf::termbuf(uint32_t rows, uint32_t cols) : viewport(NULL, rect(0,0,rows,cols))
+using namespace consolexx;
+
+termbuf::termbuf(cooked_terminal *term, uint32_t rows, uint32_t cols) : viewport(nullptr, rect(0,0,rows,cols)), engine(term)
 {
 }
 
@@ -29,4 +32,9 @@ void termbuf::render_buffer(const rect &_r, const uint8_t *buf, const size_t &st
     buf += stride;
   }
 
+}
+
+void termbuf::on_event(const std::shared_ptr<event> &evt)
+{
+  engine->on_event(evt);
 }

@@ -30,7 +30,7 @@ using namespace TXX::config_data;
 
 PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
     usb_io(usb_serial),
-    term(&usb_io)
+    term(this, &usb_io)
 {
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
@@ -278,25 +278,13 @@ void PiRadioApp::tx_init()
 
   term.startup();
 
-  output_win = term.get_cooked().create<window>(8, 0, 8, 132);
-  status_win = term.get_cooked().create<window>(20, 0, 1, 132);
+  output_win = term.get_cooked().create<consolexx::window>(8, 0, 8, 132);
+  status_win = term.get_cooked().create<consolexx::window>(20, 0, 1, 132);
 
-  input_win = term.get_cooked().create<text_field>(17, 0, 1, 132);
+  input_win = term.get_cooked().create<consolexx::text_field>(17, 0, 1, 132);
 
+  term.get_cooked().set_default_output(output_win);
   term.get_cooked().set_focus(input_win);
-
-  input_win->set_callbacks(this);
-
-  /*
-  tx_timer_create(&status_timer,
-      (char *)"Status Timer",
-      status_update,
-      (ULONG)status_win,
-      1000,
-      1000,
-      TX_AUTO_ACTIVATE);
-      */
-  
 
   fr3_1ch_hw_init();
 }
@@ -326,24 +314,20 @@ void PiRadioApp::app_main()
   }
 }
 
-void PiRadioApp::on_cr(const uint8_t *s, size_t l)
+void PiRadioApp::on_event(const consolexx::evt_ptr &evt)
 {
+  using namespace consolexx;
   using namespace parser;
 
-  std::shared_ptr<Command> cmd = std::make_shared<Command>(std::string((char *)s, l), Command::CONSOLE);
-  
-  output_win->printf("%.*s\n", l, s);
+  if (evt->type == input_event::EVENT_TYPE) {
+    auto input = event::to<input_event>(evt);
 
-  cmd_queue.push(cmd);
-}
+    std::shared_ptr<Command> cmd = std::make_shared<Command>(input->s, Command::CONSOLE);
 
-void PiRadioApp::on_command(const std::string &s)
-{
-  using namespace parser;
+    output_win->write(input->s + "\n");
 
-  std::shared_ptr<Command> cmd = std::make_shared<Command>(s, Command::APPLICATION);
-
-  cmd_queue.push(cmd);
+    cmd_queue.push(cmd);
+  }
 }
 
 int PiRadioApp::render(const char *buffer, size_t size)
@@ -354,9 +338,7 @@ int PiRadioApp::render(const char *buffer, size_t size)
 
 int PiRadioApp::writemsg(const char *buffer, size_t size)
 {
-  if (output_win) output_win->write(buffer, size);
-
-  return size;
+  return term.output_handler(buffer, size);
 }
 
 void PiRadioApp::status_update()
@@ -367,9 +349,9 @@ void PiRadioApp::status_update()
   result = HAL_DTS_GetTemperature(&hdts, &temp);
 
   if (result == TX_SUCCESS) {
-    status_win->printf(position(0,0), "Temp: %dC", temp);
+    status_win->printf(consolexx::position(0,0), "Temp: %dC", temp);
   } else {
-    status_win->printf(position(0,0), "Temp: ERROR");
+    status_win->printf(consolexx::position(0,0), "Temp: ERROR");
   }
 }
 

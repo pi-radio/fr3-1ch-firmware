@@ -208,7 +208,7 @@ namespace parser
     std::string str;
 
     Command(const std::string &_str, CommandOrigin _origin) :
-      str(_str), origin(_origin) {
+      origin(_origin), str(_str)  {
 
     }
   };

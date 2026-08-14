@@ -1,5 +1,7 @@
 #pragma once
 
+#include <usbxx/cdcacm.hpp>
+
 namespace consolexx
 {
   struct termio

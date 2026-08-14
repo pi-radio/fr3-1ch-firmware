@@ -10,6 +10,8 @@
 #include <stdarg.h>
 #include <consolexx/termbuf.hpp>
 
+using namespace consolexx;
+
 int viewport::on_input(int c)
 {
   if (_focus != NULL)
@@ -19,7 +21,7 @@ int viewport::on_input(int c)
 
 uint8_t *viewport::alloc_buffer(size_t s)
 {
-  return parent()->alloc_buffer(s);
+  return parent<viewport>()->alloc_buffer(s);
 }
 
 
@@ -31,7 +33,7 @@ void viewport::render_buffer(const rect &_r, const uint8_t *buf, const size_t &s
     return;
   }
 
-  parent()->render_buffer(local2parent(rr), buf, stride);
+  parent<viewport>()->render_buffer(local2parent(rr), buf, stride);
 }
 
 void viewport::redraw(std::vector<rect> &occluded)

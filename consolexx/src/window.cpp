@@ -9,6 +9,8 @@
 
 extern "C" void Error_Handler(void);
 
+using namespace consolexx;
+
 static ssize_t win_read(void *cookie, char *data, size_t n)
 {
   return n;

@@ -62,10 +62,12 @@ void queue_io::wait_started()
 };
 
 
-terminal_adapter::terminal_adapter(termio *_main_io) : main_io(_main_io),
+terminal_adapter::terminal_adapter(termobj *parent, termio *_main_io) :
+    terminal(parent, _main_io),
+    mode(COOKED),
     rx_thread("Terminal Adapter RX Thread", this, &terminal_adapter::_rx_thread),
     cooked_io(this, "Cooked IO", false),
-    cooked(&cooked_io)
+    cooked(this, &cooked_io)
 {
 
 }
@@ -73,7 +75,7 @@ terminal_adapter::terminal_adapter(termio *_main_io) : main_io(_main_io),
 void terminal_adapter::_rx_thread()
 {
   while(1) {
-    cooked_io.sendc(main_io->getc());
+    cooked_io.sendc(io->getc());
   }
 }
 
@@ -92,3 +94,15 @@ void terminal_adapter::beep()
   cooked.beep();
 }
 
+int terminal_adapter::output_handler(const char *buffer, size_t size)
+{
+  switch(mode)
+  {
+  case COOKED:
+    return cooked.output_handler(buffer, size);
+  case RAW:
+    //return raw.output_handler(buffer, size);
+  default:
+    throw std::runtime_error("Invalid Mode");
+  }
+}

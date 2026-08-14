@@ -7,6 +7,7 @@
 #include <consolexx/text_field.hpp>
 #include <consolexx/window.hpp>
 #include <consolexx/vtparser.hpp>
+#include <consolexx/termbuf.hpp>
 #include <usart.h>
 
 #include "ux_device_cdc_acm.h"
@@ -17,7 +18,8 @@ int force_redraw;
 
 using namespace consolexx;
 
-cooked_terminal::cooked_terminal(termio *_io) :
+cooked_terminal::cooked_terminal(termobj *parent, termio *_io) :
+    terminal(parent, _io),
     rx_count(0), tx_count(0), invalid_char(0),
     buffer_input(1), input_len(0),
     tx_len(0),  echo(0), onlcr(1),
@@ -27,8 +29,7 @@ cooked_terminal::cooked_terminal(termio *_io) :
     refresh_thread("Terminal Refresh Thread", this, &cooked_terminal::_refresh_thread),
     input_mutex("Terminal Input Mutex"),
     c_peek(0), last_dtr(0),
-    cmd_handler(nullptr),
-    io(_io)
+    default_output(nullptr)
 {
   //void *pstack;
   memset(input_buf, 0, sizeof(input_buf));
@@ -40,9 +41,7 @@ cooked_terminal::cooked_terminal(termio *_io) :
   
   tx_cur = tx_buf;
 
-  _outbuf = new termbuf(40, 132);
-
-  _outbuf->set_render_engine(this);
+  _outbuf = new termbuf(this, 40, 132);
 }
 
 void cooked_terminal::startup()
@@ -50,13 +49,6 @@ void cooked_terminal::startup()
   rx_thread.create();
   //tx_thread.create();
   refresh_thread.create();
-}
-
-void cooked_terminal::on_command(const std::string &s)
-{
-  if (cmd_handler != nullptr) {
-    cmd_handler->on_command(s);
-  }
 }
 
 void cooked_terminal::draw(position p, const uint8_t *buf, size_t len)
@@ -187,3 +179,14 @@ void cooked_terminal::_refresh_thread(void)
     }
   }
 }
+
+int cooked_terminal::output_handler(const char *buffer, size_t size)
+{
+  if (default_output == nullptr)
+    return size;
+
+  return default_output->write(buffer, size);
+}
+
+
+

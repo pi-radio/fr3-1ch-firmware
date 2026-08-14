@@ -4,7 +4,6 @@
 #include <threadxx/thread.hpp>
 #include <threadxx/mutex.hpp>
 #include <threadxx/queue.hpp>
-#include <usbxx/cdcacm.hpp>
 
 #define TERMINAL_CMD_NOOP          0
 #define TERMINAL_CMD_REDRAW        1
@@ -14,10 +13,11 @@
 
 //EXTERN_C int terminal_send_command(int cmd);
 
-#include <consolexx/termbuf.hpp>
-#include <consolexx/text_field.hpp>
 #include <consolexx/vtparser.hpp>
 #include <consolexx/io.hpp>
+#include <consolexx/terminal.hpp>
+#include <consolexx/termbuf.hpp>
+#include <consolexx/window.hpp>
 #include <functional>
 
 #include <deque>
@@ -39,8 +39,7 @@ namespace consolexx {
     virtual void on_command(const std::string &cmd) = 0;
   };
 
-  class cooked_terminal : public text_field_callbacks,
-                          public termbuf_render_engine {
+  class cooked_terminal : public terminal {
     int rx_count;
     int tx_count;
     int invalid_char;
@@ -73,8 +72,8 @@ namespace consolexx {
 
     TXX::Queue<1, CMD_QUEUE_LEN> cmd_queue;
 
-    TXX::MemberThread<cooked_terminal, 4096> rx_thread;
-    TXX::MemberThread<cooked_terminal, 4096> refresh_thread;
+    TXX::MemberThread<cooked_terminal, 8192> rx_thread;
+    TXX::MemberThread<cooked_terminal, 8192> refresh_thread;
 
     TXX::Mutex input_mutex;
     std::deque<std::string> input_lines;
@@ -90,12 +89,11 @@ namespace consolexx {
 
     //USBXX::CDCACM &usb_cdc_acm;
 
-    termio *io;
 
-    command_handler *cmd_handler;
+    window *default_output;
 
   public:
-    cooked_terminal(termio *_io);
+    cooked_terminal(termobj *parent, termio *_io);
 
     void startup();
 
@@ -105,8 +103,6 @@ namespace consolexx {
     void unlock() {};
 
     void on_input(int c) { _outbuf->on_input(c); };
-
-    void on_command(const std::string &s);
 
     void refresh(void);
 
@@ -138,8 +134,10 @@ namespace consolexx {
 
     void set_focus(window *win) { _outbuf->set_focus(win); }
   
-    void draw(position p, const uint8_t *buf, size_t len) override;
-  
-    void set_command_handler(command_handler *handler) { cmd_handler = handler; }
+    void draw(position p, const uint8_t *buf, size_t len);
+
+    void set_default_output(window *win) { default_output = win; }
+
+    int output_handler(const char *buffer, size_t size) override;
   };
 };
