@@ -176,7 +176,7 @@ token_t get_number(std::string::const_iterator &cur)
 {
   auto retval = get_number_core(cur);
 
-  if (!std::isspace(*cur)) {
+  if (!std::isspace(*cur) && *cur != 0) {
     return token_t(new ERROR());
   }
 
