@@ -5,9 +5,7 @@
  *      Author: zapman
  */
 #include <fr3_1ch_hw.h>
-#include <ltc2668.h>
-
-LTC2668 ltc2668;
+#include <piradio/ltc2668.hpp>
 
 LTC2668::LTC2668()
 {

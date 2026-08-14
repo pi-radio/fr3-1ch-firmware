@@ -542,6 +542,21 @@ namespace LMX {
     }
   }
 
+  void LMX2820::set_drive(uint8_t v )
+  {
+    outa_pwr.set(v);
+
+    program();
+  }
+
+  int LMX2820::set_powerdown(bool b)
+  {
+    powerdown.set(b);
+
+    program();
+  }
+
+
   template <uint32_t A, uint32_t B>
   std::ostream &operator<<(std::ostream &os, dreg<A, B> &f)
   {

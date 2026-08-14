@@ -53,6 +53,12 @@ namespace piradio
       float freq;
     };
 
+    struct iq_voltages : public TXX::config_data::tlv<board_serial>  {
+      static constexpr uint16_t TAG = 0x1004;
+      float I_V;
+      float Q_V;
+    };
+
     extern std::vector<std::string> board_models;
   };
 };

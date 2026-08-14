@@ -64,9 +64,7 @@ public:
   void tx_init() override;
   void app_main() override;
   
-  LMX::LMX2820 *get_lmx() {
-    return hardware->get_lmx();
-  }
+  piradio::hardware::PiRadioHardware *get_hardware() { return hardware; }
 
   int render(const char *buffer, size_t size) override;
 

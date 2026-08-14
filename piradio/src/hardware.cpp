@@ -31,6 +31,7 @@ void Gen1Hardware::initialize_gpios()
   setup_gpios();
 }
 
+
 void Gen1Hardware::setup_bank(GPIO_TypeDef *gpio,
                               const std::vector<uint32_t> &pins,
                               const std::vector<uint32_t> &set_pins)
@@ -127,6 +128,44 @@ void FR31CHHardware::restore_settings()
   lmx.setup();
 
   lmx.program();
+}
+
+void FR31CHHardware::set_I_voltage(float v)
+{
+  ltc2668.setV(2, v);
+}
+
+void FR31CHHardware::set_Q_voltage(float v)
+{
+  ltc2668.setV(0, v);
+}
+
+GPIO_PinState pin_value(uint32_t v)
+{
+  if (v == 0)
+    return GPIO_PIN_RESET;
+  else
+    return GPIO_PIN_SET;
+}
+
+void FR31CHHardware::set_rx_filter(uint8_t v)
+{
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, pin_value(v & 0x20));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, pin_value(v & 0x10));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, pin_value(v & 0x08));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, pin_value(v & 0x04));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, pin_value(v & 0x02));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, pin_value(v & 0x01));
+}
+
+void FR31CHHardware::set_tx_filter(uint8_t v)
+{
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, pin_value(v & 0x20));
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, pin_value(v & 0x10));
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9,  pin_value(v & 0x08));
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x04));
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x02));
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x01));
 }
 
 

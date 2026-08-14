@@ -6,10 +6,6 @@
 
 #include <threadxx/config_data.hpp>
 
-#include <piradio/lmx2820.hpp>
-#include <piradio/lmx2820.hpp>
-#include <ltc2668.h>
-
 #include <piradio/parser.hpp>
 #include <piradio/app.hpp>
 #include <piradio/config.hpp>
@@ -91,23 +87,22 @@ void Parser::parse_config_statement()
 }
 
 void Parser::parse_lmx_powerdown() {
-	main_app.get_lmx()->write_reg(0, 0x4071);
+  main_app.get_hardware()->set_lmx_powerdown(true);
 }
 
 void Parser::parse_lmx_powerup() {
-  main_app.get_lmx()->write_reg(0, 0x4070);
+  main_app.get_hardware()->set_lmx_powerdown(false);
 }
 
 void Parser::parse_lmx_prog() {
   parse_statement_end();
 
-  main_app.get_lmx()->reprogram();
+  main_app.get_hardware()->reprogram_lmx();
 }
 
 
 void Parser::parse_lmx_read() {
   int reg, result;
-  uint16_t val;
   auto cur_tok = tokenizer.get_token();
 
   if (cur_tok != keywords::REG) {
@@ -123,41 +118,20 @@ void Parser::parse_lmx_read() {
 
   parse_statement_end();
 
-  result = main_app.get_lmx()->read_reg(reg, &val);
+  auto val = main_app.get_hardware()->lmx_read_reg(reg);
 
-  if (result == 0) {
-    std::cout << std::format("LMX reg {}: {:04x}", reg, val) << std::endl;
-  } else {
-    std::cout << std::format("LMX reg {}: FAILURE", reg, val) << std::endl;
-  }
+  std::cout << std::format("LMX reg {}: {:04x}", reg, val) << std::endl;
 }
 
 void Parser::parse_lmx_drive() {
 	int val = shift_int();
 	uint16_t blob;
 
-	if (val == 7)
-		blob = 0x011E;
-	else if (val == 6)
-		blob = 0x011C;
-	else if (val == 5)
-		blob = 0x011A;
-	else if (val == 4)
-		blob = 0x0118;
-	else if (val == 3)
-		blob = 0x0116;
-	else if (val == 2)
-		blob = 0x0114;
-	else if (val == 1)
-		blob = 0x0112;
-	else if (val == 0)
-		blob = 0x0110;
-	else {
-		// Error
-		throw GeneralError::fmt("Invalid LMX drive {}", val);
+	if (val < 0 || val > 7) {
+    throw GeneralError::fmt("Invalid LMX drive {}", val);
 	}
 
-	main_app.get_lmx()->write_reg(79, blob);
+	main_app.get_hardware()->set_lmx_drive(val);
 }
 
 void Parser::parse_lmx_write() {
@@ -189,7 +163,7 @@ void Parser::parse_lmx_tune() {
     throw GeneralError::fmt("Invalid frequency {}", f);
   }
 
-  main_app.get_lmx()->tune(f);
+  main_app.get_hardware()->tune_lmx(f);
 }
 
 void Parser::parse_lmx_statement() {
@@ -214,13 +188,7 @@ void Parser::parse_lmx_statement() {
   }
 }
 
-GPIO_PinState pin_value(uint32_t v)
-{
-	if (v == 0)
-		return GPIO_PIN_RESET;
-	else
-		return GPIO_PIN_SET;
-}
+
 
 using namespace piradio::config;
 using namespace TXX::config_data;
@@ -306,7 +274,13 @@ void Parser::parse_set_statement() {
     double V = shift_float();
 
     parse_statement_end();
-    ltc2668.setV(2, V);
+
+    if (V < -0.4 || V > 0.4) {
+      throw GeneralError::fmt("Invalid IQ voltage {}", V);
+    }
+
+    main_app.get_hardware()->set_I_voltage(V);
+
     return;
   } else if (cur_tok == keywords::Q_V) {
     // Parse a float
@@ -314,7 +288,12 @@ void Parser::parse_set_statement() {
 
     parse_statement_end();
 
-    ltc2668.setV(0, V);
+    if (V < -0.4 || V > 0.4) {
+      throw GeneralError::fmt("Invalid IQ voltage {}", V);
+    }
+
+    main_app.get_hardware()->set_Q_voltage(V);
+
     return;
   } else if (cur_tok == keywords::IQ) {
     auto cur_tok = tokenizer.get_token();
@@ -332,25 +311,19 @@ void Parser::parse_set_statement() {
     return;
   } else if (cur_tok == keywords::RXFILTER) {
     uint32_t v = shift_int();
+
+    parse_statement_end();
+
+    main_app.get_hardware()->set_rx_filter(v);
     
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, pin_value(v & 0x20));
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, pin_value(v & 0x10));
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, pin_value(v & 0x08));
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, pin_value(v & 0x04));
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, pin_value(v & 0x02));
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, pin_value(v & 0x01));
-          
     return;
   } else if (cur_tok == keywords::TXFILTER) {
     uint32_t v = shift_int();
-    
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, pin_value(v & 0x20));
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, pin_value(v & 0x10));
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_9,  pin_value(v & 0x08));
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, pin_value(v & 0x04));
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, pin_value(v & 0x02));
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, pin_value(v & 0x01));
-          
+
+    parse_statement_end();
+
+    main_app.get_hardware()->set_rx_filter(v);
+
     return;
   } else if (cur_tok == keywords::BOARD) {
     auto cur_tok = tokenizer.get_token();

@@ -308,6 +308,8 @@ void PiRadioApp::app_main()
       printf("Syntax Error\n");
     } catch (const parser::GeneralError &e) {
       printf("%s\n", e.s.c_str());
+    } catch (const piradio::hardware::unsupported_error &e) {
+      std::cout << "Unsuppoted command for hardware." << std::endl;
     } catch (...) {
       printf("Caught unknown exception\n");             
     }

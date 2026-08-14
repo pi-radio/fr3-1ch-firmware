@@ -451,6 +451,7 @@ public:
   void dump(std::ostream &os);
 
   void tune(double f);
+  void set_drive(uint8_t d);
 
   void set_reg(int reg, uint16_t val);
   uint16_t get_reg(int reg);
@@ -460,6 +461,8 @@ public:
 
   int power_up();
   int power_down();
+
+  int set_powerdown(bool b);
 
   int locked();
 };
