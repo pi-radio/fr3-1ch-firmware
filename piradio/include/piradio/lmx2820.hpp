@@ -448,7 +448,7 @@ public:
 
   void setup();
 
-  void dump();
+  void dump(std::ostream &os);
 
   void tune(double f);
 

@@ -494,6 +494,8 @@ namespace LMX {
     vco_capctl.set(191 * (1 - t));
     
     update_PLL(f);
+
+    dirty.set(0);
   }
 
 
@@ -571,63 +573,63 @@ namespace LMX {
   }
 
 
-  void LMX2820::dump()
+  void LMX2820::dump(std::ostream &os)
   {
-    dbg::dbgout << "LMX2820 dump" << std::endl;
+    os << "LMX2820 dump" << std::endl;
 
-    dbg::dbgout << "Control: " << std::endl;
-    dbg::dbgout << " dblr_cal_en: " << dblr_cal_en << " fcal_en: " << fcal_en << " reset: " << reset << " powerdown: " << powerdown << std::endl;
-    dbg::dbgout << " instcal_skip_acal: " << instcal_skip_acal << " phase_sync_en: " << phase_sync_en << " ld_vtune_en:" << ld_vtune_en << std::endl;
-    dbg::dbgout << " instcal_dblr_en: " << instcal_dblr_en << " instcal_en: " << instcal_en << " cal_clk_div: " << cal_clk_div << " instcal_dly: " << instcal_dly << std::endl;
-    dbg::dbgout << " acal_cmp_dly: " << acal_cmp_dly << " quick_recal_en: " << quick_recal_en << " pfd_dly_manual: " << pfd_dly_manual << " vco_daciset_force: " << vco_daciset_force << std::endl;
-    dbg::dbgout << " vco_capctl_force: " << vco_capctl_force << " cpg: " << cpg << " ld_type: " << ld_type << " ld_dly: " << ld_dly << std::endl;
-    dbg::dbgout << " tempsense_en: " << tempsense_en << std::endl;
-    dbg::dbgout << " dblbuf_outmux_en: " << dblbuf_outmux_en << " dblbuf_outbuf_en: " << dblbuf_outbuf_en << " dblbuf_chdiv_en: " << dblbuf_chdiv_en << " dblbuf_pll_en: " << dblbuf_pll_en << std::endl;
+    os << "Control: " << std::endl;
+    os << " dblr_cal_en: " << dblr_cal_en << " fcal_en: " << fcal_en << " reset: " << reset << " powerdown: " << powerdown << std::endl;
+    os << " instcal_skip_acal: " << instcal_skip_acal << " phase_sync_en: " << phase_sync_en << " ld_vtune_en:" << ld_vtune_en << std::endl;
+    os << " instcal_dblr_en: " << instcal_dblr_en << " instcal_en: " << instcal_en << " cal_clk_div: " << cal_clk_div << " instcal_dly: " << instcal_dly << std::endl;
+    os << " acal_cmp_dly: " << acal_cmp_dly << " quick_recal_en: " << quick_recal_en << " pfd_dly_manual: " << pfd_dly_manual << " vco_daciset_force: " << vco_daciset_force << std::endl;
+    os << " vco_capctl_force: " << vco_capctl_force << " cpg: " << cpg << " ld_type: " << ld_type << " ld_dly: " << ld_dly << std::endl;
+    os << " tempsense_en: " << tempsense_en << std::endl;
+    os << " dblbuf_outmux_en: " << dblbuf_outmux_en << " dblbuf_outbuf_en: " << dblbuf_outbuf_en << " dblbuf_chdiv_en: " << dblbuf_chdiv_en << " dblbuf_pll_en: " << dblbuf_pll_en << std::endl;
 
-    dbg::dbgout << std::endl;
-    dbg::dbgout << "Input Path:" << std::endl;
-    dbg::dbgout << " Osc 2x: " << osc_2x << std::endl;
-    dbg::dbgout << " fcal hpfd adj: " << fcal_hpfd_adj << " lpfd adj: " << fcal_lpfd_adj << std::endl;
-    dbg::dbgout << " Pre R Divider: " << (uint16_t)pll_r_pre << " Post R divider: " << (uint16_t)pll_r << std::endl;
-    dbg::dbgout << " PFD delay: " << pfd_delay << " pfd sel: " << pfd_sel << " ext PFD div: " << extpfd_div << std::endl;
+    os << std::endl;
+    os << "Input Path:" << std::endl;
+    os << " Osc 2x: " << osc_2x << std::endl;
+    os << " fcal hpfd adj: " << fcal_hpfd_adj << " lpfd adj: " << fcal_lpfd_adj << std::endl;
+    os << " Pre R Divider: " << (uint16_t)pll_r_pre << " Post R divider: " << (uint16_t)pll_r << std::endl;
+    os << " PFD delay: " << pfd_delay << " pfd sel: " << pfd_sel << " ext PFD div: " << extpfd_div << std::endl;
 
-    dbg::dbgout << std::endl;
-    dbg::dbgout << "fPD: " << get_fPD() / 1.0e6 << " MHz" << std::endl;
+    os << std::endl;
+    os << "fPD: " << get_fPD() / 1.0e6 << " MHz" << std::endl;
 
-    dbg::dbgout << std::endl;
-    dbg::dbgout << "PLL Path:" << std::endl;
-    dbg::dbgout << " loopback_en: " << loopback_en << " extvcd_div: " << extvco_div << " extvco_en: " << extvco_en << std::endl;
-    dbg::dbgout << " pll_n: " << (uint16_t)pll_n << std::endl;
-    dbg::dbgout << " pll_den: " << pll_den << std::endl;
-    dbg::dbgout << " pll_num: " << pll_num << std::endl;
-    dbg::dbgout << " vco_sel: " << vco_sel << " vco_sel_force: " << vco_sel_force << std::endl;
-    dbg::dbgout << " vco_capctl: " << vco_capctl << std::endl;
-    dbg::dbgout << " vco_daciset: " << vco_daciset << std::endl;
+    os << std::endl;
+    os << "PLL Path:" << std::endl;
+    os << " loopback_en: " << loopback_en << " extvcd_div: " << extvco_div << " extvco_en: " << extvco_en << std::endl;
+    os << " pll_n: " << (uint16_t)pll_n << std::endl;
+    os << " pll_den: " << pll_den << std::endl;
+    os << " pll_num: " << pll_num << std::endl;
+    os << " vco_sel: " << vco_sel << " vco_sel_force: " << vco_sel_force << std::endl;
+    os << " vco_capctl: " << vco_capctl << std::endl;
+    os << " vco_daciset: " << vco_daciset << std::endl;
 
-    dbg::dbgout << " mash_reset_n: " << mash_reset_n << " mash_order: " << mash_order << " mash_seed_en: " << mash_seed_en << " mash_rst_count: " << mash_rst_count << " mash_seed: " << mash_seed << std::endl;
+    os << " mash_reset_n: " << mash_reset_n << " mash_order: " << mash_order << " mash_seed_en: " << mash_seed_en << " mash_rst_count: " << mash_rst_count << " mash_seed: " << mash_seed << std::endl;
 
-    dbg::dbgout << " instcal_pll_num: " << instcal_pll_num << std::endl;
+    os << " instcal_pll_num: " << instcal_pll_num << std::endl;
 
     double frac = pll_n + (double)pll_num/pll_den;
 
-    dbg::dbgout << std::endl;
-    dbg::dbgout << "VCO freq: " << frac * get_fPD() / 1e9 << " GHz" << std::endl;
+    os << std::endl;
+    os << "VCO freq: " << frac * get_fPD() / 1e9 << " GHz" << std::endl;
 
-    dbg::dbgout << std::endl;
-    dbg::dbgout << "Output: " << std::endl;
-    dbg::dbgout << " chdivA: " << chdivA << " outa_mux: " << outa_mux << " outa_pwr: "  << outa_pwr << " outa_pd: " << outa_pd << std::endl;
-    dbg::dbgout << " chdivB: " << chdivB << " outb_mux: " << outb_mux << " outb_pwr: "  << outb_pwr << " outb_pd: " << outb_pd << std::endl;
+    os << std::endl;
+    os << "Output: " << std::endl;
+    os << " chdivA: " << chdivA << " outa_mux: " << outa_mux << " outa_pwr: "  << outa_pwr << " outa_pd: " << outa_pd << std::endl;
+    os << " chdivB: " << chdivB << " outb_mux: " << outb_mux << " outb_pwr: "  << outb_pwr << " outb_pd: " << outb_pd << std::endl;
 
-    dbg::dbgout << std::endl;
-    dbg::dbgout << "JESD:" << std::endl;
-    dbg::dbgout << " sysref_en: " << sysref_en << " srout_pd: " << srout_pd << " sysref_inp_fmt: " << sysref_inp_fmt << std::endl;
-    dbg::dbgout << " sysref_div_pre: " << sysref_div_pre << " sysref_div: " << sysref_div  << std::endl;
-    dbg::dbgout << " sysref_pulse: " << sysref_pulse << " sysref_pulse_cnt: " << sysref_pulse_cnt << std::endl;
-    dbg::dbgout << " sysref_repeat: " << sysref_repeat << " sysref_repeat_ns: " << sysref_repeat_ns <<  std::endl;
+    os << std::endl;
+    os << "JESD:" << std::endl;
+    os << " sysref_en: " << sysref_en << " srout_pd: " << srout_pd << " sysref_inp_fmt: " << sysref_inp_fmt << std::endl;
+    os << " sysref_div_pre: " << sysref_div_pre << " sysref_div: " << sysref_div  << std::endl;
+    os << " sysref_pulse: " << sysref_pulse << " sysref_pulse_cnt: " << sysref_pulse_cnt << std::endl;
+    os << " sysref_repeat: " << sysref_repeat << " sysref_repeat_ns: " << sysref_repeat_ns <<  std::endl;
 
-    dbg::dbgout << " jesd_dac1_ctrl: " << jesd_dac1_ctrl << " jesd_dac2_ctrl: " <<  jesd_dac2_ctrl << " jesd_dac3_ctrl: " << jesd_dac3_ctrl << " jesd_dac4_ctrl: " << jesd_dac4_ctrl << std::endl;
+    os << " jesd_dac1_ctrl: " << jesd_dac1_ctrl << " jesd_dac2_ctrl: " <<  jesd_dac2_ctrl << " jesd_dac3_ctrl: " << jesd_dac3_ctrl << " jesd_dac4_ctrl: " << jesd_dac4_ctrl << std::endl;
 
-    dbg::dbgout << " inpin_ignore: " << inpin_ignore << " psync_inp_fmt: " << psync_inp_fmt << " pinmute_pol: " << pinmute_pol << std::endl;
+    os << " inpin_ignore: " << inpin_ignore << " psync_inp_fmt: " << psync_inp_fmt << " pinmute_pol: " << pinmute_pol << std::endl;
 
 #if 0
 

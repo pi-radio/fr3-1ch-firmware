@@ -277,7 +277,7 @@ void Parser::parse_set_statement() {
     auto cur_tok = tokenizer.get_token();
 
     if (cur_tok == keywords::EXT) {
-
+      HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
     } else if (cur_tok == keywords::INT) {
       HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
     } else {
