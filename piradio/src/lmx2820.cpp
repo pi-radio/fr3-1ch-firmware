@@ -334,32 +334,6 @@ namespace LMX {
       regs[i].value = regs[i].rsrvd.value =
         reg_reserved_data[i][1];
     }
-
-    /***
-
-        Input Path:
-        Osc 2x: 1
-        fcal hpfd adj: 0x0 lpfd adj: 0x0
-        Pre R Divider: 1 Post R divider: 1
-        PFD delay: 0x500 pfd sel: 1 ext PFD div: 0x1
-
-        fPD: 20 MHz
-
-        PLL Path:
-        loopback_en: 0 extvcd_div: 1 extvco_en: 0
-        pll_n: 500
-        pll_den: 1000
-        pll_num: 0
-        vco_sel: 0x7 vco_sel_force: 0
-        vco_capctl: 0xbf
-        vco_daciset: 0x12c
-
-        VCO freq: 10 GHz
-
-        JESD:
-
-    */
-
   }
 
   void LMX2820::setup()
@@ -413,10 +387,7 @@ namespace LMX {
     psync_inp_fmt = 0;
     pinmute_pol = 0;
 
-
-
     /* Setup PFD */
-
     osc_2x.set(1);
     pll_r_pre.set(1);
     pll_r.set(1);
@@ -428,7 +399,6 @@ namespace LMX {
     update_fcal();
 
     /* Setup internal VCO */
-
     loopback_en = 0;
     extvco_div.set(1);
     extvco_en = 0;
@@ -441,9 +411,7 @@ namespace LMX {
 
     instcal_pll_num = 0;
 
-
     update_fVCO(10e9);
-    //update_fVCO(10e9 * 2 / 3);
 
     chdivA.set(0);
     outa_mux.set(1);
@@ -454,12 +422,6 @@ namespace LMX {
     outb_mux.set(1);
     outb_pwr.set(7);
     outb_pd.set(1);
-
-    for (int i = 0; i < N_REGS; i++) {
-      if (regs[i] != default_regs[i]) {
-        dbg::dbgout << std::format("Error: default regs difference: register {}: {:04x} default: {:04x}\n", i, (uint16_t)regs[i], (uint16_t)default_regs[i]);
-      }
-    }
   }
 
   void LMX2820::set_OSCIN(double f)
