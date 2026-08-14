@@ -37,6 +37,7 @@
   MAKE_KEYWORD(POWERUP);                        \
   MAKE_KEYWORD(POWERDOWN);                      \
   MAKE_KEYWORD(DRIVE);                          \
+  MAKE_KEYWORD(RXFILTER);                       \
   MAKE_KEYWORD(TXFILTER);                       \
   MAKE_KEYWORD(BOARD);                          \
   MAKE_KEYWORD(MODEL);                          \
