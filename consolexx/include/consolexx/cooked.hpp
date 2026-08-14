@@ -65,14 +65,12 @@ namespace consolexx {
     termbuf *_outbuf;
 
     // Should be protected/private
-    void _rx_thread();
     void _refresh_thread();
 
     //static TX_MUTEX tx_mutex;
 
     TXX::Queue<1, CMD_QUEUE_LEN> cmd_queue;
 
-    TXX::MemberThread<cooked_terminal, 8192> rx_thread;
     TXX::MemberThread<cooked_terminal, 8192> refresh_thread;
 
     TXX::Mutex input_mutex;
@@ -102,6 +100,8 @@ namespace consolexx {
     void lock() {};
     void unlock() {};
 
+    void on_char(int c) override;
+
     void on_input(int c) { _outbuf->on_input(c); };
 
     void refresh(void);
@@ -112,7 +112,7 @@ namespace consolexx {
 
     void clear_line() { emit_cs("K"); };
 
-    void clear_screen() { emit_cs("2J"); };
+    void clear_screen() { emit_cs("2J"); emit_cs("H"); };
 
     void query_id() { emit_cs("c"); }
 

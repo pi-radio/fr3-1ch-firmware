@@ -80,6 +80,8 @@ public:
   void on_event(const consolexx::evt_ptr &evt) override;
 
   void status_update();
+
+  void set_console_mode(consolexx::terminal_adapter::TerminalMode mode) { term.set_mode(mode); }
 };
 
 extern PiRadioApp main_app;

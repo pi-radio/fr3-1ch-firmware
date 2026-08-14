@@ -19,13 +19,12 @@ int force_redraw;
 using namespace consolexx;
 
 cooked_terminal::cooked_terminal(termobj *parent, termio *_io) :
-    terminal(parent, _io),
+    terminal("Cooked Terminal", parent, _io),
     rx_count(0), tx_count(0), invalid_char(0),
     buffer_input(1), input_len(0),
     tx_len(0),  echo(0), onlcr(1),
     vtp(this),
     cmd_queue("Terminal Command Queue"),
-    rx_thread("Terminal RX Thread", this, &cooked_terminal::_rx_thread),
     refresh_thread("Terminal Refresh Thread", this, &cooked_terminal::_refresh_thread),
     input_mutex("Terminal Input Mutex"),
     c_peek(0), last_dtr(0),
@@ -35,10 +34,6 @@ cooked_terminal::cooked_terminal(termobj *parent, termio *_io) :
   memset(input_buf, 0, sizeof(input_buf));
   memset(tx_buf, 0, sizeof(tx_buf));
 
-  //rx_queue.create("Terminal RX Queue");
-  //tx_queue.create("Terminal TX Queue");
-  cmd_queue.create();
-  
   tx_cur = tx_buf;
 
   _outbuf = new termbuf(this, 40, 132);
@@ -46,6 +41,7 @@ cooked_terminal::cooked_terminal(termobj *parent, termio *_io) :
 
 void cooked_terminal::startup()
 {
+  cmd_queue.create();
   rx_thread.create();
   //tx_thread.create();
   refresh_thread.create();
@@ -141,16 +137,11 @@ void cooked_terminal::txchar(uint32_t c)
   io->putc(c);
 }
 
-
-void cooked_terminal::_rx_thread()
+void cooked_terminal::on_char(int c)
 {
-  while(1) {
-    int c = io->getc();
+  rx_char_ring.pushc(c);
 
-    rx_char_ring.pushc(c);
-
-    vtp.process(c);
-  }
+  vtp.process(c);
 }
 
 void cooked_terminal::redraw()
@@ -171,6 +162,7 @@ void cooked_terminal::_refresh_thread(void)
 
       switch (cmd) {
       case TERMINAL_CMD_REDRAW:
+        clear_screen();
         _outbuf->redraw();
         continue;
       }

@@ -33,6 +33,8 @@ namespace consolexx
 
     }
 
+    void set_drop(bool);
+
     void create();
 
     void sendc(int c);
@@ -46,26 +48,32 @@ namespace consolexx
 
   class terminal_adapter : public terminal
   {
-    friend class queue_io;
-
-    enum {
+  public:
+    enum TerminalMode {
       RAW,
       COOKED
-    } mode;
+    };
+
+  private:
+    friend class queue_io;
+
+
+    TerminalMode mode;
 
     //raw_terminal raw;
     cooked_terminal cooked;
     queue_io cooked_io;
 
+    raw_terminal raw;
+    queue_io raw_io;
+
     //TXX::queue<uint8_t> raw_in_queue;
-
-    TXX::MemberThread<terminal_adapter, 4096> rx_thread;
-
-    void _rx_thread();
 
     void flush() { io->flush(); }
     void wait_started() { io->wait_started(); }
     void putc(int c) { io->putc(c); };
+
+    void on_char(int c) override;
 
   public:
     terminal_adapter(termobj *parent, termio *_main_io);
@@ -74,7 +82,8 @@ namespace consolexx
 
     int output_handler(const char *buffer, size_t size) override;
 
-    void startup();
-    void beep();
+    void set_mode(TerminalMode);
+
+    void startup() override;
   };
 };

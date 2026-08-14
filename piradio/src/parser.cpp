@@ -497,6 +497,10 @@ void Parser::parse()
     parse_get_statement();
   } else if (cur_tok == keywords::SET){
     parse_set_statement();
+  } else if (cur_tok == keywords::RAW){
+    main_app.set_console_mode(consolexx::terminal_adapter::RAW);
+  } else if (cur_tok == keywords::COOKED){
+    main_app.set_console_mode(consolexx::terminal_adapter::COOKED);
   } else {
     throw SyntaxError();
   }

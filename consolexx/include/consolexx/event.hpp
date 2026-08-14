@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <memory>
+
 namespace consolexx
 {
   struct event

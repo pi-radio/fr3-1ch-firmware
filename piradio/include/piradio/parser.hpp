@@ -42,6 +42,8 @@
   MAKE_KEYWORD(MODEL);                          \
   MAKE_KEYWORD(SERIAL);                         \
   MAKE_KEYWORD(GET);        \
+  MAKE_KEYWORD(RAW);        \
+  MAKE_KEYWORD(COOKED);     \
 
 
 namespace parser

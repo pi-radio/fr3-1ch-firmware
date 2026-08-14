@@ -278,10 +278,10 @@ void PiRadioApp::tx_init()
 
   term.startup();
 
-  output_win = term.get_cooked().create<consolexx::window>(8, 0, 8, 132);
-  status_win = term.get_cooked().create<consolexx::window>(20, 0, 1, 132);
+  output_win = term.get_cooked().create<consolexx::window>(1, 0, 37, 132);
+  status_win = term.get_cooked().create<consolexx::window>(39, 0, 1, 132);
 
-  input_win = term.get_cooked().create<consolexx::text_field>(17, 0, 1, 132);
+  input_win = term.get_cooked().create<consolexx::text_field>(38, 0, 1, 132);
 
   term.get_cooked().set_default_output(output_win);
   term.get_cooked().set_focus(input_win);

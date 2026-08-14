@@ -9,6 +9,11 @@ void queue_io::create()
   in_sema.create();
 }
 
+void queue_io::set_drop(bool _drop)
+{
+  drop = _drop;
+}
+
 void queue_io::flush()
 {
   if (!drop) {
@@ -63,36 +68,72 @@ void queue_io::wait_started()
 
 
 terminal_adapter::terminal_adapter(termobj *parent, termio *_main_io) :
-    terminal(parent, _main_io),
-    mode(COOKED),
-    rx_thread("Terminal Adapter RX Thread", this, &terminal_adapter::_rx_thread),
-    cooked_io(this, "Cooked IO", false),
-    cooked(this, &cooked_io)
+    terminal("Adapter Terminal", parent, _main_io),
+    mode(RAW),
+    cooked_io(this, "Cooked IO", true),
+    raw_io(this, "Raw IO", false),
+    cooked(this, &cooked_io),
+    raw(this, &raw_io)
 {
 
 }
 
-void terminal_adapter::_rx_thread()
+void terminal_adapter::on_char(int c)
 {
-  while(1) {
-    cooked_io.sendc(io->getc());
+  switch(mode)
+  {
+  case COOKED:
+    cooked_io.sendc(c);
+    break;
+  case RAW:
+    raw_io.sendc(c);
+    break;
+  default:
+    throw std::runtime_error("Invalid Mode");
   }
 }
 
 void terminal_adapter::startup()
 {
-  rx_thread.create();
+  terminal::startup();
 
   cooked_io.create();
+  raw_io.create();
 
   cooked.startup();
+  raw.startup();
 }
 
-
-void terminal_adapter::beep()
+void terminal_adapter::set_mode(TerminalMode _mode)
 {
-  cooked.beep();
+  if (mode == _mode) {
+    return;
+  }
+
+  mode = _mode;
+
+  switch(mode)
+  {
+  case COOKED:
+    cooked_io.set_drop(false);
+    raw_io.set_drop(true);
+
+    cooked.redraw();
+    break;
+  case RAW:
+    cooked_io.set_drop(true);
+    raw_io.set_drop(false);
+    break;
+  default:
+    throw std::runtime_error("Invalid Mode");
+  }
 }
+
+
+//void terminal_adapter::beep()
+//{
+//  cooked.beep();
+//}
 
 int terminal_adapter::output_handler(const char *buffer, size_t size)
 {
@@ -101,7 +142,8 @@ int terminal_adapter::output_handler(const char *buffer, size_t size)
   case COOKED:
     return cooked.output_handler(buffer, size);
   case RAW:
-    //return raw.output_handler(buffer, size);
+    cooked.output_handler(buffer, size);
+    return raw.output_handler(buffer, size);
   default:
     throw std::runtime_error("Invalid Mode");
   }
