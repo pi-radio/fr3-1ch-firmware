@@ -224,13 +224,14 @@ void Parser::parse_get_statement() {
 
         if (ser == nullptr) {
           std::cout << "Board serial not set" << std::endl;
+          return;
         }
 
         std::string serial;
 
         serial.append((const char *)ser->serno, ser->length);
 
-        std::cout << "Board model '" << serial << "'" << std::endl;
+        std::cout << "Board serial '" << serial << "'" << std::endl;
         return;
       }
   }

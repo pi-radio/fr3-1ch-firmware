@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <set>
 #include <map>
 #include <format>
 #include <memory>
@@ -127,10 +128,12 @@ namespace TXX
       uint32_t serial;
       config_version version;
       uint32_t append_point;
-      uint32_t read_pos;
+      //uint32_t read_pos;
       uint32_t free_space;
 
-      page() : N(0xFFFFFFFF),  serial(0xFFFFFFFF),  version(CUR_VERSION), append_point(0), read_pos(0), free_space(flash::HEFlash::SECTOR_SIZE) {}
+      std::set<uint16_t> valid_tags;
+
+      page() : N(0xFFFFFFFF),  serial(0xFFFFFFFF),  version(CUR_VERSION), append_point(0), free_space(flash::HEFlash::SECTOR_SIZE) {}
 
       uint32_t area_offset(uint32_t off) { return  + off; }
 
@@ -173,6 +176,18 @@ namespace TXX
       std::map<uint16_t, std::shared_ptr<tlv_base> > values;
 
       void scan_headers();
+
+      template <typename Tv>
+      void _do_save(const Tv &e) {
+        _do_save((uint16_t *)&e, e.l);
+      }
+
+      void _do_save(const uint16_t *data, uint16_t length);
+
+      void save(const uint16_t *data, uint16_t length);
+
+      void erase_page(uint32_t page);
+
     public:
       template <typename Tv>
       std::shared_ptr<Tv> get()
@@ -223,7 +238,6 @@ namespace TXX
       
       uint32_t allocate_page();
 
-      void save(const uint16_t *data, uint16_t length);
 
       template <typename Tv>
       void save(const Tv &e) {
