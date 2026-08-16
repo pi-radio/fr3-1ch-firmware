@@ -5,6 +5,7 @@
 #include "main.h"
 
 extern "C" {
+#if 0
 #include "dcache.h"
 #include "dts.h"
 #include "flash.h"
@@ -16,6 +17,7 @@ extern "C" {
 #include "ucpd.h"
 #include "usbpd.h"
 #include "usart.h"
+#endif
 }
 
 using namespace piradio::hardware;
@@ -113,6 +115,15 @@ void FR31CHHardware::setup_gpios()
 
 void FR31CHHardware::restore_settings()
 {
+  using namespace piradio::config;
+
+  auto iqv = TXX::config_data::config.get<iq_voltages>();
+
+  if (iqv) {
+    i_voltage = iqv->I_V;
+    q_voltage = iqv->Q_V;
+  }
+
   // 2. Get the LO Working
   // a. LO_CTRL_3V3. 0: Internal LMX. 1: External from SMA
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
@@ -124,20 +135,51 @@ void FR31CHHardware::restore_settings()
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
 
 
+  _do_set_i_voltage();
+  _do_set_q_voltage();
+
+
   printf("Programming LMX...\r\n");
   lmx.setup();
 
   lmx.program();
 }
 
+void FR31CHHardware::_do_set_i_voltage()
+{
+  ltc2668.setV(2, i_voltage);
+}
+
+void FR31CHHardware::_do_set_q_voltage()
+{
+  ltc2668.setV(0, q_voltage);
+}
+
+void FR31CHHardware::save_IQV()
+{
+  using namespace piradio::config;
+
+  iq_voltages voltages(i_voltage, q_voltage);
+
+  TXX::config_data::config.save(voltages);
+}
+
 void FR31CHHardware::set_I_voltage(float v)
 {
-  ltc2668.setV(2, v);
+  i_voltage = v;
+
+  _do_set_i_voltage();
+
+  save_IQV();
 }
 
 void FR31CHHardware::set_Q_voltage(float v)
 {
-  ltc2668.setV(0, v);
+  q_voltage = v;
+
+  _do_set_q_voltage();
+
+  save_IQV();
 }
 
 GPIO_PinState pin_value(uint32_t v)

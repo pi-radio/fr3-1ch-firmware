@@ -133,7 +133,10 @@ analyzer::analyzer(std::ostream &out)
       break;
   }
 
-  if (!known_type) return;
+  if (!known_type) {
+    out << "Unknown fault type: " << etype << std::endl;
+    return;
+  }
 
   std::ios save(NULL);
   save.copyfmt(out);
@@ -160,7 +163,7 @@ analyzer::analyzer(std::ostream &out)
       << "FType(" << ((_einfo.excLR >> 4) & 1)  << ") "
       << "Mode(" << ((_einfo.excLR >> 3) & 1) << ") "
       << "SPSEL(" << ((_einfo.excLR >> 2) & 1) << ") "
-      << "ES(" << ((_einfo.excLR >> 0) & 1) << std::endl;
+      << "ES(" << ((_einfo.excLR >> 0) & 1) << ")" << std::endl;
 
   out << "SHCSR: " << hex<8>(_einfo.SHCSR)
       << " VTOR: " << hex<8>(_einfo.VTOR)

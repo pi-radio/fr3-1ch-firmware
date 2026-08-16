@@ -34,6 +34,8 @@ PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
 {
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
+  TXX::config_data::registry.register_tlv<lo_frequency>();
+  TXX::config_data::registry.register_tlv<iq_voltages>();
 }
 
 void PiRadioApp::setup_clocks() {

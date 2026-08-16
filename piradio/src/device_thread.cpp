@@ -2,12 +2,14 @@
 
 using namespace piradio::hardware;
 
-DeviceThread::DeviceThread() : request_sema("HW Request Semaphore"),
-                               request_mutex("HW Request Mutex"),
+DeviceThread::DeviceThread() : request_queue("HW Request Queue"),
                                Thread("HW Request Thread")
 {
-  request_sema.create();
+  // Needs to be moved to post-threadx initializer
+  request_queue.create();
 }
+
+
 
 void DeviceThread::main()
 {

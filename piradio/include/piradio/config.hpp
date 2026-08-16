@@ -48,15 +48,20 @@ namespace piradio
       }
     };
 
-    struct lo_frequency : public TXX::config_data::tlv<board_serial>  {
+    struct lo_frequency : public TXX::config_data::tlv<lo_frequency>  {
       static constexpr uint16_t TAG = 0x1004;
       float freq;
     };
 
-    struct iq_voltages : public TXX::config_data::tlv<board_serial>  {
-      static constexpr uint16_t TAG = 0x1004;
+    struct iq_voltages : public TXX::config_data::tlv<iq_voltages>  {
+      static constexpr uint16_t TAG = 0x1005;
       float I_V;
       float Q_V;
+
+      iq_voltages() : I_V(0.0), Q_V(0.0) {}
+
+      iq_voltages(float iv, float qv) : I_V(iv), Q_V(qv) {
+      }
     };
 
     extern std::vector<std::string> board_models;

@@ -1,7 +1,9 @@
+#include <halxx/fault.hpp>
 #include <consolexx/cooked.hpp>
 #include <stdio.h>
 #include <stdarg.h>
 
+#include <algorithm>
 #include <format>
 
 #include <threadxx/config_data.hpp>
@@ -229,11 +231,19 @@ void Parser::parse_get_statement() {
 
         std::string serial;
 
-        serial.append((const char *)ser->serno, ser->length);
+        serial.append((const char *)ser->serno, std::min((unsigned int)ser->length, sizeof(ser->serno)));
 
         std::cout << "Board serial '" << serial << "'" << std::endl;
         return;
       }
+  } else if (cur_tok == keywords::I_V) {
+    std::cout << main_app.get_hardware()->get_I_voltage() << std::endl;
+    return;
+  } else if (cur_tok == keywords::Q_V) {
+    std::cout << main_app.get_hardware()->get_Q_voltage() << std::endl;
+    return;
+  } else if (cur_tok == keywords::FAULT) {
+    halxx::fault::analyzer analyzer(std::cout);
   }
 
   throw SyntaxError();
@@ -323,7 +333,7 @@ void Parser::parse_set_statement() {
 
     parse_statement_end();
 
-    main_app.get_hardware()->set_rx_filter(v);
+    main_app.get_hardware()->set_tx_filter(v);
 
     return;
   } else if (cur_tok == keywords::BOARD) {
@@ -490,6 +500,8 @@ void Parser::parse()
     main_app.set_console_mode(consolexx::terminal_adapter::RAW);
   } else if (cur_tok == keywords::COOKED){
     main_app.set_console_mode(consolexx::terminal_adapter::COOKED);
+  } else if (cur_tok == keywords::CRASH) {
+    *(int *)0 = 0;
   } else {
     throw SyntaxError();
   }

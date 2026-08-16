@@ -45,6 +45,8 @@
   MAKE_KEYWORD(GET);        \
   MAKE_KEYWORD(RAW);        \
   MAKE_KEYWORD(COOKED);     \
+  MAKE_KEYWORD(FAULT);      \
+  MAKE_KEYWORD(CRASH);      \
 
 
 namespace parser

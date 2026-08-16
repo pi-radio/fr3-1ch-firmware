@@ -6,6 +6,7 @@
 #include <map>
 #include <format>
 #include <memory>
+#include <cassert>
 
 #include <stm32h5/flash.hpp>
 
@@ -112,6 +113,8 @@ namespace TXX
       }
 
       std::shared_ptr<tlv_base> read(uint16_t tag, uint32_t page, uint32_t offset) {
+        assert(read_map.contains(tag));
+
         return read_map[tag](page, offset);
       }
     };

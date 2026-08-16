@@ -20,6 +20,8 @@ static typename std::aligned_storage<sizeof (TLVRegistry), alignof (TLVRegistry)
 registry_buf; // memory for the stream object
 TLVRegistry& TXX::config_data::registry = reinterpret_cast<TLVRegistry &> (registry_buf);
 
+bool debug_config = true;
+
 void TXX::config_data::initialize_config()
 {
   using namespace std;
