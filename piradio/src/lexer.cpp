@@ -142,10 +142,10 @@ token_t get_number_core(std::string::const_iterator &cur)
         return token_t(new ERROR());
       }
 
-      return token_t(new _INT(get_hexadecimal_str(cur)));
+      return token_t(new _INT(neg * get_hexadecimal_str(cur)));
     } else if (*cur >= '0' && *cur <= '7') {
       // Octal number
-      return token_t(new _INT(get_octal_str(cur)));
+      return token_t(new _INT(neg * get_octal_str(cur)));
     }
   }
 
@@ -155,7 +155,7 @@ token_t get_number_core(std::string::const_iterator &cur)
     cur++;
     isfloat = true;
     auto start = cur;
-    d += get_decimal_str(cur) * std::pow(10, start - cur);
+    d += neg * get_decimal_str(cur) * std::pow(10, start - cur);
   }
 
   if (std::tolower(*cur) == 'e') {
