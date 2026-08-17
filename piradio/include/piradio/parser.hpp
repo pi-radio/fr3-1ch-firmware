@@ -47,6 +47,7 @@
   MAKE_KEYWORD(COOKED);     \
   MAKE_KEYWORD(FAULT);      \
   MAKE_KEYWORD(CRASH);      \
+  MAKE_KEYWORD(PROCINFO);   \
 
 
 namespace parser

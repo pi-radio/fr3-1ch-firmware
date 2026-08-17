@@ -237,16 +237,32 @@ void Parser::parse_get_statement() {
         return;
       }
   } else if (cur_tok == keywords::I_V) {
+    parse_statement_end();
     std::cout << main_app.get_hardware()->get_I_voltage() << std::endl;
     return;
   } else if (cur_tok == keywords::Q_V) {
+    parse_statement_end();
     std::cout << main_app.get_hardware()->get_Q_voltage() << std::endl;
     return;
   } else if (cur_tok == keywords::FAULT) {
+    parse_statement_end();
     halxx::fault::analyzer analyzer(std::cout);
-  }
+    return;
+  } else if (cur_tok == keywords::PROCINFO) {
+    parse_statement_end();
+    uint32_t cpuid = LL_DBGMCU_GetDeviceID();
+    uint32_t revid = LL_DBGMCU_GetRevisionID();
 
-  throw SyntaxError();
+    std::cout << std::format("CPUID: {:04x} Rev: {:04x}", cpuid, revid) << std::endl;
+
+    //std::cout << std::format("CIDR0: {:08x}", DBGMCU->CIDR0) << std::endl;
+    //std::cout << std::format("CIDR1: {:08x}", DBGMCU->CIDR1) << std::endl;
+    //std::cout << std::format("CIDR2: {:08x}", DBGMCU->CIDR2) << std::endl;
+    //std::cout << std::format("CIDR3: {:08x}", DBGMCU->CIDR3) << std::endl;
+    return;
+  } else {
+    throw SyntaxError();
+  }
 }
 
 void Parser::parse_set_statement() {
