@@ -244,8 +244,6 @@ namespace LMX {
   };
 
   LMX2820::LMX2820(double fOSC) :
-    outAmux(DIRECT),
-    outBmux(DIRECT),
     instcal_skip_acal(this),
     fcal_hpfd_adj(this),
     fcal_lpfd_adj(this),
@@ -549,7 +547,7 @@ namespace LMX {
     program();
   }
 
-  int LMX2820::set_powerdown(bool b)
+  void LMX2820::set_powerdown(bool b)
   {
     powerdown.set(b);
 
@@ -715,10 +713,10 @@ namespace LMX {
   void LMX2820::tune(double f)
   {
     if (f > f_VCO_max) {
-      chdivA.set(1);
+      outa_mux.set(2);
       f /= 2;
     } else {
-      chdivA.set(0);
+      outa_mux.set(1);
     }
 
     update_fVCO(f);

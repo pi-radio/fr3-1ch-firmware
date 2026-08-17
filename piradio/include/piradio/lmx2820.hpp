@@ -208,10 +208,6 @@ protected:
   std::array<reg, N_REGS> regs;
   std::bitset<N_REGS> dirty;
 
-  output_mux_t outAmux;
-  output_mux_t outBmux;
-
-
   double _fOSC;
   double _fVCO;
   
@@ -352,7 +348,7 @@ protected:
   field<80, 6, 8> outb_pwr;
 
   bool get_instcal_dblr_en() {
-    return (get_OUTAMux() == DOUBLER || get_OUTBMux() == DOUBLER);
+    return (outa_mux == 0x02 || outb_mux == 0x02);
   }
 
 
@@ -433,15 +429,12 @@ public:
 
   void set_fOUTA(double);
 
-  output_mux_t get_OUTAMux() { return outAmux; };
-  output_mux_t get_OUTBMux() { return outBmux; };
-
   double get_fA();
   double get_fB();
   int get_powerA();
   int get_powerB();
 
-  double set_fOUTA();
+  //double set_fOUTA();
 
   void reprogram();
   void program();
@@ -462,7 +455,7 @@ public:
   int power_up();
   int power_down();
 
-  int set_powerdown(bool b);
+  void set_powerdown(bool b);
 
   int locked();
 };
