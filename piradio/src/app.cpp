@@ -166,13 +166,27 @@ void PiRadioApp::initialize_hardware()
     hardware = new piradio::hardware::UnconfiguredHardware();
   }
 
+  try {
+    auto bs = config.get<board_serial>();
+
+    if (bs != nullptr) {
+      board.serial = std::string((char *)bs->serno, bs->length);
+    } else {
+      board.serial = "No Serial";
+    }
+  } catch(...) {
+    board.serial = "No Serial EXC";
+  }
+
   usb_serial.set_manufacturer("Pi Radio");
 
   if (hardware->configured()) {
     std::cout << board.model << " starting..." << std::endl;
     usb_serial.set_product(board.model);
+    usb_serial.set_serial(board.serial);
   } else {
     usb_serial.set_product("Unprovisioned");
+    usb_serial.set_serial(board.serial);
   }
 
 
