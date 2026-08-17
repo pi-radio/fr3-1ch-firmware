@@ -32,6 +32,13 @@ PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
     usb_io(usb_serial),
     term(this, &usb_io)
 {
+  uint32_t *p_uid = (uint32_t *)UID_BASE;
+
+  uint32_t uid0 = *p_uid++;
+  uint32_t uid1 = *p_uid++;
+  uint32_t uid2 = *p_uid++;
+  uint32_t uid3 = *p_uid++;
+
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
   TXX::config_data::registry.register_tlv<lo_frequency>();

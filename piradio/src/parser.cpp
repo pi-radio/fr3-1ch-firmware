@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <format>
 
+#include <stm32h5/info.hpp>
 #include <threadxx/config_data.hpp>
 
 #include <piradio/parser.hpp>
@@ -250,15 +251,19 @@ void Parser::parse_get_statement() {
     return;
   } else if (cur_tok == keywords::PROCINFO) {
     parse_statement_end();
-    uint32_t cpuid = LL_DBGMCU_GetDeviceID();
-    uint32_t revid = LL_DBGMCU_GetRevisionID();
 
-    std::cout << std::format("CPUID: {:04x} Rev: {:04x}", cpuid, revid) << std::endl;
 
-    //std::cout << std::format("CIDR0: {:08x}", DBGMCU->CIDR0) << std::endl;
-    //std::cout << std::format("CIDR1: {:08x}", DBGMCU->CIDR1) << std::endl;
-    //std::cout << std::format("CIDR2: {:08x}", DBGMCU->CIDR2) << std::endl;
-    //std::cout << std::format("CIDR3: {:08x}", DBGMCU->CIDR3) << std::endl;
+
+
+    std::cout << std::format("CPUID: {:04x} Rev: {:04x}", devinfo.cpuid, devinfo.revid) << std::endl;
+
+    std::cout << std::format("UID: {:08x}{:08x}{:08x}", devinfo.uid2, devinfo.uid1, devinfo.uid0) << std::endl;
+
+    std::cout << "Lot: " << devinfo.get_lot() << " Wafer: " << devinfo.get_wafer()
+        << " X: " << devinfo.get_x() << " Y: " << devinfo.get_y() << std::endl;
+
+    std::cout << std::format("Flash size: {:04x} Package: {:04x}", devinfo.get_flash_size(), devinfo.get_package()) << std::endl;
+
     return;
   } else {
     throw SyntaxError();
