@@ -101,7 +101,7 @@ namespace piradio
       }
 
       void tune_lmx(float freq) override { lmx.tune(freq); };
-      void set_lmx_drive(uint8_t v) override { };
+      void set_lmx_drive(uint8_t v) override { lmx.set_drive(v); };
       void set_lmx_powerdown(bool b) override { lmx.set_powerdown(b); }
       void reprogram_lmx() override { lmx.reprogram(); }
       uint16_t lmx_read_reg(uint16_t r) override { uint16_t retval; return lmx.read_reg(r, &retval); return retval; }
