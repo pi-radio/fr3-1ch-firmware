@@ -717,9 +717,10 @@ namespace LMX {
     if (f > f_VCO_max) {
       chdivA.set(1);
       f /= 2;
+    } else {
+      chdivA.set(0);
     }
 
-    chdivA.set(0);
     update_fVCO(f);
 
     program();
