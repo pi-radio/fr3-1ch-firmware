@@ -194,10 +194,10 @@ void FR31CHHardware::set_rx_filter(uint8_t v)
 {
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, pin_value(v & 0x20));
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, pin_value(v & 0x10));
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, pin_value(v & 0x08));
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, pin_value(v & 0x04));
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, pin_value(v & 0x02));
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, pin_value(v & 0x01));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, pin_value(v & 0x08));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, pin_value(v & 0x04));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, pin_value(v & 0x02));
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, pin_value(v & 0x01));
 }
 
 void FR31CHHardware::set_tx_filter(uint8_t v)

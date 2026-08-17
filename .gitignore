@@ -56,3 +56,9 @@ OctoLO_Debug/
 *.pdb
 
 *.cyclo
+*.mk
+STM32CubeIDE/Debug 2/makefile
+STM32CubeIDE/Debug 2/objects.list
+STM32CubeIDE/Debug 2/fr31chfw.srec
+STM32CubeIDE/Debug 2/fr31chfw.list
+STM32CubeIDE/Debug 2/fr31chfw.symbolsrec

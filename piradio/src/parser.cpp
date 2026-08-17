@@ -354,6 +354,8 @@ void Parser::parse_set_statement() {
 
     parse_statement_end();
 
+    std::cout << "Setting txfilter to " << std::hex << v << std::endl;
+
     main_app.get_hardware()->set_tx_filter(v);
 
     return;
