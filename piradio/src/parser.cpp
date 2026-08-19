@@ -237,6 +237,10 @@ void Parser::parse_get_statement() {
         std::cout << "Board serial '" << serial << "'" << std::endl;
         return;
       }
+  } else if (cur_tok == keywords::LO) {
+    parse_statement_end();
+    std::cout << main_app.get_hardware()->get_LO() << std::endl;
+    return;
   } else if (cur_tok == keywords::I_V) {
     parse_statement_end();
     std::cout << main_app.get_hardware()->get_I_voltage() << std::endl;
@@ -280,6 +284,16 @@ void Parser::parse_set_statement() {
       HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
     } else if (cur_tok == keywords::INT) {
       HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
+    } else if (cur_tok->isint() || cur_tok->isfloat()) {
+      double f = cur_tok->d;
+
+      if (cur_tok->isint()) f = cur_tok->i;
+
+      if (f < 6e9 || f > 22.6e9) {
+        throw GeneralError::fmt("Invalid LO frequency {}", f);
+      }
+
+      main_app.get_hardware()->tune_lmx(f);
     } else {
       throw SyntaxError();
     }
@@ -493,6 +507,12 @@ Parser::Parser()
   //rule<typeof(parse_lmx), ID<"LMX">, ID<"PROGRAM"> > r(parse_lmx);
 }
 
+token_t Parser::get_last_token()
+{
+  return tokenizer.last_token();
+}
+
+
 void Parser::parse()
 {
   auto cur_tok = tokenizer.get_token();
@@ -529,4 +549,32 @@ void Parser::parse()
     throw SyntaxError();
   }
 }
+
+std::ostream &operator<<(std::ostream &os, const parser::token_t &tok)
+{
+  switch (tok->t) {
+  case token::token_type::STR:
+  case token::token_type::KEYWORD:
+  case token::token_type::ID:
+    os << tok->s;
+    break;
+  case token::token_type::INT:
+    os << tok->i;
+    break;
+  case token::token_type::FLOAT:
+    os << tok->d;
+    break;
+  case token::token_type::EOL:
+    os << "<EOL>";
+    break;
+  case token::token_type::ERROR:
+    os << "<ERROR>";
+    break;
+  default:
+    os << "<INVALID TOKEN>";
+  };
+
+  return os;
+}
+
 

@@ -67,7 +67,7 @@ namespace TXX
 
   public:
     int pushc(T c) {
-      if (end + 1 == start) {
+      if ((end + 1) == start) {
         ++start;
       }
 

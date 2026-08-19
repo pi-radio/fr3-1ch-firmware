@@ -555,6 +555,7 @@ namespace LMX {
   }
 
 
+
   template <uint32_t A, uint32_t B>
   std::ostream &operator<<(std::ostream &os, dreg<A, B> &f)
   {
@@ -709,6 +710,19 @@ namespace LMX {
 
     return retval;
   }
+
+  double LMX2820::get_fOUTA()
+  {
+    if (outa_mux == 2) {
+      return _fVCO * 2;
+    } else if (outa_mux == 1) {
+      return _fVCO;
+    } else {
+      return -1;
+    }
+  }
+
+
 
   void LMX2820::tune(double f)
   {

@@ -74,13 +74,13 @@ VOID   _ux_system_error_handler(UINT system_level, UINT system_context, UINT err
 {
   switch (error_code) {
   case UX_MEMORY_INSUFFICIENT:
-    dbgprint("Memory Allocation Failure: %d %d\r\n", system_level, system_context);
+    printf("ERROR: USB: Memory Allocation Failure: %d %d\r\n", system_level, system_context);
     break;
   case TX_WAIT_ERROR:
-    dbgprint("Wait Error: %d %d\r\n", system_level, system_context);
+    printf("ERROR: USB: Wait Error: %d %d\r\n", system_level, system_context);
     break;
   default:
-    dbgprint("ERROR HANDLER: %d %d %d\r\n", system_level, system_context, error_code);
+    printf("ERROR: USB: ERROR HANDLER: %d %d %d\r\n", system_level, system_context, error_code);
     break;
   }
 

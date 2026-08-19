@@ -93,7 +93,6 @@ namespace parser
   };
 
 
-
   typedef std::shared_ptr<token> token_t;
 
 
@@ -156,9 +155,11 @@ namespace parser
 
   class _tokenizer {
     std::queue<token_t> tq;
+    token_t _last_token;
     void push_token(token_t);
   public:
     token_t peek_token();
+    token_t last_token();
     token_t get_token();
     void set_line(const std::string &s);
   };
@@ -248,6 +249,8 @@ namespace parser
   public:
     Parser();
 
+    token_t get_last_token();
+
     void set_command(std::shared_ptr<Command> &cmd);
     void parse();
   };
@@ -259,10 +262,5 @@ namespace parser
 #define PARSER_SYNTAX_ERROR  1
 #define PARSER_GENERAL_ERROR 2
 
-extern const char *parser_get_error_string(void);
 
-extern "C" int parser_parse_statement(void);
-
-extern void lexer_set_line(const std::string &s);
-
-
+std::ostream &operator<<(std::ostream &, const parser::token_t &);

@@ -52,6 +52,11 @@ token_t _tokenizer::peek_token()
   return tq.front();
 }
 
+token_t _tokenizer::last_token()
+{
+  return _last_token;
+}
+
 token_t _tokenizer::get_token()
 {
   dbg::dbgout << "tq size 1: " << tq.size() << std::endl;
@@ -64,6 +69,8 @@ token_t _tokenizer::get_token()
   tq.pop();
 
   dbg::dbgout << "tq size 2: " << tq.size() << std::endl;
+
+  _last_token = retval;
 
   return retval;
 }
@@ -159,9 +166,19 @@ token_t get_number_core(std::string::const_iterator &cur)
   }
 
   if (std::tolower(*cur) == 'e') {
+    int nege = 1;
+
     cur++;
+
+    if (*cur == '+') {
+      cur++;
+    } else if (*cur == '-') {
+      nege = -1;
+      cur++;
+    }
+
     isfloat = true;
-    int e = get_decimal_str(cur);
+    int e = nege * get_decimal_str(cur);
     d *= std::pow(10, e);
   }
 

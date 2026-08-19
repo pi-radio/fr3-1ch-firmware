@@ -60,6 +60,9 @@ namespace piradio
       virtual void restore_settings() = 0;
 
       virtual void tune_lmx(float freq) { throw unsupported_error(); }
+
+      virtual double get_LO() { throw unsupported_error(); }
+
       virtual void set_lmx_drive(uint8_t v) { throw unsupported_error(); }
       virtual void set_lmx_powerdown(bool) { throw unsupported_error(); }
       virtual void reprogram_lmx() { throw unsupported_error(); }
@@ -100,6 +103,7 @@ namespace piradio
       Gen1Hardware(float osc_in) : lmx(osc_in) {
       }
 
+      double get_LO() override { return lmx.get_fOUTA(); }
       void tune_lmx(float freq) override { lmx.tune(freq); };
       void set_lmx_drive(uint8_t v) override { lmx.set_drive(v); };
       void set_lmx_powerdown(bool b) override { lmx.set_powerdown(b); }

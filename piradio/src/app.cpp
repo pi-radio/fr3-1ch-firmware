@@ -32,13 +32,6 @@ PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
     usb_io(usb_serial),
     term(this, &usb_io)
 {
-  uint32_t *p_uid = (uint32_t *)UID_BASE;
-
-  uint32_t uid0 = *p_uid++;
-  uint32_t uid1 = *p_uid++;
-  uint32_t uid2 = *p_uid++;
-  uint32_t uid3 = *p_uid++;
-
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
   TXX::config_data::registry.register_tlv<lo_frequency>();
@@ -327,14 +320,16 @@ void PiRadioApp::app_main()
     
     try {
       p.parse();
+
+      std::cout << "OK" << std::endl;
     } catch (const parser::SyntaxError &e) {
-      printf("Syntax Error\n");
+      std::cout << "ERROR: Syntax Error (at " << p.get_last_token() << ")" << std::endl;
     } catch (const parser::GeneralError &e) {
-      printf("%s\n", e.s.c_str());
+      std::cout << "ERROR: " << e.s.c_str() << std::endl;
     } catch (const piradio::hardware::unsupported_error &e) {
-      std::cout << "Unsuppoted command for hardware." << std::endl;
+      std::cout << "ERROR: Unsuppoted command for hardware." << std::endl;
     } catch (...) {
-      printf("Caught unknown exception\n");             
+      std::cout << "ERROR: Caught unknown exception" << std::endl;
     }
   }
 }
