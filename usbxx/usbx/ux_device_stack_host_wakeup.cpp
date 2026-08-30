@@ -28,6 +28,9 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
+
+using namespace USBXX;
 
 /**************************************************************************/
 /*                                                                        */
@@ -72,22 +75,22 @@
 UINT  _ux_device_stack_host_wakeup(VOID)
 {
 
-UX_SLAVE_DCD        *dcd;
+USBXX::DCD        *dcd;
 UINT                status = UX_FUNCTION_NOT_SUPPORTED;
-                    
+
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_HOST_WAKEUP, 0, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
                         
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Check if DEVICE_REMOTE_WAKEUP feature is enabled. */
-    if (_ux_system_slave -> ux_system_slave_remote_wakeup_enabled)
-
-        /* Send the change signal to the controller driver.  */
-        status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_CHANGE_STATE, (VOID *) UX_DEVICE_REMOTE_WAKEUP);
+    if (_ux_system_slave -> ux_system_slave_remote_wakeup_enabled) {
+        dcd->on_state_change(UX_DEVICE_REMOTE_WAKEUP);
+        status = 0;
+    }
 
     /* Return the status to the caller.  */
-    return(status);
+    return status;
 }
 

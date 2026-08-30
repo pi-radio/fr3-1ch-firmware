@@ -28,72 +28,17 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_alternate_setting_set              PORTABLE C      */
-/*                                                           6.1.12       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function sets the alternate setting for a specific interface.  */
-/*    The previous interface is unmounted and all the endpoints           */
-/*    associated with the alternate setting are mounted.                  */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    endpoint                              Pointer to endpoint           */
-/*    interface_value                       Interface value               */
-/*    alternate_setting_value               Alternate setting value       */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*    _ux_utility_descriptor_parse          Parse descriptor              */
-/*    _ux_device_stack_transfer_all_request_abort                         */
-/*                                          Abort transfer                */
-/*    _ux_utility_memory_copy               Copy memory                   */
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions, verified       */
-/*                                            memset and memcpy cases,    */
-/*                                            resulting in version 6.1    */
-/*  10-15-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            calculated payload size,    */
-/*                                            resulting in version 6.1.9  */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*                                                                        */
-/**************************************************************************/
+using namespace USBXX;
+
 UINT  _ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value)
 {
 
 UX_SLAVE_DEVICE                 *device;
 UX_SLAVE_INTERFACE              *interface_ptr;
 #if !defined(UX_DEVICE_ALTERNATE_SETTING_SUPPORT_DISABLE)
-UX_SLAVE_DCD                    *dcd;
+USBXX::DCD                    *dcd;
 UX_SLAVE_TRANSFER               *transfer_request;
 UCHAR                           *device_framework;
 ULONG                           device_framework_length;
@@ -170,7 +115,7 @@ ULONG                           max_transfer_length, n_trans;
 #else
 
     /* Get the pointer to the DCD. */
-    dcd =  &_ux_system_slave->ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* We may have multiple configurations!  */
     device_framework =  _ux_system_slave -> ux_system_slave_device_framework;
@@ -242,7 +187,7 @@ ULONG                           max_transfer_length, n_trans;
                                 _ux_device_stack_transfer_all_request_abort(endpoint, UX_TRANSFER_BUS_RESET);
 
                                 /* The device controller must be called to destroy the endpoint.  */
-                                dcd -> ux_slave_dcd_function(dcd, UX_DCD_DESTROY_ENDPOINT, (VOID *) endpoint);
+                                dcd->destroy_endpoint(endpoint);
 
                                 /* Get the next endpoint.  */
                                 next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
@@ -354,7 +299,7 @@ ULONG                           max_transfer_length, n_trans;
                                     endpoint -> ux_slave_endpoint_device =  device;
 
                                     /* Create the endpoint at the DCD level.  */
-                                    status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_CREATE_ENDPOINT, (VOID *) endpoint); 
+                                    status =  dcd->create_endpoint(endpoint);
 
                                     /* Do a sanity check on endpoint creation.  */
                                     if (status != UX_SUCCESS)

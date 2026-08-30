@@ -28,64 +28,14 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_configuration_set                  PORTABLE C      */
-/*                                                           6.1.12       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function sets the configuration from the host and will enable  */
-/*    the default alternate setting 0 for all the interfaces attached to  */
-/*    this configuration.                                                 */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    endpoint                              Pointer to endpoint           */
-/*    configuration_value                   Configuration selected        */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */
-/*    (ux_slave_class_entry_function)       Device class entry function   */ 
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*    _ux_device_stack_interface_delete     Delete interface              */
-/*    _ux_device_stack_interface_set        Set interface                 */ 
-/*    _ux_utility_descriptor_parse          Parse descriptor              */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions,                */
-/*                                            resulting in version 6.1    */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*                                                                        */
-/**************************************************************************/
+using namespace USBXX;
+
 UINT  _ux_device_stack_configuration_set(ULONG configuration_value)
 {
 
-UX_SLAVE_DCD                    *dcd;
+USBXX::DCD                    *dcd;
 UCHAR *                         device_framework;
 ULONG                           device_framework_length;
 ULONG                           descriptor_length;
@@ -112,7 +62,7 @@ ULONG                           class_index;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_CONFIGURATION_SET, configuration_value, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -215,7 +165,7 @@ ULONG                           class_index;
     device -> ux_slave_device_state =  UX_DEVICE_ATTACHED;
 
     /* The DCD needs to update the device state too.  */
-    dcd -> ux_slave_dcd_function(dcd, UX_DCD_CHANGE_STATE, (VOID *) UX_DEVICE_ATTACHED);
+    dcd->on_state_change(UX_DEVICE_ATTACHED);
 
     /* If the host tries to unconfigure, we are done. */
     if (configuration_value == 0)
@@ -396,7 +346,7 @@ ULONG                           class_index;
     device -> ux_slave_device_state =  UX_DEVICE_CONFIGURED;
 
     /* The DCD needs to update the device state too.  */
-    dcd -> ux_slave_dcd_function(dcd, UX_DCD_CHANGE_STATE, (VOID *) UX_DEVICE_CONFIGURED);
+    dcd->on_state_change(UX_DEVICE_CONFIGURED);
 
     /* Configuration mounted. */
     return(UX_SUCCESS);

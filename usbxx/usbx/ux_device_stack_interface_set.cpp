@@ -29,67 +29,16 @@
 #include <usbxx/ux_device_stack.h>
 
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_interface_set                      PORTABLE C      */
-/*                                                           6.1.12       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function sets one alternate setting of one interface and       */
-/*    enable all endpoints associated with this alternate setting.        */
-/*    configuration.                                                      */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    device_framework                      Address in device framework   */ 
-/*                                          for selected alternate setting*/
-/*    device_framework_length               Length of device framework    */ 
-/*    alternate_setting_value               Alternate setting             */ 
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*    _ux_device_stack_interface_start      Start interface               */ 
-/*    _ux_utility_descriptor_parse          Parse descriptor              */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions,                */
-/*                                            resulting in version 6.1    */
-/*  10-15-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            calculated payload size,    */
-/*                                            resulting in version 6.1.9  */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*                                                                        */
+#include <usbxx/stm32/dcd.hpp>
+
+using namespace USBXX;
+
 /**************************************************************************/
 UINT  _ux_device_stack_interface_set(UCHAR * device_framework, ULONG device_framework_length,
                                                     ULONG alternate_setting_value)
 {
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UX_SLAVE_DEVICE         *device;
 UX_SLAVE_TRANSFER       *transfer_request;
 UX_SLAVE_INTERFACE      *interface_ptr;
@@ -111,7 +60,7 @@ ULONG                   max_transfer_length, n_trans;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INTERFACE_SET, alternate_setting_value, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -271,7 +220,7 @@ ULONG                   max_transfer_length, n_trans;
             endpoint -> ux_slave_endpoint_device =  device;
                 
             /* Create the endpoint at the DCD level.  */
-            status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_CREATE_ENDPOINT, (VOID *) endpoint); 
+            status =  dcd->create_endpoint(endpoint);
             
             /* Do a sanity check on endpoint creation.  */
             if (status != UX_SUCCESS)

@@ -28,59 +28,10 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_transfer_request                   PORTABLE C      */
-/*                                                           6.1.10       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function performs a USB transaction. On entry the              */
-/*    transfer request gives the endpoint pipe selected for this          */
-/*    transaction and the parameters associated with the transfer         */
-/*    (data payload, length of transaction).                              */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    transfer_request                      Pointer to transfer request   */
-/*    slave_length                          Length returned by host       */
-/*    host_length                           Length asked by host          */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    (ux_slave_dcd_function)               Slave DCD dispatch function   */ 
-/*    _ux_utility_delay_ms                  Delay ms                      */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            used UX prefix to refer to  */
-/*                                            TX symbols instead of using */
-/*                                            them directly,              */
-/*                                            resulting in version 6.1    */
-/*  01-31-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added standalone support,   */
-/*                                            resulting in version 6.1.10 */
-/*                                                                        */
-/**************************************************************************/
+using namespace USBXX;
+
 UINT  _ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, 
                                             ULONG slave_length, 
                                             ULONG host_length)
@@ -101,7 +52,7 @@ UINT            status;
 #else
 UX_INTERRUPT_SAVE_AREA
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UINT                    status;
 UX_SLAVE_ENDPOINT       *endpoint;
 ULONG                   device_state;
@@ -140,7 +91,7 @@ ULONG                   device_state;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_TRANSFER_REQUEST, transfer_request, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the endpoint associated with this transaction.  */
     endpoint =  transfer_request -> ux_slave_transfer_request_endpoint;
@@ -195,7 +146,7 @@ ULONG                   device_state;
                             transfer_request -> ux_slave_transfer_request_data_pointer;
 
     /* Call the DCD driver transfer function.   */
-    status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_TRANSFER_REQUEST, transfer_request);
+    status =  dcd->transfer_request(transfer_request);
 
     /* And return the status.  */
     return(status);

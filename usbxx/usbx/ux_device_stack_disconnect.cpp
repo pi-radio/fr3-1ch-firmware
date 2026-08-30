@@ -28,72 +28,24 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/device.hpp>
+#include <usbxx/stm32/dcd.hpp>
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_disconnect                         PORTABLE C      */
-/*                                                           6.1.12       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function is called when the device gets disconnected from the  */
-/*    host. All the device resources are freed.                           */
-/*                                                                        */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    None                                                                */ 
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    (ux_slave_class_entry_function)       Device class entry function   */ 
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*    _ux_device_stack_interface_delete     Delete interface              */
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions,                */
-/*                                            resulting in version 6.1    */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*                                                                        */
-/**************************************************************************/
+using namespace USBXX;
+
 UINT  _ux_device_stack_disconnect(VOID)
 {
 
-UX_SLAVE_DCD                *dcd;
+USBXX::DCD                *dcd;
 UX_SLAVE_DEVICE             *device;
 UX_SLAVE_INTERFACE          *interface_ptr; 
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
 UX_SLAVE_INTERFACE          *next_interface; 
-#endif
 UX_SLAVE_CLASS              *class_ptr;
 UX_SLAVE_CLASS_COMMAND      class_command;
 UINT                        status = UX_ERROR;
                         
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd =  STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -155,8 +107,7 @@ UINT                        status = UX_ERROR;
     if (device -> ux_slave_device_state == UX_DEVICE_ATTACHED)
 
         /* Now we can destroy the default control endpoint.  */
-        status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_DESTROY_ENDPOINT,
-                                (VOID *) &device -> ux_slave_device_control_endpoint);
+        status =  dcd->destroy_endpoint(&device -> ux_slave_device_control_endpoint);
 
     /* We are reverting to configuration 0.  */
     device -> ux_slave_device_configuration_selected =  0;

@@ -30,84 +30,14 @@
 
 #include <usbxx/endian.hpp>
 
+#include <usbxx/stm32/dcd.hpp>
+
 using namespace USBXX;
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_control_request_process            PORTABLE C      */
-/*                                                           6.3.0        */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function is called by the DCD when the device has received a   */
-/*    SETUP packet.                                                       */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    transfer_request                      Pointer to transfer request   */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    (ux_slave_class_entry_function)       Device class entry function   */ 
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*    _ux_device_stack_transfer_request     Transfer request              */
-/*    _ux_device_stack_endpoint_stall       Stall endpoint                */
-/*    _ux_device_stack_alternate_setting_get                              */
-/*                                          Get alternate settings        */ 
-/*    _ux_device_stack_alternate_setting_set                              */
-/*                                          Set alternate settings        */ 
-/*    _ux_device_stack_clear_feature        Clear feature                 */ 
-/*    _ux_device_stack_configuration_get    Get configuration             */ 
-/*    _ux_device_stack_configuration_set    Set configuration             */ 
-/*    _ux_device_stack_descriptor_send      Send descriptor               */ 
-/*    _ux_device_stack_get_status           Get status                    */ 
-/*    _ux_device_stack_set_feature          Set feature                   */ 
-/*    _ux_utility_short_get                 Get short value               */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
-/*  10-15-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed possible buffer issue */
-/*                                            for control vendor request, */
-/*                                            resulting in version 6.1.9  */
-/*  01-31-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added printer support,      */
-/*                                            resulting in version 6.1.10 */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*  03-08-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed vendor request issue, */
-/*                                            resulting in version 6.2.1  */
-/*  10-31-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            improved interface request  */
-/*                                            process with print class,   */
-/*                                            resulting in version 6.3.0  */
-/*                                                                        */
-/**************************************************************************/
 UINT  _ux_device_stack_control_request_process(UX_SLAVE_TRANSFER *transfer_request)
 {
 
-UX_SLAVE_DCD                *dcd;
+USBXX::DCD                *dcd;
 UX_SLAVE_DEVICE             *device;
 UX_SLAVE_CLASS              *class_ptr;
 UX_SLAVE_CLASS_COMMAND      class_command;
@@ -122,7 +52,7 @@ UX_SLAVE_ENDPOINT           *endpoint;
 ULONG                       application_data_length;
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -298,7 +228,10 @@ ULONG                       application_data_length;
             dcd -> ux_slave_dcd_device_address =  request_value;
 
             /* Force the new address.  */
-            status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_SET_DEVICE_ADDRESS, (VOID *) (ALIGN_TYPE) request_value);
+            dcd->set_device_address(request_value);
+
+            status = 0;
+
             break;
 
         case UX_GET_DESCRIPTOR:

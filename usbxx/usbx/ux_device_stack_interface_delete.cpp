@@ -28,6 +28,9 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
+
+using namespace USBXX;
 
 /**************************************************************************/
 /*                                                                        */
@@ -78,7 +81,7 @@
 UINT  _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *interface_ptr)
 {
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UX_SLAVE_DEVICE         *device;
 UX_SLAVE_ENDPOINT       *endpoint;
 UX_SLAVE_ENDPOINT       *next_endpoint;
@@ -106,10 +109,10 @@ UX_SLAVE_ENDPOINT       *next_endpoint;
         next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
         
         /* Get the pointer to the DCD.  */
-        dcd =  &_ux_system_slave->ux_system_slave_dcd;
+        dcd = STM32::gDCD;
 
         /* The endpoint must be destroyed.  */
-        dcd -> ux_slave_dcd_function(dcd, UX_DCD_DESTROY_ENDPOINT, endpoint);
+        dcd->destroy_endpoint(endpoint);
 
         /* Free the endpoint.  */
         endpoint -> ux_slave_endpoint_status =  UX_UNUSED;

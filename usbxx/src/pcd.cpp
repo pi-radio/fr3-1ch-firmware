@@ -5,101 +5,10 @@ extern "C" {
 
 #include <stdexcept>
 
-class PCD
-{
-  PCD_HandleTypeDef hpcd;
-  USB_DRD_TypeDef *USBx;
+#include <usbxx/device.hpp>
+#include <usbxx/stm32/dcd.hpp>
 
-public:
-  PCD() {
-    USBx = USB_DRD_FS;
-
-    hpcd.Instance = USBx;
-    hpcd.Init.dev_endpoints = 8;
-    hpcd.Init.speed = USBD_FS_SPEED;
-    hpcd.Init.phy_itface = PCD_PHY_EMBEDDED;
-    hpcd.Init.Sof_enable = DISABLE;
-    hpcd.Init.low_power_enable = DISABLE;
-    hpcd.Init.lpm_enable = DISABLE;
-    hpcd.Init.battery_charging_enable = DISABLE;
-    hpcd.Init.vbus_sensing_enable = DISABLE;
-    hpcd.Init.bulk_doublebuffer_enable = DISABLE;
-    hpcd.Init.iso_singlebuffer_enable = DISABLE;
-  }
-
-  void init() {
-    uint8_t i;
-
-    if (hpcd.State == HAL_PCD_STATE_RESET)
-      /* Allocate lock resource and initialize it */
-      hpcd.Lock = HAL_UNLOCKED;
-
-    hpcd.State = HAL_PCD_STATE_BUSY;
-
-    /* Disable the Interrupts */
-    __HAL_PCD_DISABLE(&hpcd);
-
-    /* Reset after a PHY select */
-    reset();
-
-    /* Clear pending interrupts */
-    USBx->ISTR = 0U;
-
-    /* Force Device Mode */
-    if (USB_SetCurrentMode(hpcd.Instance, USB_DEVICE_MODE) != HAL_OK)
-    {
-      hpcd.State = HAL_PCD_STATE_ERROR;
-      throw std::runtime_error("Unable to set USB mode");
-    }
-
-    /* Init endpoints structures */
-    for (i = 0U; i < hpcd.Init.dev_endpoints; i++)
-    {
-      /* Init ep structure */
-      hpcd.IN_ep[i].is_in = 1U;
-      hpcd.IN_ep[i].num = i;
-      /* Control until ep is activated */
-      hpcd.IN_ep[i].type = EP_TYPE_CTRL;
-      hpcd.IN_ep[i].maxpacket = 0U;
-      hpcd.IN_ep[i].xfer_buff = 0U;
-      hpcd.IN_ep[i].xfer_len = 0U;
-    }
-
-    for (i = 0U; i < hpcd.Init.dev_endpoints; i++)
-    {
-      hpcd.OUT_ep[i].is_in = 0U;
-      hpcd.OUT_ep[i].num = i;
-      /* Control until ep is activated */
-      hpcd.OUT_ep[i].type = EP_TYPE_CTRL;
-      hpcd.OUT_ep[i].maxpacket = 0U;
-      hpcd.OUT_ep[i].xfer_buff = 0U;
-      hpcd.OUT_ep[i].xfer_len = 0U;
-    }
-
-    /* Init Device */
-    if (USB_DevInit(hpcd.Instance, hpcd.Init) != HAL_OK)
-    {
-      hpcd.State = HAL_PCD_STATE_ERROR;
-      throw std::runtime_error("Unable to initialize USB device");
-    }
-
-    hpcd.USB_Address = 0U;
-    hpcd.State = HAL_PCD_STATE_READY;
-
-    /* Activate LPM */
-    if (hpcd.Init.lpm_enable == 1U)
-    {
-      (void)HAL_PCDEx_ActivateLPM(&hpcd);
-    }
-
-    (void)USB_DevDisconnect(USBx);
-  }
-
-  void reset() {
-    USBx->CNTR &= ~USB_CNTR_HOST;
-    USBx->CNTR |= USB_CNTR_USBRST;
-  }
-};
+using namespace USBXX;
 
 extern "C" {
 /* Includes ------------------------------------------------------------------*/
@@ -389,7 +298,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   {
     __HAL_PCD_CLEAR_FLAG(hpcd, USB_ISTR_RESET);
 
-    HAL_PCD_ResetCallback(hpcd);
+    STM32::gDCD->reset();
 
     (void)HAL_PCD_SetAddress(hpcd, 0U);
 
@@ -422,7 +331,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       HAL_PCDEx_LPM_Callback(hpcd, PCD_LPM_L0_ACTIVE);
     }
 
-    HAL_PCD_ResumeCallback(hpcd);
+    STM32::gDCD->resume();
 
     __HAL_PCD_CLEAR_FLAG(hpcd, USB_ISTR_WKUP);
 
@@ -439,7 +348,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
 
     hpcd->Instance->CNTR |= USB_CNTR_SUSPRDY;
 
-    HAL_PCD_SuspendCallback(hpcd);
+    STM32::gDCD->suspend();
 
     return;
   }
@@ -460,7 +369,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
     }
     else
     {
-      HAL_PCD_SuspendCallback(hpcd);
+      STM32::gDCD->suspend();
     }
 
     return;
@@ -470,7 +379,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   {
     __HAL_PCD_CLEAR_FLAG(hpcd, USB_ISTR_SOF);
 
-    HAL_PCD_SOFCallback(hpcd);
+    STM32::gDCD->on_sof();
 
     return;
   }
@@ -908,7 +817,7 @@ static HAL_StatusTypeDef PCD_EP_ISR_Handler(PCD_HandleTypeDef *hpcd)
         ep->xfer_buff += ep->xfer_count;
 
         /* TX COMPLETE */
-        HAL_PCD_DataInStageCallback(hpcd, 0U);
+        STM32::gDCD->on_data_in(0);
 
         if ((hpcd->USB_Address > 0U) && (ep->xfer_len == 0U))
         {
@@ -949,7 +858,7 @@ static HAL_StatusTypeDef PCD_EP_ISR_Handler(PCD_HandleTypeDef *hpcd)
           PCD_CLEAR_RX_EP_CTR(hpcd->Instance, PCD_ENDP0);
 
           /* Process SETUP Packet*/
-          HAL_PCD_SetupStageCallback(hpcd);
+          STM32::gDCD->setup();
         }
         else if ((wEPVal & USB_EP_VTRX) != 0U)
         {
@@ -973,7 +882,7 @@ static HAL_StatusTypeDef PCD_EP_ISR_Handler(PCD_HandleTypeDef *hpcd)
               ep->xfer_buff += ep->xfer_count;
 
               /* Process Control Data OUT Packet */
-              HAL_PCD_DataOutStageCallback(hpcd, 0U);
+              STM32::gDCD->on_data_out(0);
             }
           }
         }
@@ -1044,7 +953,7 @@ static HAL_StatusTypeDef PCD_EP_ISR_Handler(PCD_HandleTypeDef *hpcd)
         if ((ep->xfer_len == 0U) || (count < ep->maxpacket))
         {
           /* RX COMPLETE */
-          HAL_PCD_DataOutStageCallback(hpcd, ep->num);
+          STM32::gDCD->on_data_out(ep->num);
         }
         else
         {
@@ -1079,7 +988,7 @@ static HAL_StatusTypeDef PCD_EP_ISR_Handler(PCD_HandleTypeDef *hpcd)
 #endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
 
           /* TX COMPLETE */
-          HAL_PCD_DataInStageCallback(hpcd, ep->num);
+          STM32::gDCD->on_data_in(ep->num);
         }
         else
         {
@@ -1102,7 +1011,7 @@ static HAL_StatusTypeDef PCD_EP_ISR_Handler(PCD_HandleTypeDef *hpcd)
             if (ep->xfer_len == 0U)
             {
               /* TX COMPLETE */
-              HAL_PCD_DataInStageCallback(hpcd, ep->num);
+              STM32::gDCD->on_data_in(ep->num);
             }
             else
             {
@@ -1251,7 +1160,7 @@ static HAL_StatusTypeDef HAL_PCD_EP_DB_Transmit(PCD_HandleTypeDef *hpcd,
       }
 
       /* TX COMPLETE */
-      HAL_PCD_DataInStageCallback(hpcd, ep->num);
+      STM32::gDCD->on_data_in(ep->num);
 
       if ((wEPVal & USB_EP_DTOG_RX) != 0U)
       {
@@ -1328,7 +1237,7 @@ static HAL_StatusTypeDef HAL_PCD_EP_DB_Transmit(PCD_HandleTypeDef *hpcd,
       }
 
       /* TX COMPLETE */
-      HAL_PCD_DataInStageCallback(hpcd, ep->num);
+      STM32::gDCD->on_data_in(ep->num);
 
       /* need to Free USB Buff */
       if ((wEPVal & USB_EP_DTOG_RX) == 0U)

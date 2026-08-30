@@ -160,7 +160,7 @@ extern   "C" {
 
 /* Include USBX port specific file.  */
 
-#include <usbxx/ux_port.h>
+#include "ux_port.h"
 
 /* Process compile options:
  *
@@ -2396,14 +2396,7 @@ typedef struct UX_SLAVE_DEVICE_STRUCT
 typedef struct UX_SLAVE_DCD_STRUCT
 {
 
-    UINT            ux_slave_dcd_status;
-    UINT            ux_slave_dcd_controller_type;
-    UINT            ux_slave_dcd_otg_capabilities;
-    UINT            ux_slave_dcd_irq;
-    ULONG           ux_slave_dcd_io;
-    ULONG           ux_slave_dcd_device_address;
-    UINT            (*ux_slave_dcd_function) (struct UX_SLAVE_DCD_STRUCT *,UINT, VOID *);
-    void            *ux_slave_dcd_controller_hardware;
+
 
 #if defined(UX_DEVICE_STANDALONE)
     UINT            (*ux_device_dcd_task_function)(struct UX_SLAVE_DCD_STRUCT *);
@@ -2637,8 +2630,6 @@ typedef struct UX_SYSTEM_HOST_STRUCT
 
 typedef struct UX_SYSTEM_SLAVE_STRUCT
 {
-
-    UX_SLAVE_DCD    ux_system_slave_dcd;
     UX_SLAVE_DEVICE ux_system_slave_device;
     UCHAR           *ux_system_slave_device_framework;
     ULONG           ux_system_slave_device_framework_length;

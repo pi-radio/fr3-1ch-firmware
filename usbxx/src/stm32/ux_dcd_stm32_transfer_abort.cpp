@@ -31,54 +31,9 @@
 #include <usbxx/ux_utility.h>
 #include <usbxx/ux_device_stack.h>
 
+using namespace USBXX;
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                                RELEASE       */
-/*                                                                        */
-/*    _ux_dcd_stm32_transfer_request                       PORTABLE C     */
-/*                                                            6.1.10      */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function will initiate a transfer to a specific endpoint.      */
-/*    If the endpoint is IN, the endpoint register will be set to accept  */
-/*    the request.                                                        */
-/*                                                                        */
-/*    If the endpoint is IN, the endpoint FIFO will be filled with the    */
-/*    buffer and the endpoint register set.                               */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    dcd_stm32                             Pointer to device controller  */
-/*    transfer_request                      Pointer to transfer request   */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */
-/*                                                                        */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    HAL_PCD_EP_Transmit                   Transmit data                 */
-/*    HAL_PCD_EP_Receive                    Receive data                  */
-/*    _ux_utility_semaphore_get             Get semaphore                 */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    STM32 Controller Driver                                             */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
-/*    DATE              NAME                      DESCRIPTION             */
-/*                                                                        */
-/*  01-31-2022     Chaoqiong Xiao           Initial Version 6.1.10        */
-/*                                                                        */
-/**************************************************************************/
-UINT  _ux_dcd_stm32_transfer_abort(UX_DCD_STM32 *dcd_stm32, UX_SLAVE_TRANSFER *transfer_request)
+UINT  STM32::DCD::abort_transfer(UX_SLAVE_TRANSFER *transfer_request)
 {
 
 #if !defined (USBD_HAL_TRANSFER_ABORT_NOT_SUPPORTED)
@@ -89,8 +44,8 @@ UINT  _ux_dcd_stm32_transfer_abort(UX_DCD_STM32 *dcd_stm32, UX_SLAVE_TRANSFER *t
     /* Get the pointer to the logical endpoint from the transfer request.  */
     endpoint =  transfer_request -> ux_slave_transfer_request_endpoint;
 
-    HAL_PCD_EP_Abort(dcd_stm32 -> pcd_handle, endpoint->ux_slave_endpoint_descriptor.bEndpointAddress);
-    HAL_PCD_EP_Flush(dcd_stm32 -> pcd_handle, endpoint->ux_slave_endpoint_descriptor.bEndpointAddress);
+    HAL_PCD_EP_Abort(pcd_handle, endpoint->ux_slave_endpoint_descriptor.bEndpointAddress);
+    HAL_PCD_EP_Flush(pcd_handle, endpoint->ux_slave_endpoint_descriptor.bEndpointAddress);
 
     /* No semaphore put here since it's already done in stack.  */
 #endif /* USBD_HAL_TRANSFER_ABORT_NOT_SUPPORTED */

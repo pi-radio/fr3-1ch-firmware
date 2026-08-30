@@ -2,6 +2,7 @@
 #define UX_SOURCE_CODE
 #define UX_DCD_STM32_SOURCE_CODE
 
+#include <stdexcept>
 
 /* Include necessary system files.  */
 
@@ -9,44 +10,78 @@
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/ux_device_stack.h>
 
-UINT  _ux_dcd_stm32_initialize(ULONG dcd_io, ULONG parameter)
+using namespace USBXX;
+
+USBXX::STM32::DCD *USBXX::STM32::gDCD;
+
+STM32::DCD::DCD(PCD_TypeDef *_pcd) : pcd(_pcd)
+{
+  STM32::gDCD = this;
+};
+
+void STM32::DCD::low_level_init()
 {
 
-UX_SLAVE_DCD            *dcd;
-UX_DCD_STM32            *dcd_stm32;
+}
+
+uint32_t STM32::DCD::initialize()
+{
+  pcd_handle = &hpcd;
+
+  hpcd.Instance = pcd;
+  hpcd.Init.dev_endpoints = 8;
+  hpcd.Init.speed = USBD_FS_SPEED;
+  hpcd.Init.phy_itface = PCD_PHY_EMBEDDED;
+  hpcd.Init.Sof_enable = DISABLE;
+  hpcd.Init.low_power_enable = DISABLE;
+  hpcd.Init.lpm_enable = DISABLE;
+  hpcd.Init.battery_charging_enable = DISABLE;
+  hpcd.Init.vbus_sensing_enable = DISABLE;
+  hpcd.Init.bulk_doublebuffer_enable = DISABLE;
+  hpcd.Init.iso_singlebuffer_enable = DISABLE;
+
+  if (HAL_PCD_Init(&hpcd) != HAL_OK)
+  {
+    throw std::runtime_error("Unable to initialize USB stack");
+  }
+
+  // MOVE ME
+  HAL_PCDEx_PMAConfig(&hpcd, 0x00 , PCD_SNG_BUF, 0x40);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x80 , PCD_SNG_BUF, 0x80);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x01, PCD_SNG_BUF, 0xC0);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x81, PCD_SNG_BUF, 0x100);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x82, PCD_SNG_BUF, 0x140);
+
+  ux_slave_dcd_status =  UX_DCD_STATUS_OPERATIONAL;
+
+  HAL_PCD_Start(&hpcd);
+
+  /* Return successful completion.  */
+  return(UX_SUCCESS);
+}
 
 
-    UX_PARAMETER_NOT_USED(dcd_io);
 
-    /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
 
-    /* The controller initialized here is of STM32 type.  */
-    dcd -> ux_slave_dcd_controller_type =  UX_DCD_STM32_SLAVE_CONTROLLER;
+void STM32::DCD::set_device_address(uint8_t addr)
+{
+  HAL_PCD_SetAddress(pcd_handle, addr);
+}
 
-    /* Allocate memory for this STM32 DCD instance.  */
-    dcd_stm32 = (UX_DCD_STM32 *)::malloc(sizeof(UX_DCD_STM32));
+void STM32::DCD::handle_IRQ()
+{
+  HAL_PCD_IRQHandler(&hpcd);
+}
 
-    /* Check if memory was properly allocated.  */
-    if(dcd_stm32 == UX_NULL)
-        return(UX_MEMORY_INSUFFICIENT);
+uint32_t STM32::DCD::get_frame_number()
+{
 
-    ::memset(dcd_stm32, 0, sizeof(UX_DCD_STM32));
-
-    /* Set the pointer to the STM32 DCD.  */
-    dcd -> ux_slave_dcd_controller_hardware =  (VOID *) dcd_stm32;
-
-    /* Set the generic DCD owner for the STM32 DCD.  */
-    dcd_stm32 -> ux_dcd_stm32_dcd_owner =  dcd;
-
-    /* Initialize the function collector for this DCD.  */
-    dcd -> ux_slave_dcd_function =  _ux_dcd_stm32_function;
-
-    dcd_stm32 -> pcd_handle = (PCD_HandleTypeDef *)parameter;
-
-    /* Set the state of the controller to OPERATIONAL now.  */
-    dcd -> ux_slave_dcd_status =  UX_DCD_STATUS_OPERATIONAL;
-
-    /* Return successful completion.  */
+    /* This function never fails. */
     return(UX_SUCCESS);
+}
+
+
+extern "C" void USB_DRD_FS_IRQHandler(void)
+{
+  STM32::gDCD->handle_IRQ();
 }

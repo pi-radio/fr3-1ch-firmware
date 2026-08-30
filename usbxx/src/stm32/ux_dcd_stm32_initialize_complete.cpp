@@ -32,67 +32,14 @@
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/ux_device_stack.h>
 
+using namespace USBXX;
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_dcd_stm32_initialize_complete                   PORTABLE C      */
-/*                                                           6.1          */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function completes the initialization of the USB slave         */
-/*    controller for the STM32 chip.                                      */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    (ux_slave_dcd_function)               Process the DCD function      */
-/*    _ux_utility_descriptor_parse          Parse descriptor              */
-/*    _ux_utility_memory_allocate           Allocate memory               */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    STM32 Controller Driver                                             */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
-/*    DATE              NAME                      DESCRIPTION             */
-/*                                                                        */
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            prefixed UX to MS_TO_TICK,  */
-/*                                            used ST HAL library to      */
-/*                                            drive the controller,       */
-/*                                            resulting in version 6.1    */
-/*                                                                        */
-/**************************************************************************/
-UINT  _ux_dcd_stm32_initialize_complete(VOID)
+UINT  STM32::DCD::complete_initialization()
 {
-
-UX_SLAVE_DCD            *dcd;
-UX_DCD_STM32            *dcd_stm32;
 UX_SLAVE_DEVICE         *device;
 UCHAR                     *device_framework;
 UX_SLAVE_TRANSFER       *transfer_request;
 
-
-    /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
-
-    /* Get the pointer to the STM32 DCD.  */
-    dcd_stm32 = (UX_DCD_STM32 *) dcd -> ux_slave_dcd_controller_hardware;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -168,16 +115,15 @@ UX_SLAVE_TRANSFER       *transfer_request;
        Once this endpoint is enabled, the host can then send a setup packet
        The device controller will receive it and will call the setup function
        module.  */
-    dcd -> ux_slave_dcd_function(dcd, UX_DCD_CREATE_ENDPOINT,
-                                    (VOID *) &device -> ux_slave_device_control_endpoint);
+    create_endpoint(&device -> ux_slave_device_control_endpoint);
 
     /* Open Control OUT endpoint.  */
-    HAL_PCD_EP_Flush(dcd_stm32 -> pcd_handle, 0x00U);
-    HAL_PCD_EP_Open(dcd_stm32 -> pcd_handle, 0x00U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+    HAL_PCD_EP_Flush(pcd_handle, 0x00U);
+    HAL_PCD_EP_Open(pcd_handle, 0x00U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
 
     /* Open Control IN endpoint.  */
-    HAL_PCD_EP_Flush(dcd_stm32 -> pcd_handle, 0x80U);
-    HAL_PCD_EP_Open(dcd_stm32 -> pcd_handle, 0x80U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+    HAL_PCD_EP_Flush(pcd_handle, 0x80U);
+    HAL_PCD_EP_Open(pcd_handle, 0x80U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
 
     /* Ensure the control endpoint is properly reset.  */
     device -> ux_slave_device_control_endpoint.ux_slave_endpoint_state = UX_ENDPOINT_RESET;

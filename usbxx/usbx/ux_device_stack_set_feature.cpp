@@ -29,59 +29,14 @@
 #include <usbxx/ux_device_stack.h>
 
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_set_feature                        PORTABLE C      */
-/*                                                           6.1.12       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function sets a specific feature (Device, Interface,           */
-/*    Endpoint ....).                                                     */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    request_type                          Request type                  */
-/*    request_value                         Request value                 */
-/*    request_index                         Request index                 */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    (ux_slave_dcd_function)               DCD controller function       */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions, stalled on not */
-/*                                            supported device requests,  */
-/*                                            resulting in version 6.1    */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*                                                                        */
-/**************************************************************************/
+#include <usbxx/stm32/dcd.hpp>
+
+using namespace USBXX;
+
 UINT  _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULONG request_index)
 {
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UX_SLAVE_DEVICE         *device;
 UX_SLAVE_INTERFACE      *interface_ptr;
 UX_SLAVE_ENDPOINT       *endpoint;
@@ -93,7 +48,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_SET_FEATURE, request_value, request_index, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -177,7 +132,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
                 {
 
                     /* Stall the endpoint.  */
-                    dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint_target);
+                    dcd->stall(endpoint_target);
 
                     /* Return the function status.  */
                     return(UX_SUCCESS);
@@ -199,7 +154,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
     default:
         
         /* We stall the command.  */
-        dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+        dcd->stall(endpoint);
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
         return(UX_SUCCESS);            

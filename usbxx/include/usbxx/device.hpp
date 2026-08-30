@@ -13,92 +13,30 @@
 
 #include <usbxx/ux_api.h>
 
+#include <usbxx/dcd.hpp>
+
 namespace USBXX
 {
-  extern UINT _usbxx_change_notification(ULONG);
-
-#if 0
-  class DeviceBase;
-  class DeviceEndpoint;
-  class DeviceInterface;
-  class DeviceTransfer;
-
-  class DeviceTransfer
-  {
-    ULONG           request_status;
-    ULONG           request_type;
-    DeviceEndpoint  *request_endpoint;
-    UCHAR           *request_data_pointer;
-    UCHAR           *request_current_data_pointer;
-    ULONG           request_requested_length;
-    ULONG           request_actual_length;
-    ULONG           request_in_transfer_length;
-    ULONG           request_transfer_length;
-    ULONG           request_completion_code;
-    ULONG           request_phase;
-    VOID            (*request_completion_function) (void *);
-    TXX::Semaphore  request_semaphore;
-    ULONG           request_timeout;
-    ULONG           request_force_zlp;
-    UCHAR           request_setup[UX_SETUP_SIZE];
-    ULONG           request_status_phase_ignore;
-  };
-
-  class DeviceEndpoint
-  {
-    ULONG               status;
-    ULONG               state;
-    void                *ed;
-    EndpointDescriptor  *descriptor;
-    DeviceEndpoint      *next_endpoint;
-    DeviceInterface     *interface;
-    DeviceBase          *device;
-    DeviceTransfer      transfer_request;
-  };
-
-  class DeviceInterface
-  {
-    ULONG           status;
-    DeviceClass     *device_class;
-    VOID            *device_class_instance;
-
-    InterfaceDesc   descriptor;
-    DeviceInterface *next_interface;
-    DeviceEndpoint  *first_endpoint;
-  };
-#endif
-
-
   class DeviceBase
   {
-    friend UINT _usbxx_change_notification(ULONG);
+    static UINT _usbxx_change_notification(ULONG);
 
     uint32_t on_change(uint32_t);
-
-#if 0
-    ULONG            state;
-    DeviceDescriptor descriptor;
-    DeviceEndpoint   control_endpoint;
-    ULONG            configuration_selected;
-    ConfigDescriptor configuration_descriptor;
-    DeviceInterface  *first_interface;
-    DeviceInterface  *interfaces_pool;
-    ULONG            interfaces_pool_number;
-    DeviceEndpoint   *endpoints_pool;
-    ULONG            endpoints_pool_number;
-    ULONG            power_state;
-#endif
 
     Descriptor  fs_desc;
     Descriptor  hs_desc;
     Strings     strings;
     LanguageIDs lang_ids;
 
+    DCD *dcd;
+
   protected:
     void thread_entry();
 
   public:
     DeviceBase();
+
+    void set_dcd(DCD *_dcd) { dcd = _dcd; }
 
     void add_class(uint8_t cls) {
       fs_desc.add_class(cls);

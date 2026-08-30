@@ -5,6 +5,7 @@
 #include <consolexx/cooked.hpp>
 #include <halxx/fault.hpp>
 #include <stm32h5/flash.hpp>
+#include <usbxx/stm32/dcd.hpp>
 
 #include "fr3_1ch_hw.h"
 
@@ -28,10 +29,14 @@ extern "C" {
 using namespace piradio::config;
 using namespace TXX::config_data;
 
+USBXX::STM32::DCD dcd(USB_DRD_FS);
+
 PiRadioApp::PiRadioApp() : cmd_queue("App command queue"),
     usb_io(usb_serial),
     term(this, &usb_io)
 {
+  usb_serial.set_dcd(&dcd);
+
   TXX::config_data::registry.register_tlv<board_model>();
   TXX::config_data::registry.register_tlv<board_serial>();
   TXX::config_data::registry.register_tlv<lo_frequency>();

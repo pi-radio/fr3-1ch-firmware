@@ -28,59 +28,14 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_interface_get                      PORTABLE C      */
-/*                                                           6.1.12       */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function is deprecated, ux_device_stack_alternate_setting_get  */
-/*    does the same thing and used by the core stack.                     */
-/*                                                                        */
-/*    This function gets the current alternate setting for an interface.  */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    interface_value                       Value of the interface        */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions,                */
-/*                                            resulting in version 6.1    */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            resulting in version 6.1.12 */
-/*                                                                        */
-/**************************************************************************/
+using namespace USBXX;
+
 UINT  _ux_device_stack_interface_get(UINT interface_value)
 {
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UX_SLAVE_TRANSFER       *transfer_request;
 UX_SLAVE_INTERFACE      *interface_ptr;
 UX_SLAVE_DEVICE         *device;
@@ -91,7 +46,7 @@ UINT                    status;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INTERFACE_GET, interface_value, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -131,7 +86,7 @@ UINT                    status;
                 transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
 
                 /* Send the descriptor with the appropriate length to the host.  */
-                status = dcd -> ux_slave_dcd_function(dcd, UX_DCD_TRANSFER_REQUEST, transfer_request);
+                status = dcd->transfer_request(transfer_request);
 
                 /* Return the function status code.  */
                 return(status);
@@ -146,7 +101,7 @@ UINT                    status;
     }
 
     /* The alternate setting value was not found, so we return a stall error.  */
-    dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+    dcd->stall(endpoint);
 
     /* Return the status to the caller.  */
     return(UX_ERROR);

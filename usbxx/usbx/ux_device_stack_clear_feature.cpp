@@ -28,6 +28,9 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
+
+using namespace USBXX;
 
 /**************************************************************************/
 /*                                                                        */
@@ -80,7 +83,7 @@
 UINT  _ux_device_stack_clear_feature(ULONG request_type, ULONG request_value, ULONG request_index)
 {
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UX_SLAVE_DEVICE         *device;
 UX_SLAVE_INTERFACE      *interface_ptr;
 UX_SLAVE_ENDPOINT       *endpoint;
@@ -92,7 +95,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_CLEAR_FEATURE, request_type, request_value, request_index, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd =  STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -150,7 +153,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
                 {
 
                     /* Reset the endpoint.  */
-                    dcd -> ux_slave_dcd_function(dcd, UX_DCD_RESET_ENDPOINT, endpoint_target);
+                    dcd->reset_endpoint(endpoint_target);
                     
                     /* Mark its state now.  */
                     endpoint_target -> ux_slave_endpoint_state = UX_ENDPOINT_RESET;
@@ -176,7 +179,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
     default:
         
         /* We stall the command.  */
-        dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+        dcd->stall(endpoint);
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
         return(UX_SUCCESS);            

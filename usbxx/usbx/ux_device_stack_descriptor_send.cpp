@@ -40,70 +40,14 @@ using namespace USBXX;
 /* Build option checked runtime by UX_ASSERT  */
 #endif
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_descriptor_send                    PORTABLE C      */
-/*                                                           6.3.0        */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function sends back the device descriptor required by the host.*/
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    descriptor_type                       Descriptor type               */
-/*    descriptor_index                      Index of descriptor           */
-/*    host_length                           Length requested by host      */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    (ux_slave_dcd_function)               DCD dispatch function         */
-/*    _ux_device_stack_transfer_request     Process transfer request      */
-/*    _ux_utility_descriptor_parse          Parse descriptor              */
-/*    _ux_utility_memory_copy               Memory copy                   */
-/*    _ux_utility_short_get                 Get short value               */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    Application                                                         */
-/*    Device Stack                                                        */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
-/*    DATE              NAME                      DESCRIPTION             */
-/*                                                                        */
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized descriptor search */
-/*                                            logic, verified memset and  */
-/*                                            memcpy cases,               */
-/*                                            resulting in version 6.1    */
-/*  12-31-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added BOS support,          */
-/*                                            resulting in version 6.1.3  */
-/*  04-25-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            internal clean up,          */
-/*                                            resulting in version 6.1.11 */
-/*  10-31-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            moved compile option check, */
-/*                                            added support for get string*/
-/*                                            requests with zero wIndex,  */
-/*                                            resulting in version 6.3.0  */
-/*                                                                        */
-/**************************************************************************/
+#include <usbxx/stm32/dcd.hpp>
+
+using namespace USBXX;
+
 UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_index, ULONG host_length)
 {
 
-UX_SLAVE_DCD                    *dcd;
+USBXX::DCD                    *dcd;
 UX_SLAVE_DEVICE                 *device;
 ULONG                           descriptor_index;
 ULONG                           parsed_descriptor_index;
@@ -135,7 +79,7 @@ ULONG                           string_length;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_DESCRIPTOR_SEND, descriptor_type, request_index, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -341,7 +285,7 @@ ULONG                           string_length;
                 UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device, 0, 0, UX_TRACE_ERRORS, 0, 0)
 
                 /* Stall the endpoint.  */
-                status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+                status =  dcd ->stall(endpoint);
                 break;
             }
 
@@ -374,7 +318,7 @@ ULONG                           string_length;
                 UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device, 0, 0, UX_TRACE_ERRORS, 0, 0)
 
                 /* Stall the endpoint.  */
-                status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+                status = dcd->stall(endpoint);
                 break;
             }
 
@@ -442,7 +386,7 @@ ULONG                           string_length;
                             UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device, 0, 0, UX_TRACE_ERRORS, 0, 0)
 
                             /* Stall the endpoint.  */
-                            status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+                            status =  dcd->stall(endpoint);
                             break;
                         }
 
@@ -493,7 +437,7 @@ ULONG                           string_length;
             {
 
                 /* Could not find the required string index. Stall the endpoint.  */
-                dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+                dcd->stall(endpoint);
                 return(UX_ERROR);
             }
         }
@@ -502,7 +446,7 @@ ULONG                           string_length;
     default:
 
         /* Stall the endpoint.  */
-        dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+        dcd->stall(endpoint);
         return(UX_ERROR);
     }
 

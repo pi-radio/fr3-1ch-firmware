@@ -21,18 +21,15 @@
 UX_SYSTEM ux_system;
 UX_SYSTEM *_ux_system = &ux_system;
 
-void USBXX::DeviceBase::thread_entry()
+using namespace USBXX;
+
+
+
+void DeviceBase::thread_entry()
 {
   dbg::dbgout << "Initializing USB Hardware" << std::endl;
 
-  MX_USB_PCD_Init();
-  HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x00 , PCD_SNG_BUF, 0x40);
-  HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x80 , PCD_SNG_BUF, 0x80);
-  HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x01, PCD_SNG_BUF, 0xC0);
-  HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x81, PCD_SNG_BUF, 0x100);
-  HAL_PCDEx_PMAConfig(&hpcd_USB_DRD_FS, 0x82, PCD_SNG_BUF, 0x140);
-  ux_dcd_stm32_initialize((ULONG)USB_DRD_FS, (ULONG)&hpcd_USB_DRD_FS);
-  HAL_PCD_Start(&hpcd_USB_DRD_FS);
+  dcd->initialize();
 
   // Call app thread, if desired
 
@@ -40,14 +37,14 @@ void USBXX::DeviceBase::thread_entry()
 }
 
 
-USBXX::DeviceBase *_devbase = NULL;
+DeviceBase *_devbase = NULL;
 
-USBXX::DeviceBase::DeviceBase() : fs_desc(USBD_FULL_SPEED), hs_desc(USBD_HIGH_SPEED)
+DeviceBase::DeviceBase() : fs_desc(USBD_FULL_SPEED), hs_desc(USBD_HIGH_SPEED)
 {
   _devbase = this;
 }
 
-UINT USBXX::_usbxx_change_notification(ULONG new_state)
+UINT DeviceBase::_usbxx_change_notification(ULONG new_state)
 {
   return _devbase->on_change(new_state);
 }
@@ -56,7 +53,7 @@ UINT USBXX::_usbxx_change_notification(ULONG new_state)
 
 TXX::ring_buffer_base<int, 32> event_ring;
 
-uint32_t USBXX::DeviceBase::on_change(uint32_t new_state)
+uint32_t DeviceBase::on_change(uint32_t new_state)
 {
   if (new_state != UX_DCD_STM32_SOF_RECEIVED)
     event_ring.push(new_state);
@@ -84,7 +81,7 @@ uint32_t USBXX::DeviceBase::on_change(uint32_t new_state)
 
 }
 
-void USBXX::DeviceBase::setup_device()
+void DeviceBase::setup_device()
 {
 #if 0
   UCHAR *device_framework_high_speed;
@@ -142,7 +139,7 @@ void USBXX::DeviceBase::setup_device()
 }
 
 
-void USBXX::DeviceBase::start()
+void DeviceBase::start()
 {
   try {
     start_system();

@@ -30,6 +30,9 @@
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/ux_device_stack.h>
 
+using namespace USBXX;
+
+#if 0
 
 #if defined(UX_DEVICE_STANDALONE)
 extern VOID     _ux_dcd_stm32_setup_isr_pending(UX_DCD_STM32 *);
@@ -88,7 +91,7 @@ extern VOID     _ux_dcd_stm32_setup_isr_pending(UX_DCD_STM32 *);
 /*                                            resulting in version 6.1.10 */
 /*                                                                        */
 /**************************************************************************/
-UINT  _ux_dcd_stm32_function(UX_SLAVE_DCD *dcd, UINT function, VOID *parameter)
+UINT  _ux_dcd_stm32_function(USBXX::DCD *dcd, UINT function, VOID *parameter)
 {
 
 UINT             status;
@@ -174,7 +177,7 @@ UX_DCD_STM32     *dcd_stm32;
 
     case UX_DCD_ENDPOINT_STATUS:
 
-        status =  _ux_dcd_stm32_endpoint_status(dcd_stm32, (ULONG) parameter);
+        status =  dcd->_ux_dcd_stm32_endpoint_status(dcd_stm32, (ULONG) parameter);
         break;
 
 #if defined(UX_DEVICE_STANDALONE)
@@ -200,4 +203,4 @@ UX_DCD_STM32     *dcd_stm32;
     /* Return completion status.  */
     return(status);
 }
-
+#endif

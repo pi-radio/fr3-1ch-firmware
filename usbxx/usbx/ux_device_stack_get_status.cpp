@@ -28,57 +28,14 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/stm32/dcd.hpp>
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_get_status                         PORTABLE C      */
-/*                                                           6.1.6        */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function obtains the status of a USB component of the device   */
-/*    such as device or endpoint.                                         */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    request_type                          Request type                  */
-/*    request_index                         Request index                 */
-/*    request_length                        Request length                */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    _ux_device_stack_transfer_request     Transfer request              */
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Device Stack                                                        */
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1    */
-/*  04-02-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            supported bi-dir-endpoints, */
-/*                                            resulting in version 6.1.6  */
-/*                                                                        */
-/**************************************************************************/
+using namespace USBXX;
+
 UINT  _ux_device_stack_get_status(ULONG request_type, ULONG request_index, ULONG request_length)
 {
 
-UX_SLAVE_DCD            *dcd;
+USBXX::DCD            *dcd;
 UX_SLAVE_TRANSFER       *transfer_request;
 UX_SLAVE_DEVICE         *device;
 UX_SLAVE_ENDPOINT       *endpoint;
@@ -91,7 +48,7 @@ ULONG                   data_length;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_GET_STATUS, request_type, request_index, request_length, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the DCD.  */
-    dcd =  &_ux_system_slave -> ux_system_slave_dcd;
+    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     device =  &_ux_system_slave -> ux_system_slave_device;
@@ -155,7 +112,7 @@ ULONG                   data_length;
 
         /* This feature returns the halt state of a specific endpoint.  The endpoint address
            is used to retrieve the endpoint container.  */
-        status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_ENDPOINT_STATUS, (VOID *)(ALIGN_TYPE)(request_index));
+        status =  dcd->get_endpoint_status(request_index);
 #endif
 
         /* Check the status. We may have a unknown endpoint.  */
@@ -169,7 +126,7 @@ ULONG                   data_length;
         {
     
             /* We stall the command. Endpoint is wrong.  */
-            dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+            dcd->stall(endpoint);
     
             /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
             return(UX_SUCCESS);            
@@ -179,7 +136,7 @@ ULONG                   data_length;
     default:
         
         /* We stall the command.  */
-        dcd -> ux_slave_dcd_function(dcd, UX_DCD_STALL_ENDPOINT, endpoint);
+        dcd->stall(endpoint);
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
         return(UX_SUCCESS);            
