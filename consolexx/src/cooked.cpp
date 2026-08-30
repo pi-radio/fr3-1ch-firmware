@@ -129,17 +129,17 @@ TXX::ring_buffer_base<int, 32> rx_char_ring;
 void cooked_terminal::txchar(uint32_t c)
 {
   if(onlcr && c == 0x0A) {
-    tx_char_ring.pushc(0x0D);
+    tx_char_ring.push(0x0D);
     io->putc(0x0D);
   }
   
-  tx_char_ring.pushc(c);
+  tx_char_ring.push(c);
   io->putc(c);
 }
 
 void cooked_terminal::on_char(int c)
 {
-  rx_char_ring.pushc(c);
+  rx_char_ring.push(c);
 
   vtp.process(c);
 }

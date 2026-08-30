@@ -25,6 +25,10 @@ namespace TXX
       return rbptr { (p + i) % n };
     }
     
+    rbptr next() const {
+      return rbptr { (p + 1) % n };
+    }
+
     size_t operator-(const rbptr &o) const {
       if (o.p > p) {
 	return n + p - o.p;
@@ -66,8 +70,8 @@ namespace TXX
     }
 
   public:
-    int pushc(T c) {
-      if ((end + 1) == start) {
+    int push(T c) {
+      if (full()) {
         ++start;
       }
 
@@ -81,7 +85,7 @@ namespace TXX
     }
 
     bool full() {
-      return end + 1 == start;
+      return end.next() == start;
     }
 
     std::pair<const T *, size_t> get_seg() {

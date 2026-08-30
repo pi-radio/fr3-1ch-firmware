@@ -48,7 +48,7 @@ namespace dbg
         sync();
       }
 
-      dbgbuf.pushc(c);
+      dbgbuf.push(c);
     }
 
     virtual int_type overflow(int_type c) override

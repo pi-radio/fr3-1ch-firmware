@@ -175,7 +175,7 @@ void CDCACM::_tx_thread()
       flush_buffer();
     }
 
-    tx_buf.pushc(c);
+    tx_buf.push(c);
 
     tx_count++;
   }

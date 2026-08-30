@@ -58,7 +58,7 @@ TXX::ring_buffer_base<int, 32> event_ring;
 uint32_t USBXX::DeviceBase::on_change(uint32_t new_state)
 {
   if (new_state != UX_DCD_STM32_SOF_RECEIVED)
-    event_ring.pushc(new_state);
+    event_ring.push(new_state);
 
   switch (new_state)
   {
