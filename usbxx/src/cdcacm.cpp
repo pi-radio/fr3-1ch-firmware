@@ -7,7 +7,7 @@
 
 #include <threadxx/dbgstream.hpp>
 
-#include <ux_api.h>
+#include <usbxx/ux_api.h>
 
 #include <usbxx/cdcacm.hpp>
 

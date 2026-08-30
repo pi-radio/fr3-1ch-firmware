@@ -10,7 +10,7 @@
 
 #include <usbxx/usbxx.hpp>
 
-#include <ux_api.h>
+#include <usbxx/ux_api.h>
 
 #include <usb.h>
 
