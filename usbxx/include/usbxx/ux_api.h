@@ -1,150 +1,3 @@
-/**************************************************************************/
-/*                                                                        */
-/*       Copyright (c) Microsoft Corporation. All rights reserved.        */
-/*                                                                        */
-/*       This software is licensed under the Microsoft Software License   */
-/*       Terms for Microsoft Azure RTOS. Full text of the license can be  */
-/*       found in the LICENSE file at https://aka.ms/AzureRTOS_EULA       */
-/*       and in the root directory of this software.                      */
-/*                                                                        */
-/**************************************************************************/
-
-
-/**************************************************************************/
-/**************************************************************************/
-/**                                                                       */
-/** USBX Component                                                        */
-/**                                                                       */
-/**   Application Interface (API)                                         */
-/**                                                                       */
-/**************************************************************************/
-/**************************************************************************/
-
-
-/**************************************************************************/
-/*                                                                        */
-/*  APPLICATION INTERFACE DEFINITION                       RELEASE        */
-/*                                                                        */
-/*    ux_api.h                                            PORTABLE C      */
-/*                                                           6.4.0        */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This file defines the basic Application Interface (API) to the      */
-/*    high-performance USBX real-time USB stack.  All service prototypes  */
-/*    and data structure definitions are defined in this file.            */
-/*    Please note that basic data type definitions and other architecture-*/
-/*    specific information is contained in the file ux_port.h.            */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
-/*    DATE              NAME                      DESCRIPTION             */
-/*                                                                        */
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added query usage of device */
-/*                                            ClassSubclassProtocol,      */
-/*                                            added option to disable FX  */
-/*                                            media integration, prefixed */
-/*                                            UX to MS_TO_TICK, added     */
-/*                                            APIs and macros related to  */
-/*                                            uninitialize, optimized     */
-/*                                            based on compile            */
-/*                                            definitions, updated        */
-/*                                            product constants, used     */
-/*                                            host class extension        */
-/*                                            pointer for class specific  */
-/*                                            structured data, used UX    */
-/*                                            prefix to refer to TX       */
-/*                                            symbols instead of using    */
-/*                                            them directly,              */
-/*                                            resulting in version 6.1    */
-/*  11-09-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            used unsigned defines,      */
-/*                                            added HCD uninit command,   */
-/*                                            modified HCD status code,   */
-/*                                            fixed compile warnings,     */
-/*                                            resulting in version 6.1.2  */
-/*  12-31-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added BOS support,          */
-/*                                            resulting in version 6.1.3  */
-/*  02-02-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added configuration activate*/
-/*                                            and deactivate support,     */
-/*                                            added host printer get      */
-/*                                            device ID support,          */
-/*                                            added host device string    */
-/*                                            descriptor get support,     */
-/*                                            added events for device     */
-/*                                            connection/disconnection,   */
-/*                                            resulting in version 6.1.4  */
-/*  03-02-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.1.5  */
-/*  04-02-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added macros for Word/DWord */
-/*                                            to bytes extraction,        */
-/*                                            resulting in version 6.1.6  */
-/*  06-02-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added trace dependency test,*/
-/*                                            changed transfer timeout    */
-/*                                            value,                      */
-/*                                            resulting in version 6.1.7  */
-/*  08-02-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed spelling error,       */
-/*                                            fixed trace ID order error, */
-/*                                            resulting in version 6.1.8  */
-/*  10-15-2021     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            improved assert macros,     */
-/*                                            added transfer size field,  */
-/*                                            improved traceX support,    */
-/*                                            resulting in version 6.1.9  */
-/*  01-31-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added too many ports error, */
-/*                                            moved tx_api.h include and  */
-/*                                            typedefs to ux_port.h,      */
-/*                                            added standalone support,   */
-/*                                            added device HID trace IDs, */
-/*                                            added some general errors,  */
-/*                                            added printer trace IDs,    */
-/*                                            resulting in version 6.1.10 */
-/*  04-25-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            assumed OS types to avoid   */
-/*                                            standalone compiling error, */
-/*                                            added CCID trace IDs,       */
-/*                                            resulting in version 6.1.11 */
-/*  07-29-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            fixed parameter/variable    */
-/*                                            names conflict C++ keyword, */
-/*                                            added feedback size defs,   */
-/*                                            added shared device config  */
-/*                                            descriptor for enum scan,   */
-/*                                            resulting in version 6.1.12 */
-/*  10-31-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added some ETH error codes, */
-/*                                            allowed align minimal def,  */
-/*                                            added interface instance    */
-/*                                            creation strategy control,  */
-/*                                            resulting in version 6.2.0  */
-/*  03-08-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            accepted UX_MAX_CLASSES as  */
-/*                                            max class driver configure, */
-/*                                            added a new error code,     */
-/*                                            resulting in version 6.2.1  */
-/*  10-31-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            refined memory management,  */
-/*                                            added a new mode to manage  */
-/*                                            endpoint buffer in classes, */
-/*                                            optimized USB descriptors,  */
-/*                                            added error checks support, */
-/*                                            resulting in version 6.3.0  */
-/*  12-31-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            resulting in version 6.4.0  */
-/*                                                                        */
-/**************************************************************************/
-
 #ifndef UX_API_H
 #define UX_API_H
 
@@ -158,60 +11,26 @@ extern   "C" {
 
 #endif
 
+
+
 /* Include USBX port specific file.  */
 
 #include "ux_port.h"
 
-/* Process compile options:
- *
- * - UX_HOST_SIDE_ONLY/UX_HOST_STANDALONE:
- *   Must not be defined at the same time,
- *   When defined, only host/device side APIs are available.
- *
- * - UX_STANDALONE:
- *   Defined, whole RTOS dependencies are removed from USBX.
- *
- * - UX_DEVICE_STANDALONE/UX_HOST_STANDALONE
- *   Internal definitions for different parts,
- *   _DEVICE_STANDALONE removes RTOS dependencies of DCD, device stack and classes,
- *   _HOST_STANDALONE removes RTOS dependencies of HCD, host stack and classes,
- *   if UX_STANDALONE is not defined, RTOS is always enabled in system and utilities.
- */
-#if defined(UX_STANDALONE)
-#if !defined(UX_DEVICE_STANDALONE)
-#define UX_DEVICE_STANDALONE
-#endif
-#if !defined(UX_HOST_STANDALONE)
-#define UX_HOST_STANDALONE
-#endif
-#if !defined(UX_OTG_STANDALONE)
-#define UX_OTG_STANDALONE
-#endif
-#else
-#if defined(UX_DEVICE_STANDALONE) && defined(UX_HOST_STANDALONE) && defined(UX_OTG_STANDALONE) ||\
-    defined(UX_DEVICE_STANDALONE) && defined(UX_DEVICE_SIDE_ONLY) ||\
-    defined(UX_HOST_STANDALONE) && defined(UX_HOST_SIDE_ONLY)
-#define UX_STANDALONE
-#endif
-#endif
+struct UX_DEVICE;
+struct UX_INTERFACE;
+struct UX_TRANSFER;
+struct UX_CONFIGURATION;
+struct UX_HOST_CLASS;
 
-/* Internal option: enable the basic USBX error checking. This define is typically used
-   while debugging application.  */
-#if defined(UX_ENABLE_ERROR_CHECKING) && !defined(UX_SYSTEM_ENABLE_ERROR_CHECKING)
-#define UX_SYSTEM_ENABLE_ERROR_CHECKING
-#endif
 
-/* Internal option: enable the basic USBX error checking. This define is typically used
-   while debugging application.  */
-#if defined(UX_ENABLE_ERROR_CHECKING) && !defined(UX_DEVICE_STACK_ENABLE_ERROR_CHECKING)
-#define UX_DEVICE_STACK_ENABLE_ERROR_CHECKING
-#endif
+struct UX_SLAVE_DEVICE;
+struct UX_SLAVE_TRANSFER;
+struct UX_SLAVE_INTERFACE;
+struct UX_SLAVE_ENDPOINT;
+struct UX_SLAVE_CLASS;
+struct UX_SLAVE_CLASS_COMMAND;
 
-/* Internal option: enable the basic USBX error checking. This define is typically used
-   while debugging application.  */
-#if defined(UX_ENABLE_ERROR_CHECKING) && !defined(UX_HOST_STACK_ENABLE_ERROR_CHECKING)
-#define UX_HOST_STACK_ENABLE_ERROR_CHECKING
-#endif
 
 /* Defined, this value represents the endpoint buffer owner.
    0 - The default, endpoint buffer is managed by core stack. Each endpoint takes UX_SLAVE_REQUEST_DATA_MAX_LENGTH bytes.
@@ -1719,6 +1538,9 @@ VOID    _ux_trace_event_update(TX_TRACE_BUFFER_ENTRY *event, ULONG timestamp, UL
 #define UX_HOST_CLASS_PRINTER_NAME_LENGTH                               64
 
 
+struct UX_ENDPOINT;
+
+
 /* Define USBX 2.0 TT Instance structure.  */
 
 typedef struct UX_HUB_TT_STRUCT
@@ -1731,7 +1553,7 @@ typedef struct UX_HUB_TT_STRUCT
 
 /* Define USBX Class calling command structure.  */
 
-typedef struct UX_HOST_CLASS_COMMAND_STRUCT
+struct UX_HOST_CLASS_COMMAND
 {
 
     UINT            ux_host_class_command_request;
@@ -1747,14 +1569,14 @@ typedef struct UX_HOST_CLASS_COMMAND_STRUCT
     UINT            ux_host_class_command_iad_subclass;
     UINT            ux_host_class_command_iad_protocol;
 
-    struct UX_HOST_CLASS_STRUCT
+    UX_HOST_CLASS
                     *ux_host_class_command_class_ptr;
-} UX_HOST_CLASS_COMMAND;
+};
 
 
 /* Define USBX Class container structure.  */
 
-typedef struct UX_HOST_CLASS_STRUCT
+struct UX_HOST_CLASS
 {
 
 #if defined(UX_NAME_REFERENCED_BY_POINTER)
@@ -1764,27 +1586,26 @@ typedef struct UX_HOST_CLASS_STRUCT
 #endif
 
 #if defined(UX_HOST_STANDALONE)
-    UINT            (*ux_host_class_task_function)(struct UX_HOST_CLASS_STRUCT *);
+    UINT            (*ux_host_class_task_function)(UX_HOST_CLASS *);
 #endif
 
     UINT            ux_host_class_status;
-    UINT            (*ux_host_class_entry_function) (struct UX_HOST_CLASS_COMMAND_STRUCT *);
+    UINT            (*ux_host_class_entry_function) (UX_HOST_CLASS_COMMAND *);
     VOID            *ux_host_class_first_instance;
     VOID            *ux_host_class_client;
     VOID            *ux_host_class_media;
     VOID            *ux_host_class_ext;
 
-} UX_HOST_CLASS;
+};
 
 
 /* Define USBX transfer request structure.  */
 
-typedef struct UX_TRANSFER_STRUCT
+struct UX_TRANSFER
 {
 
     ULONG           ux_transfer_request_status;
-    struct UX_ENDPOINT_STRUCT
-                    *ux_transfer_request_endpoint;
+    UX_ENDPOINT     *ux_transfer_request_endpoint;
     UCHAR *         ux_transfer_request_data_pointer;
     ULONG           ux_transfer_request_requested_length;
     ULONG           ux_transfer_request_actual_length;
@@ -1792,7 +1613,7 @@ typedef struct UX_TRANSFER_STRUCT
     UINT            ux_transfer_request_function;
     UINT            ux_transfer_request_value;
     UINT            ux_transfer_request_index;
-    VOID            (*ux_transfer_request_completion_function) (struct UX_TRANSFER_STRUCT *);
+    VOID            (*ux_transfer_request_completion_function) (UX_TRANSFER *);
     VOID            *ux_transfer_request_class_instance;
     ULONG           ux_transfer_request_maximum_length;
     ULONG           ux_transfer_request_timeout_value;
@@ -1801,34 +1622,14 @@ typedef struct UX_TRANSFER_STRUCT
     struct UX_TRANSFER_STRUCT
                     *ux_transfer_request_next_transfer_request;
     VOID            *ux_transfer_request_user_specific;
-#if !defined(UX_HOST_STANDALONE)
     UX_SEMAPHORE    ux_transfer_request_semaphore;
     UX_THREAD       *ux_transfer_request_thread_pending;
-#else
-    UINT            ux_transfer_request_state;
-    ULONG           ux_transfer_request_time_start;
-    ULONG           ux_transfer_request_flags;
-    struct UX_TRANSFER_STRUCT
-                    *ux_transfer_request_next_pending;
-#endif
-} UX_TRANSFER;
-
-#if defined(UX_HOST_STANDALONE)
-#define UX_TRANSFER_STATE_RESET(tr)             ((tr)->ux_transfer_request_state = UX_STATE_RESET)
-#define UX_TRANSFER_STATE_IDLE(tr)              ((tr)->ux_transfer_request_state = UX_STATE_IDLE)
-#define UX_TRANSFER_STATE_IS_BUSY(tr)           UX_STATE_IS_BUSY((tr)->ux_transfer_request_state)
-#define UX_TRANSFER_STATE_IS_IDLE(tr)           ((tr)->ux_transfer_request_state == UX_STATE_IDLE)
-
-#define UX_TRANSFER_FLAGS_RESET(tr)             ((tr)->ux_transfer_request_flags = 0)
-#define UX_TRANSFER_FLAG_LOCK                   (0x1u << 0)
-#define UX_TRANSFER_FLAG_AUTO_WAIT              (0x1u << 1) /* Wait until transfer done.  */
-#define UX_TRANSFER_FLAG_AUTO_DEVICE_UNLOCK     (0x1u << 2) /* In wait case, unlock device after transfer done.  */
-#endif
+};
 
 
 /* Define USBX Endpoint Descriptor structure.  */
 
-typedef struct UX_ENDPOINT_DESCRIPTOR_STRUCT
+struct UX_ENDPOINT_DESCRIPTOR
 {
 
     UCHAR           bLength;
@@ -1838,7 +1639,7 @@ typedef struct UX_ENDPOINT_DESCRIPTOR_STRUCT
     USHORT          wMaxPacketSize;
     UCHAR           bInterval;
     UCHAR           _align_size[1];
-} UX_ENDPOINT_DESCRIPTOR;
+} ;
 
 #define UX_ENDPOINT_DESCRIPTOR_ENTRIES                                  6
 #define UX_ENDPOINT_DESCRIPTOR_LENGTH                                   7
@@ -1846,23 +1647,23 @@ typedef struct UX_ENDPOINT_DESCRIPTOR_STRUCT
 
 /* Define USBX Endpoint Container structure.  */
 
-typedef struct UX_ENDPOINT_STRUCT
+struct UX_ENDPOINT
 {
 
     ULONG           ux_endpoint;
     ULONG           ux_endpoint_state;
     void            *ux_endpoint_ed;
-    struct UX_ENDPOINT_DESCRIPTOR_STRUCT
+    UX_ENDPOINT_DESCRIPTOR
                     ux_endpoint_descriptor;
-    struct UX_ENDPOINT_STRUCT
+    UX_ENDPOINT
                     *ux_endpoint_next_endpoint;
-    struct UX_INTERFACE_STRUCT
+    UX_INTERFACE
                     *ux_endpoint_interface;
-    struct UX_DEVICE_STRUCT
+    UX_DEVICE
                     *ux_endpoint_device;
-    struct UX_TRANSFER_STRUCT
+    UX_TRANSFER
                     ux_endpoint_transfer_request;
-} UX_ENDPOINT;
+};
 
 
 /* Define USBX Device Descriptor structure.  */
@@ -1969,7 +1770,7 @@ typedef struct UX_INTERFACE_ASSOCIATION_DESCRIPTOR_STRUCT
 
 /* Define USBX Device Container structure.  */
 
-typedef struct UX_DEVICE_STRUCT
+struct UX_DEVICE
 {
 
     ULONG           ux_device_handle;
@@ -1978,25 +1779,25 @@ typedef struct UX_DEVICE_STRUCT
     ULONG           ux_device_address;
     ULONG           ux_device_speed;
     ULONG           ux_device_power_source;
-    struct UX_CONFIGURATION_STRUCT
+    UX_CONFIGURATION
                     *ux_device_current_configuration;
     UCHAR           *ux_device_packed_configuration;
     ULONG           ux_device_packed_configuration_keep_count;
 #if !defined(UX_HOST_STANDALONE)
     UX_SEMAPHORE    ux_device_protection_semaphore;
 #endif
-    struct UX_HOST_CLASS_STRUCT
+    UX_HOST_CLASS
                     *ux_device_class;
     VOID            *ux_device_class_instance;
-    struct UX_CONFIGURATION_STRUCT
+    UX_CONFIGURATION
                     *ux_device_first_configuration;
     struct UX_DEVICE_DESCRIPTOR_STRUCT
                     ux_device_descriptor;
-    struct UX_ENDPOINT_STRUCT
+    UX_ENDPOINT
                     ux_device_control_endpoint;
     ULONG           ux_device_port_location;
 #if UX_MAX_HCD > 1
-    struct UX_HCD_STRUCT
+    UX_HCD
                     *ux_device_hcd;
 #endif
 #if UX_MAX_DEVICES > 1
@@ -2017,9 +1818,9 @@ typedef struct UX_DEVICE_STRUCT
     union {
         struct UX_DEVICE_STRUCT
                     *device;
-        struct UX_CONFIGURATION_STRUCT
+        UX_CONFIGURATION
                     *configuration;
-        struct UX_INTERFACE_STRUCT
+        UX_INTERFACE
                     *interface;
         VOID        *ptr;
     }               ux_device_enum_inst;
@@ -2037,7 +1838,7 @@ typedef struct UX_DEVICE_STRUCT
     ULONG           ux_device_dbg_state_count;
 #endif
 
-} UX_DEVICE;
+};
 
 #if defined(UX_HOST_STANDALONE)
 #define UX_DEVICE_FLAG_LOCK                     0x01u
@@ -2101,7 +1902,7 @@ typedef struct UX_CONFIGURATION_DESCRIPTOR_STRUCT
 
 /* Define USBX Configuration Container structure.  */
 
-typedef struct UX_CONFIGURATION_STRUCT
+struct UX_CONFIGURATION
 {
 
     ULONG           ux_configuration_handle;
@@ -2109,16 +1910,16 @@ typedef struct UX_CONFIGURATION_STRUCT
     ULONG           ux_configuration_otg_capabilities;
     struct UX_CONFIGURATION_DESCRIPTOR_STRUCT
                     ux_configuration_descriptor;
-    struct UX_INTERFACE_STRUCT
+    UX_INTERFACE
                     *ux_configuration_first_interface;
-    struct UX_CONFIGURATION_STRUCT
+    UX_CONFIGURATION
                     *ux_configuration_next_configuration;
     struct UX_DEVICE_STRUCT
                     *ux_configuration_device;
     ULONG           ux_configuration_iad_class;
     ULONG           ux_configuration_iad_subclass;
     ULONG           ux_configuration_iad_protocol;
-} UX_CONFIGURATION;
+};
 
 #define UX_HOST_STACK_CONFIGURATION_INSTANCE_CREATE_ALL     0 /* Default: all things created.  */
 #define UX_HOST_STACK_CONFIGURATION_INSTANCE_CREATE_OWNED   1 /* Owned: class owned things created.  */
@@ -2129,7 +1930,7 @@ typedef struct UX_CONFIGURATION_STRUCT
 
 /* Define USBX Interface Descriptor structure.  */
 
-typedef struct UX_INTERFACE_DESCRIPTOR_STRUCT
+struct UX_INTERFACE_DESCRIPTOR
 {
 
     UCHAR           bLength;
@@ -2142,7 +1943,7 @@ typedef struct UX_INTERFACE_DESCRIPTOR_STRUCT
     UCHAR           bInterfaceProtocol;
     UCHAR           iInterface;
     UCHAR           _align_size[3];
-} UX_INTERFACE_DESCRIPTOR;
+};
 
 #define UX_INTERFACE_DESCRIPTOR_ENTRIES                                 9
 #define UX_INTERFACE_DESCRIPTOR_LENGTH                                  9
@@ -2150,28 +1951,28 @@ typedef struct UX_INTERFACE_DESCRIPTOR_STRUCT
 
 /* Define USBX Interface Container structure.  */
 
-typedef struct UX_INTERFACE_STRUCT
+struct UX_INTERFACE
 {
 
     ULONG           ux_interface_handle;
     ULONG           ux_interface_state;
     UINT            ux_interface_current_alternate_setting;
-    struct UX_INTERFACE_DESCRIPTOR_STRUCT
+    UX_INTERFACE_DESCRIPTOR
                     ux_interface_descriptor;
-    struct UX_HOST_CLASS_STRUCT
+    UX_HOST_CLASS
                     *ux_interface_class;
     VOID            *ux_interface_class_instance;
-    struct UX_ENDPOINT_STRUCT
+    UX_ENDPOINT
                     *ux_interface_first_endpoint;
-    struct UX_INTERFACE_STRUCT
+    UX_INTERFACE
                     *ux_interface_next_interface;
-    struct UX_CONFIGURATION_STRUCT
+    UX_CONFIGURATION
                     *ux_interface_configuration;
     ULONG           ux_interface_iad_class;
     ULONG           ux_interface_iad_subclass;
     ULONG           ux_interface_iad_protocol;
 
-} UX_INTERFACE;
+};
 
 
 /* Define USBX String Descriptor structure.  */
@@ -2253,8 +2054,7 @@ typedef struct UX_DFU_FUNCTIONAL_DESCRIPTOR_STRUCT
 
 
 /* Define USBX Host Controller structure.  */
-
-typedef struct UX_HCD_STRUCT
+struct UX_HCD
 {
 
 #if defined(UX_NAME_REFERENCED_BY_POINTER)
@@ -2272,7 +2072,7 @@ typedef struct UX_HCD_STRUCT
     UINT            ux_hcd_thread_signal;
     ULONG           ux_hcd_rh_device_connection;
     ULONG           ux_hcd_io;
-    UINT            (*ux_hcd_entry_function) (struct UX_HCD_STRUCT *, UINT, VOID *);
+    UINT            (*ux_hcd_entry_function) (UX_HCD *, UINT, VOID *);
     void            *ux_hcd_controller_hardware;
 
 #if defined(UX_OTG_SUPPORT)
@@ -2289,17 +2089,17 @@ typedef struct UX_HCD_STRUCT
 #if defined(UX_HOST_STANDALONE)
     ULONG           ux_hcd_flags;
 #endif
-} UX_HCD;
+};
 
 
 /* Define USBX Device Transfer Request structure.  */
 
-typedef struct UX_SLAVE_TRANSFER_STRUCT
+struct UX_SLAVE_TRANSFER
 {
 
     ULONG           ux_slave_transfer_request_status;
     ULONG           ux_slave_transfer_request_type;
-    struct UX_SLAVE_ENDPOINT_STRUCT
+    UX_SLAVE_ENDPOINT
                     *ux_slave_transfer_request_endpoint;
     UCHAR           *ux_slave_transfer_request_data_pointer;
     UCHAR           *ux_slave_transfer_request_current_data_pointer;
@@ -2309,7 +2109,7 @@ typedef struct UX_SLAVE_TRANSFER_STRUCT
     ULONG           ux_slave_transfer_request_transfer_length;
     ULONG           ux_slave_transfer_request_completion_code;
     ULONG           ux_slave_transfer_request_phase;
-    VOID            (*ux_slave_transfer_request_completion_function) (struct UX_SLAVE_TRANSFER_STRUCT *);
+    VOID            (*ux_slave_transfer_request_completion_function) (UX_SLAVE_TRANSFER *);
 #if defined(UX_DEVICE_STANDALONE)
     ULONG           ux_slave_transfer_request_state;
 #else
@@ -2319,94 +2119,76 @@ typedef struct UX_SLAVE_TRANSFER_STRUCT
     ULONG           ux_slave_transfer_request_force_zlp;
     UCHAR           ux_slave_transfer_request_setup[UX_SETUP_SIZE];
     ULONG           ux_slave_transfer_request_status_phase_ignore;
-} UX_SLAVE_TRANSFER;
-
-#if defined(UX_DEVICE_STANDALONE)
-#define UX_SLAVE_TRANSFER_STATE_RESET(tr) ((tr)->ux_slave_transfer_request_state = UX_STATE_RESET)
-#endif
+};
 
 
 /* Define USBX Device Controller Endpoint structure.  */
 
-typedef struct UX_SLAVE_ENDPOINT_STRUCT
+struct UX_SLAVE_ENDPOINT
 {
 
     ULONG           ux_slave_endpoint_status;
     ULONG           ux_slave_endpoint_state;
     void            *ux_slave_endpoint_ed;
-    struct UX_ENDPOINT_DESCRIPTOR_STRUCT
+    UX_ENDPOINT_DESCRIPTOR
                     ux_slave_endpoint_descriptor;
-    struct UX_SLAVE_ENDPOINT_STRUCT
+    UX_SLAVE_ENDPOINT
                     *ux_slave_endpoint_next_endpoint;
-    struct UX_SLAVE_INTERFACE_STRUCT
+    UX_SLAVE_INTERFACE
                     *ux_slave_endpoint_interface;
-    struct UX_SLAVE_DEVICE_STRUCT
+    UX_SLAVE_DEVICE
                     *ux_slave_endpoint_device;
-    struct UX_SLAVE_TRANSFER_STRUCT
+    UX_SLAVE_TRANSFER
                     ux_slave_endpoint_transfer_request;
-} UX_SLAVE_ENDPOINT;
+};
 
 
 /* Define USBX Device Controller Interface structure.  */
 
-typedef struct UX_SLAVE_INTERFACE_STRUCT
+struct UX_SLAVE_INTERFACE
 {
     ULONG           ux_slave_interface_status;
-    struct UX_SLAVE_CLASS_STRUCT
+    UX_SLAVE_CLASS
                     *ux_slave_interface_class;
     VOID            *ux_slave_interface_class_instance;
 
-    struct UX_INTERFACE_DESCRIPTOR_STRUCT
+    UX_INTERFACE_DESCRIPTOR
                     ux_slave_interface_descriptor;
-    struct UX_SLAVE_INTERFACE_STRUCT
+    UX_SLAVE_INTERFACE
                     *ux_slave_interface_next_interface;
-    struct UX_SLAVE_ENDPOINT_STRUCT
+    UX_SLAVE_ENDPOINT
                     *ux_slave_interface_first_endpoint;
-} UX_SLAVE_INTERFACE;
+};
 
 
 /* Define USBX Device Controller structure.  */
 
-typedef struct UX_SLAVE_DEVICE_STRUCT
+struct UX_SLAVE_DEVICE
 {
 
     ULONG           ux_slave_device_state;
     struct UX_DEVICE_DESCRIPTOR_STRUCT
                     ux_slave_device_descriptor;
-    struct UX_SLAVE_ENDPOINT_STRUCT
+    UX_SLAVE_ENDPOINT
                     ux_slave_device_control_endpoint;
     ULONG           ux_slave_device_configuration_selected;
     struct UX_CONFIGURATION_DESCRIPTOR_STRUCT
                     ux_slave_device_configuration_descriptor;
-    struct UX_SLAVE_INTERFACE_STRUCT
+    UX_SLAVE_INTERFACE
                     *ux_slave_device_first_interface;
-    struct UX_SLAVE_INTERFACE_STRUCT
+    UX_SLAVE_INTERFACE
                     *ux_slave_device_interfaces_pool;
     ULONG           ux_slave_device_interfaces_pool_number;
-    struct UX_SLAVE_ENDPOINT_STRUCT
+    UX_SLAVE_ENDPOINT
                     *ux_slave_device_endpoints_pool;
     ULONG           ux_slave_device_endpoints_pool_number;
     ULONG           ux_slave_device_power_state;
 
-} UX_SLAVE_DEVICE;
-
-
-/* Define USBX Device Controller structure.  */
-
-typedef struct UX_SLAVE_DCD_STRUCT
-{
-
-
-
-#if defined(UX_DEVICE_STANDALONE)
-    UINT            (*ux_device_dcd_task_function)(struct UX_SLAVE_DCD_STRUCT *);
-#endif
-
-} UX_SLAVE_DCD;
+};
 
 /* Define USBX Device Class Command container structure.  */
 
-typedef struct UX_SLAVE_CLASS_COMMAND_STRUCT
+struct UX_SLAVE_CLASS_COMMAND
 {
 
     UINT            ux_slave_class_command_request;
@@ -2417,42 +2199,33 @@ typedef struct UX_SLAVE_CLASS_COMMAND_STRUCT
     UINT            ux_slave_class_command_class;
     UINT            ux_slave_class_command_subclass;
     UINT            ux_slave_class_command_protocol;
-    struct UX_SLAVE_CLASS_STRUCT
+    UX_SLAVE_CLASS
                     *ux_slave_class_command_class_ptr;
     VOID            *ux_slave_class_command_parameter;
     VOID            *ux_slave_class_command_interface_number;
 
-} UX_SLAVE_CLASS_COMMAND;
+};
 
 
 /* Define USBX Device Class container structure.  */
 
-typedef struct UX_SLAVE_CLASS_STRUCT
+struct UX_SLAVE_CLASS
 {
-
-#if defined(UX_NAME_REFERENCED_BY_POINTER)
-    const UCHAR     *ux_slave_class_name;
-#else
     UCHAR           ux_slave_class_name[UX_MAX_CLASS_NAME_LENGTH + 1]; /* "+1" for string null-terminator */
-#endif
 
     UINT            ux_slave_class_status;
-    UINT            (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND_STRUCT *);
+    UINT            (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND *);
     VOID            *ux_slave_class_instance;
     VOID            *ux_slave_class_client;
-#if !defined(UX_DEVICE_STANDALONE)
     UX_THREAD       ux_slave_class_thread;
     VOID            *ux_slave_class_thread_stack;
-#else
-    UINT            (*ux_slave_class_task_function)(VOID *class_instance);
-#endif
     VOID            *ux_slave_class_interface_parameter;
     ULONG           ux_slave_class_interface_number;
     ULONG           ux_slave_class_configuration_number;
-    struct UX_SLAVE_INTERFACE_STRUCT
+    UX_SLAVE_INTERFACE
                     *ux_slave_class_interface;
 
-} UX_SLAVE_CLASS;
+};
 
 #define UX_UCHAR_POINTER_ADD(a,b)                       (((UCHAR *) (a)) + ((UINT) (b)))
 #define UX_UCHAR_POINTER_SUB(a,b)                       (((UCHAR *) (a)) - ((UINT) (b)))
@@ -2861,8 +2634,8 @@ UINT    ux_host_stack_class_get(UCHAR *class_name, UX_HOST_CLASS **host_class);
 UINT    ux_host_stack_class_instance_create(UX_HOST_CLASS *host_class, VOID *class_instance);
 UINT    ux_host_stack_class_instance_destroy(UX_HOST_CLASS *host_class, VOID *class_instance);
 UINT    ux_host_stack_class_instance_get(UX_HOST_CLASS *host_class, UINT class_index, VOID **class_instance);
-UINT    ux_host_stack_class_register(UCHAR *class_name, UINT (*class_entry_function)(struct UX_HOST_CLASS_COMMAND_STRUCT *));
-UINT    ux_host_stack_class_unregister(UINT (*class_entry_function)(struct UX_HOST_CLASS_COMMAND_STRUCT *));
+UINT    ux_host_stack_class_register(UCHAR *class_name, UINT (*class_entry_function)(UX_HOST_CLASS_COMMAND *));
+UINT    ux_host_stack_class_unregister(UINT (*class_entry_function)(UX_HOST_CLASS_COMMAND *));
 UINT    ux_host_stack_configuration_interface_get(UX_CONFIGURATION *configuration, UINT interface_index,
                                     UINT alternate_setting_index, UX_INTERFACE **ux_interface);
 UINT    ux_host_stack_device_configuration_activate(UX_CONFIGURATION *configuration);
@@ -2872,7 +2645,7 @@ UINT    ux_host_stack_device_configuration_select(UX_CONFIGURATION *configuratio
 UINT    ux_host_stack_device_get(ULONG device_index, UX_DEVICE **device);
 UINT    ux_host_stack_device_string_get(UX_DEVICE *device, UCHAR *descriptor_buffer, ULONG length, ULONG language_id, ULONG string_index);
 UINT    ux_host_stack_endpoint_transfer_abort(UX_ENDPOINT *endpoint);
-UINT    ux_host_stack_hcd_register(UCHAR *hcd_name, UINT (*hcd_initialize_function)(struct UX_HCD_STRUCT *), ULONG hcd_param1, ULONG hcd_param2);
+UINT    ux_host_stack_hcd_register(UCHAR *hcd_name, UINT (*hcd_initialize_function)(UX_HCD *), ULONG hcd_param1, ULONG hcd_param2);
 UINT    ux_host_stack_hcd_unregister(UCHAR *hcd_name, ULONG hcd_param1, ULONG hcd_param2);
 UINT    ux_host_stack_initialize(UINT (*ux_system_host_change_function)(ULONG, UX_HOST_CLASS *, VOID *));
 UINT    ux_host_stack_uninitialize(VOID);
@@ -2899,12 +2672,12 @@ VOID    ux_device_class_storage_thread(ULONG);
 UINT    ux_device_stack_alternate_setting_get(ULONG interface_value);
 UINT    ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value);
 UINT    ux_device_stack_class_register(UCHAR *class_name,
-                                    UINT (*class_entry_function)(struct UX_SLAVE_CLASS_COMMAND_STRUCT *),
+                                    UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
                                     ULONG configuration_number,
                                     ULONG interface_number,
                                     VOID *parameter);
 UINT    ux_device_stack_class_unregister(UCHAR *class_name,
-                                    UINT (*class_entry_function)(struct UX_SLAVE_CLASS_COMMAND_STRUCT *));
+                                    UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
 UINT    ux_device_stack_configuration_get(VOID);
 UINT    ux_device_stack_configuration_set(ULONG configuration_value);
 UINT    ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_index, ULONG host_length);

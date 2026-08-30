@@ -78,7 +78,7 @@ extern   "C" {
 UINT    _ux_device_stack_alternate_setting_get(ULONG interface_value);
 UINT    _ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value);
 UINT    _ux_device_stack_class_register(UCHAR *class_name,
-                    UINT (*class_entry_function)(struct UX_SLAVE_CLASS_COMMAND_STRUCT *),
+                    UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
                     ULONG configuration_number,
                     ULONG interface_number,
                     VOID *parameter);
@@ -105,7 +105,7 @@ UINT    _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, UL
 UINT    _ux_device_stack_transfer_all_request_abort(UX_SLAVE_ENDPOINT *endpoint, ULONG completion_code);
 UINT    _ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, ULONG slave_length, ULONG host_length);
 UINT    _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
-UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(struct UX_SLAVE_CLASS_COMMAND_STRUCT *));
+UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
 UINT    _ux_device_stack_microsoft_extension_register(ULONG vendor_request, UINT (*vendor_request_function)(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *));
 UINT    _ux_device_stack_uninitialize(VOID);
 

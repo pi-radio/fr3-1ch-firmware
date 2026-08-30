@@ -156,7 +156,7 @@ void DeviceBase::start()
 
 
 UINT  _ux_device_stack_class_register(UCHAR *class_name,
-                        UINT (*class_entry_function)(struct UX_SLAVE_CLASS_COMMAND_STRUCT *),
+                        UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
                         ULONG configuration_number,
                         ULONG interface_number,
                         VOID *parameter)

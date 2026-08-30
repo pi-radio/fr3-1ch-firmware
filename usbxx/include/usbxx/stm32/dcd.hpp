@@ -60,7 +60,7 @@
 
 struct UX_DCD_STM32_ED
 {
-    struct UX_SLAVE_ENDPOINT_STRUCT
+    UX_SLAVE_ENDPOINT
                     *ux_dcd_stm32_ed_endpoint;
     ULONG           ux_dcd_stm32_ed_status;
     UCHAR           ux_dcd_stm32_ed_state;
