@@ -384,7 +384,7 @@ void STM32::DCD::on_data_out(uint8_t epnum)
 {
 
 UX_DCD_STM32_ED         *ed;
-UX_SLAVE_TRANSFER       *transfer_request;
+UX_SLAVE_TRANSFER       *xfer;
 ULONG                   transfer_length;
 UX_SLAVE_ENDPOINT       *endpoint;
 
@@ -393,7 +393,7 @@ UX_SLAVE_ENDPOINT       *endpoint;
     ed = &ux_dcd_stm32_ed[epnum & 0xF];
 
     /* Get the pointer to the transfer request.  */
-    transfer_request = &(ed -> ux_dcd_stm32_ed_endpoint -> ux_slave_endpoint_transfer_request);
+    xfer = &(ed -> ux_dcd_stm32_ed_endpoint -> ux_slave_endpoint_transfer_request);
 
     /* Endpoint 0 is different.  */
     if (epnum == 0U)
@@ -404,34 +404,34 @@ UX_SLAVE_ENDPOINT       *endpoint;
         {
 
             /* Get the pointer to the logical endpoint from the transfer request.  */
-            endpoint = transfer_request -> ux_slave_transfer_request_endpoint;
+            endpoint = xfer -> ux_slave_transfer_request_endpoint;
 
             /* Read the received data length for the Control endpoint.  */
             transfer_length = HAL_PCD_EP_GetRxCount(&hpcd, epnum);
 
             /* Update the length of the data received.  */
-            transfer_request -> ux_slave_transfer_request_actual_length += transfer_length;
+            xfer -> ux_slave_transfer_request_actual_length += transfer_length;
 
             /* Can we accept this much?  */
-            if (transfer_request -> ux_slave_transfer_request_actual_length <=
-                transfer_request -> ux_slave_transfer_request_requested_length)
+            if (xfer -> ux_slave_transfer_request_actual_length <=
+                xfer -> ux_slave_transfer_request_requested_length)
             {
 
                 /* Are we done with this transfer ? */
-                if ((transfer_request -> ux_slave_transfer_request_actual_length ==
-                     transfer_request -> ux_slave_transfer_request_requested_length) ||
+                if ((xfer -> ux_slave_transfer_request_actual_length ==
+                     xfer -> ux_slave_transfer_request_requested_length) ||
                     (transfer_length != endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize))
                 {
-                    _ux_dcd_stm32_setup_out(ed, transfer_request, &hpcd);
+                    _ux_dcd_stm32_setup_out(ed, xfer, &hpcd);
                 }
                 else
                 {
 
                     /* Rearm the OUT control endpoint for one packet. */
-                    transfer_request -> ux_slave_transfer_request_current_data_pointer += endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize;
+                    xfer -> ux_slave_transfer_request_current_data_pointer += endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize;
                     HAL_PCD_EP_Receive(&hpcd,
                                 endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress,
-                                transfer_request -> ux_slave_transfer_request_current_data_pointer,
+                                xfer -> ux_slave_transfer_request_current_data_pointer,
                                 endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize);
                 }
             }
@@ -439,10 +439,10 @@ UX_SLAVE_ENDPOINT       *endpoint;
             {
 
                 /*  We have an overflow situation. Set the completion code to overflow.  */
-                transfer_request -> ux_slave_transfer_request_completion_code =  UX_TRANSFER_BUFFER_OVERFLOW;
+                xfer -> ux_slave_transfer_request_completion_code =  UX_TRANSFER_BUFFER_OVERFLOW;
 
                 /* If trace is enabled, insert this event into the trace buffer.  */
-                UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_TRANSFER_BUFFER_OVERFLOW, transfer_request, 0, 0, UX_TRACE_ERRORS, 0, 0)
+                UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_TRANSFER_BUFFER_OVERFLOW, xfer, 0, 0, UX_TRACE_ERRORS, 0, 0)
 
 #if defined(UX_DEVICE_STANDALONE)
 
@@ -451,8 +451,8 @@ UX_SLAVE_ENDPOINT       *endpoint;
 #endif
 
                 /* We are using a Control endpoint, if there is a callback, invoke it. We are still under ISR.  */
-                if (transfer_request -> ux_slave_transfer_request_completion_function)
-                    transfer_request -> ux_slave_transfer_request_completion_function (transfer_request) ;
+                if (xfer -> ux_slave_transfer_request_completion_function)
+                    xfer -> ux_slave_transfer_request_completion_function (xfer) ;
             }
         }
     }
@@ -461,20 +461,20 @@ UX_SLAVE_ENDPOINT       *endpoint;
 
 
         /* Update the length of the data sent in previous transaction.  */
-        transfer_request -> ux_slave_transfer_request_actual_length =  HAL_PCD_EP_GetRxCount(&hpcd, epnum);
+        xfer -> ux_slave_transfer_request_actual_length =  HAL_PCD_EP_GetRxCount(&hpcd, epnum);
 
         /* Set the completion code to no error.  */
-        transfer_request -> ux_slave_transfer_request_completion_code =  UX_SUCCESS;
+        xfer -> ux_slave_transfer_request_completion_code =  UX_SUCCESS;
 
         /* The transfer is completed.  */
-        transfer_request -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_COMPLETED;
+        xfer -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_COMPLETED;
 
 #if defined(UX_DEVICE_STANDALONE)
         ed -> ux_dcd_stm32_ed_status |= UX_DCD_STM32_ED_STATUS_DONE;
 #else
 
         /* Non control endpoint operation, use semaphore.  */
-        _ux_utility_semaphore_put(&transfer_request -> ux_slave_transfer_request_semaphore);
+        _ux_utility_semaphore_put(&xfer -> ux_slave_transfer_request_semaphore);
 #endif
     }
 

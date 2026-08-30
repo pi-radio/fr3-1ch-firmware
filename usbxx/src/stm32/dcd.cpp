@@ -60,6 +60,129 @@ uint32_t STM32::DCD::initialize()
   return(UX_SUCCESS);
 }
 
+UINT  STM32::DCD::complete_initialization()
+{
+UX_SLAVE_DEVICE         *device;
+UCHAR                     *device_framework;
+UX_SLAVE_TRANSFER       *transfer_request;
+
+
+    /* Get the pointer to the device.  */
+    device =  &_ux_system_slave -> ux_system_slave_device;
+
+    /* Are we in DFU mode ? If so, check if we are in a Reset mode.  */
+    if (_ux_system_slave -> ux_system_slave_device_dfu_state_machine == UX_SYSTEM_DFU_STATE_APP_DETACH)
+    {
+
+        /* The device is now in DFU reset mode. Switch to the DFU device framework.  */
+        _ux_system_slave -> ux_system_slave_device_framework =  _ux_system_slave -> ux_system_slave_dfu_framework;
+        _ux_system_slave -> ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_dfu_framework_length;
+
+    }
+    else
+    {
+
+        /* Set State to App Idle. */
+        _ux_system_slave -> ux_system_slave_device_dfu_state_machine = UX_SYSTEM_DFU_STATE_APP_IDLE;
+
+        /* Check the speed and set the correct descriptor.  */
+        if (_ux_system_slave -> ux_system_slave_speed ==  UX_FULL_SPEED_DEVICE)
+        {
+
+            /* The device is operating at full speed.  */
+            _ux_system_slave -> ux_system_slave_device_framework =  _ux_system_slave -> ux_system_slave_device_framework_full_speed;
+            _ux_system_slave -> ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_device_framework_length_full_speed;
+        }
+        else
+        {
+
+            /* The device is operating at high speed.  */
+            _ux_system_slave -> ux_system_slave_device_framework =  _ux_system_slave -> ux_system_slave_device_framework_high_speed;
+            _ux_system_slave -> ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_device_framework_length_high_speed;
+        }
+    }
+
+    /* Get the device framework pointer.  */
+    device_framework =  _ux_system_slave -> ux_system_slave_device_framework;
+
+    /* And create the decompressed device descriptor structure.  */
+    _ux_utility_descriptor_parse(device_framework,
+                                _ux_system_device_descriptor_structure,
+                                UX_DEVICE_DESCRIPTOR_ENTRIES,
+                                (UCHAR *) &device -> ux_slave_device_descriptor);
+
+    /* Now we create a transfer request to accept the first SETUP packet
+       and get the ball running. First get the address of the endpoint
+       transfer request container.  */
+    transfer_request =  &device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request;
+
+    /* Set the timeout to be for Control Endpoint.  */
+    transfer_request -> ux_slave_transfer_request_timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
+
+    /* Adjust the current data pointer as well.  */
+    transfer_request -> ux_slave_transfer_request_current_data_pointer =
+                            transfer_request -> ux_slave_transfer_request_data_pointer;
+
+    /* Update the transfer request endpoint pointer with the default endpoint.  */
+    transfer_request -> ux_slave_transfer_request_endpoint =  &device -> ux_slave_device_control_endpoint;
+
+    /* The control endpoint max packet size needs to be filled manually in its descriptor.  */
+    transfer_request -> ux_slave_transfer_request_endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize =
+                                device -> ux_slave_device_descriptor.bMaxPacketSize0;
+
+    /* On the control endpoint, always expect the maximum.  */
+    transfer_request -> ux_slave_transfer_request_requested_length =
+                                device -> ux_slave_device_descriptor.bMaxPacketSize0;
+
+    /* Attach the control endpoint to the transfer request.  */
+    transfer_request -> ux_slave_transfer_request_endpoint =  &device -> ux_slave_device_control_endpoint;
+
+    /* Create the default control endpoint attached to the device.
+       Once this endpoint is enabled, the host can then send a setup packet
+       The device controller will receive it and will call the setup function
+       module.  */
+    create_endpoint(&device -> ux_slave_device_control_endpoint);
+
+    /* Open Control OUT endpoint.  */
+    HAL_PCD_EP_Flush(pcd_handle, 0x00U);
+    HAL_PCD_EP_Open(pcd_handle, 0x00U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+
+    /* Open Control IN endpoint.  */
+    HAL_PCD_EP_Flush(pcd_handle, 0x80U);
+    HAL_PCD_EP_Open(pcd_handle, 0x80U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+
+    /* Ensure the control endpoint is properly reset.  */
+    device -> ux_slave_device_control_endpoint.ux_slave_endpoint_state = UX_ENDPOINT_RESET;
+
+    /* Mark the phase as SETUP.  */
+    transfer_request -> ux_slave_transfer_request_type =  UX_TRANSFER_PHASE_SETUP;
+
+    /* Mark this transfer request as pending.  */
+    transfer_request -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_PENDING;
+
+    /* Ask for 8 bytes of the SETUP packet.  */
+    transfer_request -> ux_slave_transfer_request_requested_length =    UX_SETUP_SIZE;
+    transfer_request -> ux_slave_transfer_request_in_transfer_length =  UX_SETUP_SIZE;
+
+    /* Reset the number of bytes sent/received.  */
+    transfer_request -> ux_slave_transfer_request_actual_length =  0;
+
+    /* Check the status change callback.  */
+    if(_ux_system_slave -> ux_system_slave_change_function != UX_NULL)
+    {
+      _ux_system_slave -> ux_system_slave_change_function(UX_DEVICE_ATTACHED);
+    }
+
+    return(UX_SUCCESS);
+}
+
+UINT  STM32::DCD::uninitialize()
+{
+    /* Set the state of the controller to HALTED now.  */
+  ux_slave_dcd_status =  UX_DCD_STATUS_HALTED;
+
+  return(UX_SUCCESS);
+}
 
 
 
