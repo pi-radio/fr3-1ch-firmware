@@ -32,6 +32,8 @@
 
 #include <usbxx/stm32/dcd.hpp>
 
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 UINT  _ux_device_stack_control_request_process(UX_SLAVE_TRANSFER *transfer_request)

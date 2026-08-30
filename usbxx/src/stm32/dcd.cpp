@@ -10,6 +10,8 @@
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 USBXX::STM32::DCD *USBXX::STM32::gDCD;

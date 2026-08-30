@@ -30,6 +30,9 @@
 
 #include <usbxx/stm32/dcd.hpp>
 
+
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 UINT  _ux_device_stack_interface_get(UINT interface_value)

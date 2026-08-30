@@ -30,6 +30,8 @@
 
 #include <usbxx/stm32/dcd.hpp>
 
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 UINT  _ux_device_stack_get_status(ULONG request_type, ULONG request_index, ULONG request_length)

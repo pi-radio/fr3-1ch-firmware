@@ -30,6 +30,8 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/device.hpp>
+
 UX_COMPILE_TIME_ASSERT(!UX_OVERFLOW_CHECK_MULC_ULONG(sizeof(UX_SLAVE_CLASS), UX_MAX_SLAVE_CLASS_DRIVER), UX_MAX_SLAVE_CLASS_DRIVER_mul_ovf)
 
 /* Define the names of all the USB Classes of USBX.  */

@@ -29,6 +29,7 @@
 #include <usbxx/ux_device_stack.h>
 
 
+#include <usbxx/device.hpp>
 #include <usbxx/stm32/dcd.hpp>
 
 using namespace USBXX;

@@ -30,6 +30,8 @@
 
 #include <usbxx/endian.hpp>
 
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 

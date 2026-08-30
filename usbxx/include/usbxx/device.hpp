@@ -14,6 +14,69 @@
 #include <usbxx/ux_api.h>
 
 #include <usbxx/dcd.hpp>
+#include <usbxx/endpoint.hpp>
+
+
+struct UX_SLAVE_DEVICE
+{
+
+    ULONG           ux_slave_device_state;
+    struct UX_DEVICE_DESCRIPTOR_STRUCT
+                    ux_slave_device_descriptor;
+    UX_SLAVE_ENDPOINT
+                    ux_slave_device_control_endpoint;
+    ULONG           ux_slave_device_configuration_selected;
+    struct UX_CONFIGURATION_DESCRIPTOR_STRUCT
+                    ux_slave_device_configuration_descriptor;
+    UX_SLAVE_INTERFACE
+                    *ux_slave_device_first_interface;
+    UX_SLAVE_INTERFACE
+                    *ux_slave_device_interfaces_pool;
+    ULONG           ux_slave_device_interfaces_pool_number;
+    UX_SLAVE_ENDPOINT
+                    *ux_slave_device_endpoints_pool;
+    ULONG           ux_slave_device_endpoints_pool_number;
+    ULONG           ux_slave_device_power_state;
+
+};
+
+
+struct UX_SYSTEM_SLAVE
+{
+    UX_SLAVE_DEVICE ux_system_slave_device;
+    UCHAR           *ux_system_slave_device_framework;
+    ULONG           ux_system_slave_device_framework_length;
+    UCHAR           *ux_system_slave_device_framework_full_speed;
+    ULONG           ux_system_slave_device_framework_length_full_speed;
+    UCHAR           *ux_system_slave_device_framework_high_speed;
+    ULONG           ux_system_slave_device_framework_length_high_speed;
+    UCHAR           *ux_system_slave_string_framework;
+    ULONG           ux_system_slave_string_framework_length;
+    UCHAR           *ux_system_slave_language_id_framework;
+    ULONG           ux_system_slave_language_id_framework_length;
+    UCHAR           *ux_system_slave_dfu_framework;
+    ULONG           ux_system_slave_dfu_framework_length;
+#if UX_MAX_SLAVE_CLASS_DRIVER > 1
+    UINT            ux_system_slave_max_class;
+#endif
+    UX_SLAVE_CLASS  *ux_system_slave_class_array;
+    UX_SLAVE_CLASS  *ux_system_slave_interface_class_array[UX_MAX_SLAVE_INTERFACES];
+    ULONG           ux_system_slave_speed;
+    ULONG           ux_system_slave_power_state;
+    ULONG           ux_system_slave_remote_wakeup_capability;
+    ULONG           ux_system_slave_remote_wakeup_enabled;
+    ULONG           ux_system_slave_device_dfu_capabilities;
+    ULONG           ux_system_slave_device_dfu_detach_timeout;
+    ULONG           ux_system_slave_device_dfu_transfer_size;
+    ULONG           ux_system_slave_device_dfu_state_machine;
+    ULONG           ux_system_slave_device_dfu_mode;
+    UINT            (*ux_system_slave_change_function) (ULONG);
+    ULONG           ux_system_slave_device_vendor_request;
+    UINT            (*ux_system_slave_device_vendor_request_function) (ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *);
+
+} ;
+
+extern UX_SYSTEM_SLAVE *_ux_system_slave;
 
 namespace USBXX
 {

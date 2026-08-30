@@ -31,6 +31,8 @@
 #include <usbxx/device.hpp>
 #include <usbxx/stm32/dcd.hpp>
 
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 UINT  _ux_device_stack_disconnect(VOID)

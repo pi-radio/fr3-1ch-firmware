@@ -28,6 +28,8 @@
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
+#include <usbxx/device.hpp>
+
 /**************************************************************************/
 /*                                                                        */
 /*  FUNCTION                                               RELEASE        */

@@ -82,7 +82,7 @@ UINT  _uxe_system_initialize(VOID *regular_memory_pool_start, ULONG regular_memo
 
 extern UX_SYSTEM *_ux_system;
 extern UX_SYSTEM_HOST *_ux_system_host;
-extern UX_SYSTEM_SLAVE *_ux_system_slave;
+
 extern UX_SYSTEM_OTG *_ux_system_otg;
 extern UCHAR _ux_system_endpoint_descriptor_structure[];
 extern UCHAR _ux_system_device_descriptor_structure[];

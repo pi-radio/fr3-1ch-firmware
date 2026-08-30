@@ -27,10 +27,12 @@
 
 #include <usbxx/ux_api.h>
 #include <usbxx/stm32/dcd.hpp>
+#include <usbxx/stm32/endpoint.hpp>
 #include <usbxx/ux_device_stack.h>
 #include <usbxx/ux_utility.h>
 
 #include <usbxx/endian.hpp>
+#include <usbxx/device.hpp>
 
 using namespace USBXX;
 

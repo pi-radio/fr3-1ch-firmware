@@ -30,6 +30,8 @@
 
 #include <usbxx/stm32/dcd.hpp>
 
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 UINT  _ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value)

@@ -30,6 +30,9 @@
 
 #include <usbxx/stm32/dcd.hpp>
 
+
+#include <usbxx/device.hpp>
+
 using namespace USBXX;
 
 /**************************************************************************/
