@@ -37,7 +37,6 @@ uint16_t USBD_Get_Configuration_Number(uint8_t class_type, uint8_t interface_typ
 
 #define USBD_VID                                      1155
 #define USBD_PID                                      22288
-#define USBD_LANGID_STRING                            1033
 #define USBD_MANUFACTURER_STRING                      "Pi Radio"
 #define USBD_PRODUCT_STRING                           "FR3 1CH"
 #define USBD_SERIAL_NUMBER                            "000000000001"

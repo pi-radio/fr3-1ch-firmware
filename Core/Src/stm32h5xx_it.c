@@ -240,13 +240,6 @@ void TIM1_UP_IRQHandler(void)
   */
 void USART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
-
-  /* USER CODE END USART1_IRQn 0 */
-  TRACER_EMB_IRQHandlerUSART();
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**
@@ -266,16 +259,6 @@ void LPTIM1_IRQHandler(void)
 /**
   * @brief This function handles USB FS global interrupt.
   */
-void USB_DRD_FS_IRQHandler(void)
-{
-  /* USER CODE BEGIN USB_DRD_FS_IRQn 0 */
-
-  /* USER CODE END USB_DRD_FS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_DRD_FS);
-  /* USER CODE BEGIN USB_DRD_FS_IRQn 1 */
-
-  /* USER CODE END USB_DRD_FS_IRQn 1 */
-}
 
 /**
   * @brief This function handles UCPD1 global interrupt.

@@ -6,162 +6,102 @@
  */
 
 #include <cassert>
+#include <algorithm>
 
 #include <threadxx/dbgstream.hpp>
 
-#include <usbxx/ux_api.h>
-
+#include <usbxx/endian.hpp>
+#include <usbxx/class.hpp>
 #include <usbxx/descriptor.hpp>
+#include <usbxx/device.hpp>
+#include <usbxx/ux_api.h>
 
 using namespace USBXX;
 
 extern "C" {
 /* Includes ------------------------------------------------------------------*/
-#include "ux_device_descriptors.h"
+//#include "ux_device_descriptors.h"
 }
+
+#ifndef   __PACKED
+#define __PACKED                               __attribute__((packed, aligned(1)))
+#endif
+
+
+#define USBD_VID                                      1155
+#define USBD_PID                                      22288
+#define USBD_LANGID_STRING                            1033
+#define USBD_MANUFACTURER_STRING                      "Pi Radio"
+#define USBD_PRODUCT_STRING                           "FR3 1CH"
+#define USBD_SERIAL_NUMBER                            "000000000001"
+
+#define USB_DESC_TYPE_INTERFACE                       0x04U
+#define USB_DESC_TYPE_ENDPOINT                        0x05U
+#define USB_DESC_TYPE_CONFIGURATION                   0x02U
+#define USB_DESC_TYPE_IAD                             0x0BU
+
+#define USBD_EP_TYPE_CTRL                             0x00U
+#define USBD_EP_TYPE_ISOC                             0x01U
+#define USBD_EP_TYPE_BULK                             0x02U
+#define USBD_EP_TYPE_INTR                             0x03U
+
+
+#define USB_BCDUSB                                    0x0200U
+#define LANGUAGE_ID_MAX_LENGTH                        2U
+
+#define USBD_IDX_MFC_STR                              0x01U
+#define USBD_IDX_PRODUCT_STR                          0x02U
+#define USBD_IDX_SERIAL_STR                           0x03U
+
+#define USBD_MAX_EP0_SIZE                             64U
+#define USBD_DEVICE_QUALIFIER_DESC_SIZE               0x0AU
+
+#define USBD_STRING_FRAMEWORK_MAX_LENGTH              256U
+
+/* Device CDC-ACM Class */
+#define USBD_CDCACM_EPINCMD_ADDR                      0x81U
+#define USBD_CDCACM_EPINCMD_FS_MPS                    8U
+#define USBD_CDCACM_EPINCMD_HS_MPS                    8U
+#define USBD_CDCACM_EPIN_ADDR                         0x82U
+#define USBD_CDCACM_EPOUT_ADDR                        0x03U
+#define USBD_CDCACM_EPIN_FS_MPS                       64U
+#define USBD_CDCACM_EPIN_HS_MPS                       512U
+#define USBD_CDCACM_EPOUT_FS_MPS                      64U
+#define USBD_CDCACM_EPOUT_HS_MPS                      512U
+#define USBD_CDCACM_EPINCMD_FS_BINTERVAL              5U
+#define USBD_CDCACM_EPINCMD_HS_BINTERVAL              5U
+
+#ifndef USBD_CONFIG_STR_DESC_IDX
+#define USBD_CONFIG_STR_DESC_IDX                      0U
+#endif /* USBD_CONFIG_STR_DESC_IDX */
+
+#ifndef USBD_CONFIG_BMATTRIBUTES
+#define USBD_CONFIG_BMATTRIBUTES                      0xC0U
+#endif /* USBD_CONFIG_BMATTRIBUTES */
+
+
 
 USBXX::Descriptor::Descriptor(int _speed) : speed(_speed)
 {
   p_cur = desc;
 }
 
+#if 0
 typedef USBXX::EndpointDesc USBD_EPTypeDef;
 typedef USBXX::CompositeElement USBD_CompositeElementTypeDef;
 typedef USBXX::CompositeClass USBD_CompositeClassTypeDef;
-
-/* USB Device descriptors structure */
-struct DeviceDescriptor
-{
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint16_t bcdUSB;
-  uint8_t bDeviceClass;
-  uint8_t bDeviceSubClass;
-  uint8_t bDeviceProtocol;
-  uint8_t bMaxPacketSize;
-  uint16_t idVendor;
-  uint16_t idProduct;
-  uint16_t bcdDevice;
-  uint8_t iManufacturer;
-  uint8_t iProduct;
-  uint8_t iSerialNumber;
-  uint8_t bNumConfigurations;
-} __PACKED;
-
-/* USB Iad descriptors structure */
-typedef struct
-{
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bFirstInterface;
-  uint8_t bInterfaceCount;
-  uint8_t bFunctionClass;
-  uint8_t bFunctionSubClass;
-  uint8_t bFunctionProtocol;
-  uint8_t iFunction;
-} __PACKED USBD_IadDescTypedef;
-
-/* USB interface descriptors structure */
-typedef struct
-{
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bInterfaceNumber;
-  uint8_t bAlternateSetting;
-  uint8_t bNumEndpoints;
-  uint8_t bInterfaceClass;
-  uint8_t bInterfaceSubClass;
-  uint8_t bInterfaceProtocol;
-  uint8_t iInterface;
-} __PACKED USBD_IfDescTypedef;
-
-/* USB endpoint descriptors structure */
-typedef struct
-{
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bEndpointAddress;
-  uint8_t bmAttributes;
-  uint16_t wMaxPacketSize;
-  uint8_t bInterval;
-} __PACKED USBD_EpDescTypedef;
-
-/* USB Config descriptors structure */
-struct ConfigDesc
-{
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint16_t wDescriptorLength;
-  uint8_t bNumInterfaces;
-  uint8_t bConfigurationValue;
-  uint8_t iConfiguration;
-  uint8_t bmAttributes;
-  uint8_t bMaxPower;
-} __PACKED;
-
-/* USB Qualifier descriptors structure */
-struct DevQualiDesc
-{
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint16_t bcdDevice;
-  uint8_t Class;
-  uint8_t SubClass;
-  uint8_t Protocol;
-  uint8_t bMaxPacketSize;
-  uint8_t bNumConfigurations;
-  uint8_t bReserved;
-} __PACKED;
-
-typedef struct
-{
-  /* Header Functional Descriptor*/
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bDescriptorSubtype;
-  uint16_t bcdCDC;
-} __PACKED USBD_CDCHeaderFuncDescTypedef;
-
-typedef struct
-{
-  /* Call Management Functional Descriptor*/
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bDescriptorSubtype;
-  uint8_t bmCapabilities;
-  uint8_t bDataInterface;
-} __PACKED USBD_CDCCallMgmFuncDescTypedef;
-
-typedef struct
-{
-  /* ACM Functional Descriptor*/
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bDescriptorSubtype;
-  uint8_t bmCapabilities;
-} __PACKED USBD_CDCACMFuncDescTypedef;
-
-typedef struct
-{
-  /* Union Functional Descriptor*/
-  uint8_t bLength;
-  uint8_t bDescriptorType;
-  uint8_t bDescriptorSubtype;
-  uint8_t bMasterInterface;
-  uint8_t bSlaveInterface;
-} __PACKED USBD_CDCUnionFuncDescTypedef;
-
+#endif
 
 void USBXX::Descriptor::build()
 {
   auto *pDevDesc = allocate_section<DeviceDescriptor>();
 
-  pDevDesc->bDescriptorType = UX_DEVICE_DESCRIPTOR_ITEM;
+  pDevDesc->bDescriptorType = DeviceDescriptor::desc_type;
   pDevDesc->bcdUSB = USB_BCDUSB;
   pDevDesc->bDeviceClass = 0x00;
   pDevDesc->bDeviceSubClass = 0x00;
   pDevDesc->bDeviceProtocol = 0x00;
-  pDevDesc->bMaxPacketSize = USBD_MAX_EP0_SIZE;
+  pDevDesc->bMaxPacketSize0 = USBD_MAX_EP0_SIZE;
   pDevDesc->idVendor = USBD_VID;
   pDevDesc->idProduct = USBD_PID;
   pDevDesc->bcdDevice = 0x0200;
@@ -172,13 +112,12 @@ void USBXX::Descriptor::build()
 
   if (speed == USBD_HIGH_SPEED)
   {
-    auto *pDevQualDesc = allocate_section<DevQualiDesc>();
-    pDevQualDesc->bDescriptorType = UX_DEVICE_QUALIFIER_DESCRIPTOR_ITEM;
-    pDevQualDesc->bcdDevice = 0x0200;
-    pDevQualDesc->Class = 0x00;
-    pDevQualDesc->SubClass = 0x00;
-    pDevQualDesc->Protocol = 0x00;
-    pDevQualDesc->bMaxPacketSize = 0x40;
+    auto *pDevQualDesc = allocate_section<DeviceQualifierDescriptor>();
+    pDevQualDesc->bcdUSB = 0x0200;
+    pDevQualDesc->bDeviceClass = 0x00;
+    pDevQualDesc->bDeviceSubClass = 0x00;
+    pDevQualDesc->bDeviceProtocol = 0x00;
+    pDevQualDesc->bMaxPacketSize0 = 0x40;
     pDevQualDesc->bNumConfigurations = 0x01;
     pDevQualDesc->bReserved = 0x00;
   }
@@ -189,23 +128,21 @@ void USBXX::Descriptor::build()
     pDevDesc->bDeviceProtocol = 0x01;
   } else {
     // Hard wiring to just get done
-    assert(usb_classes[0] == CLASS_TYPE_CDC_ACM);
+    assert(usb_classes[0] == CompositeClass::CLASS_TYPE_CDC_ACM);
     pDevDesc->bDeviceClass = 0x02;
     pDevDesc->bDeviceSubClass = 0x02;
     pDevDesc->bDeviceProtocol = 0x00;
   }
 
   uint32_t config_start = get_desc_len();
-  auto *config_desc = allocate_section<ConfigDesc>();
+  auto *config_desc = allocate_section<ConfigurationDescriptor>();
 
-  config_desc->bLength = (uint8_t)sizeof(ConfigDesc);
-  config_desc->bDescriptorType = USB_DESC_TYPE_CONFIGURATION;
-  config_desc->wDescriptorLength = 0U;
+  config_desc->wTotalLength = 0U;
   config_desc->bNumInterfaces = 0U;
   config_desc->bConfigurationValue = 1U;
   config_desc->iConfiguration = USBD_CONFIG_STR_DESC_IDX;
   config_desc->bmAttributes = USBD_CONFIG_BMATTRIBUTES;
-  config_desc->bMaxPower = USBD_CONFIG_MAXPOWER;
+  config_desc->MaxPower = USBD_CONFIG_MAXPOWER;
 
   /* Build the device framework */
   for(auto cls : usb_classes)
@@ -214,7 +151,7 @@ void USBXX::Descriptor::build()
   }
 
   config_desc->bNumInterfaces = interfaces.size();
-  config_desc->wDescriptorLength = get_desc_len() - config_start;
+  config_desc->wTotalLength = get_desc_len() - config_start;
 }
 
 uint8_t USBXX::Descriptor::allocate_interface(uint8_t cls)
@@ -243,9 +180,8 @@ uint8_t USBXX::Descriptor::assign_endpoint(uint8_t cls, uint8_t addr, uint8_t ty
 
 void USBXX::Descriptor::add_endpoint_desc(uint8_t epaddr, uint8_t interval)
 {
-  auto *pEpDesc = allocate_section<USBD_EpDescTypedef>();
+  auto *pEpDesc = allocate_section<EndpointDescriptor>();
 
-  pEpDesc->bDescriptorType    = USB_DESC_TYPE_ENDPOINT;
   pEpDesc->bEndpointAddress   = (epaddr);
   pEpDesc->bmAttributes       = endpoints[epaddr].type;
   pEpDesc->wMaxPacketSize     = endpoints[epaddr].size;
@@ -260,9 +196,7 @@ void USBXX::Descriptor::add_interface_desc(uint8_t ifnum,
     uint8_t protocol,
     uint8_t istring)
 {
-  auto *pIfDesc = allocate_section<USBD_IfDescTypedef>();
-  pIfDesc->bLength = (uint8_t)sizeof(USBD_IfDescTypedef);
-  pIfDesc->bDescriptorType = USB_DESC_TYPE_INTERFACE;
+  auto *pIfDesc = allocate_section<InterfaceDescriptor>();
   pIfDesc->bInterfaceNumber = (ifnum);
   pIfDesc->bAlternateSetting = (alt);
   pIfDesc->bNumEndpoints = (eps);
@@ -294,9 +228,7 @@ void USBXX::Descriptor::add_class_to_conf(uint8_t cls)
   assign_endpoint(cls, USBD_CDCACM_EPINCMD_ADDR, USBD_EP_TYPE_INTR,
       is_hs() ? USBD_CDCACM_EPINCMD_HS_MPS : USBD_CDCACM_EPINCMD_FS_MPS);
 
-  auto pIadDesc = allocate_section<USBD_IadDescTypedef>();
-  pIadDesc->bLength = (uint8_t)sizeof(USBD_IadDescTypedef);
-  pIadDesc->bDescriptorType = USB_DESC_TYPE_IAD; /* IAD descriptor */
+  auto pIadDesc = allocate_section<UX_INTERFACE_ASSOCIATION_DESCRIPTOR>();
   pIadDesc->bFirstInterface = iface1;
   pIadDesc->bInterfaceCount = 2U;    /* 2 interfaces */
   pIadDesc->bFunctionClass = 0x02U;
@@ -309,14 +241,14 @@ void USBXX::Descriptor::add_class_to_conf(uint8_t cls)
 
 
   /* Header Functional Descriptor*/
-  auto pHeadDesc = allocate_section<USBD_CDCHeaderFuncDescTypedef>();
+  auto pHeadDesc = allocate_section<CDCFunctionHeaderDescriptor>();
   pHeadDesc->bLength = 0x05U;
   pHeadDesc->bDescriptorType = 0x24U;
   pHeadDesc->bDescriptorSubtype = 0x00U;
   pHeadDesc->bcdCDC = 0x0110;
 
   /* Call Management Functional Descriptor*/
-  auto pCallMgmDesc = allocate_section<USBD_CDCCallMgmFuncDescTypedef>();
+  auto pCallMgmDesc = allocate_section<CDCCallManagementFunctionDescriptor>();
   pCallMgmDesc->bLength = 0x05U;
   pCallMgmDesc->bDescriptorType = 0x24U;
   pCallMgmDesc->bDescriptorSubtype = 0x01U;
@@ -324,16 +256,12 @@ void USBXX::Descriptor::add_class_to_conf(uint8_t cls)
   pCallMgmDesc->bDataInterface = iface2;
 
   /* ACM Functional Descriptor*/
-  auto pACMDesc = allocate_section<USBD_CDCACMFuncDescTypedef>();
-  pACMDesc->bLength = 0x04U;
-  pACMDesc->bDescriptorType = 0x24U;
+  auto pACMDesc = allocate_section<CDCACMFunctionDescriptor>();
   pACMDesc->bDescriptorSubtype = 0x02U;
   pACMDesc->bmCapabilities = 0x02;
 
   /* Union Functional Descriptor*/
-  auto pUnionDesc = allocate_section<USBD_CDCUnionFuncDescTypedef>();
-  pUnionDesc->bLength = 0x05U;
-  pUnionDesc->bDescriptorType = 0x24U;
+  auto pUnionDesc = allocate_section<CDCUnionFunctionDescriptor>();
   pUnionDesc->bDescriptorSubtype = 0x06U;
   pUnionDesc->bMasterInterface = iface1;
   pUnionDesc->bSlaveInterface = iface2;
@@ -375,3 +303,249 @@ void USBXX::Strings::add_string(uint8_t idx, const std::string &s, uint16_t lang
   pos += s.size();
 }
 
+#if 0
+UINT DeviceBase::send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length)
+{
+  uint32_t length = host_length;
+  auto xfer = get_control_transfer();
+
+  if (descriptor_type == DeviceDescriptor::desc_type)
+  {
+    length = std::min(length, (uint32_t)DeviceDescriptor::length);
+  }
+  else
+  {
+    length = std::min(length, (uint32_t)DeviceQualifierDescriptor::length);
+  }
+
+  for (auto d : get_current_descriptor()) {
+    if (d.cur_type() != descriptor_type) {
+      continue;
+    }
+
+    ::memcpy(xfer->data.data(), d.buffer, length);
+
+    return transfer_request(xfer, length, host_length);
+  }
+
+  return -1;
+}
+
+
+UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descriptor_index, ULONG request_index, ULONG host_length)
+{
+  BOSDescriptor               bos_descriptor;
+  ConfigurationDescriptor     configuration_descriptor;
+  uint32_t                        target_descriptor_length = 0;
+  uint32_t                        parsed_descriptor_index = 0;
+
+  Descriptor &desc = (descriptor_type == UX_OTHER_SPEED_DESCRIPTOR_ITEM) ? fs_desc : get_current_descriptor();
+
+  auto di = desc.begin();
+
+  if (descriptor_type == UX_OTHER_SPEED_DESCRIPTOR_ITEM)
+    descriptor_type = UX_CONFIGURATION_DESCRIPTOR_ITEM;
+
+  for (; di != desc.end(); ++di)
+  {
+    auto d = *di;
+
+    if (d.cur_type() != descriptor_type)
+      continue;
+
+    if (descriptor_type == BOSDescriptor::desc_type)
+    {
+      bos_descriptor = d.read_in<BOSDescriptor>();
+
+      target_descriptor_length = bos_descriptor.wTotalLength;
+      break;
+    }
+    else
+    {
+      if (parsed_descriptor_index == descriptor_index)
+      {
+        configuration_descriptor = d.read_in<ConfigurationDescriptor>();
+
+        target_descriptor_length = configuration_descriptor.wTotalLength;
+
+        break;
+      }
+      else
+      {
+        /* There may be more configuration descriptors in this framework.  */
+        parsed_descriptor_index++;
+      }
+    }
+  }
+
+  if (di == desc.end()) {
+    return -1;
+  }
+
+  auto d = *di;
+
+  uint32_t length = std::max(target_descriptor_length, host_length);
+
+  /* Check buffer length, since total descriptors length may exceed buffer...  */
+  if (length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+  {
+    stall_control_endpoint();
+    throw std::runtime_error("Control request length too long");
+  }
+
+  auto xfer = get_control_transfer();
+
+  /* Copy the device descriptor into the transfer request memory.  */
+  ::memcpy(xfer->data.data(), d.buffer, length); /* Use case of memcpy is verified. */
+
+  /* Now we need to hack the found descriptor because this request expect a requested
+      descriptor type instead of the regular descriptor.  */
+  xfer->data[1] = descriptor_index;
+
+  /* We can return the configuration descriptor.  */
+  return transfer_request(xfer, length, host_length);
+
+}
+
+UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_type, ULONG request_index, ULONG host_length)
+{
+  Transfer               *xfer;
+  UINT                            status =  UX_ERROR;
+  UCHAR                           *string_memory;
+  UCHAR                           *string_framework;
+  ULONG                           string_framework_length;
+  ULONG                           string_length;
+
+  /* Get the pointer to the transfer request associated with the endpoint.  */
+  xfer = get_control_transfer();
+
+  /* Set the direction to OUT.  */
+  xfer->phase = UX_TRANSFER_PHASE_DATA_OUT;
+
+  auto descriptor_index = req.value & 0xff;
+  auto descriptor_type =  (UCHAR) ((req.value >> 8) & 0xff);
+
+  /* Default descriptor length is host length.  */
+  //length =  host_length;
+
+  /* What type of descriptor do we need to return?  */
+  switch (descriptor_type)
+  {
+
+    case DeviceDescriptor::desc_type:
+    case UX_DEVICE_QUALIFIER_DESCRIPTOR_ITEM:
+      return send_device_descriptor(descriptor_type, req.index, req.length);
+
+    case BOSDescriptor::desc_type:
+    case UX_OTHER_SPEED_DESCRIPTOR_ITEM:
+    case UX_CONFIGURATION_DESCRIPTOR_ITEM:
+      return send_compound_descriptor(descriptor_type, descriptor_index, req.index, req.length);
+
+    case UX_STRING_DESCRIPTOR_ITEM:
+
+        /* We need to filter for the index 0 which is the language ID string.  */
+        if (descriptor_index == 0)
+        {
+
+            /* We need to check request buffer size in case it's possible exceed. */
+            if (lang_ids.get_buffer_len() + 2 > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+            {
+              stall_control_endpoint();
+              throw std::runtime_error("Invalid language id framework length");
+            }
+
+            xfer->data[0] = (UCHAR)(lang_ids.get_buffer_len() + 2);
+            xfer->data[1] =  UX_STRING_DESCRIPTOR_ITEM;
+
+            /* Store the language ID into the buffer.  */
+            ::memcpy(xfer->data.data()+2, lang_ids.get_buffer(),
+                lang_ids.get_buffer_len()); /* Use case of memcpy is verified. */
+
+            auto len = std::min((uint32_t)req.length, (uint32_t)xfer->data[0]);
+
+            /* We can return the string language ID descriptor.  */
+            status = transfer_request(xfer, len, req.length);
+        }
+        else
+        {
+            /* The host wants a specific string index returned. Get the string framework pointer
+               and length.  */
+            string_framework = strings.get_buffer();
+            string_framework_length = strings.get_buffer_len();
+
+            /* We search through the string framework until we find the right index.
+               The index is in the lower byte of the descriptor type. */
+            while (string_framework_length != 0)
+            {
+
+                /* Ensure we have the correct language page.  */
+                if (_ux_utility_short_get(string_framework) == req.index)
+                {
+
+                    /* Check the index.  */
+                    if (*(string_framework + 2) == descriptor_index)
+                    {
+
+                        /* We need to check request buffer size in case it's possible exceed. */
+                        if (((*(string_framework + 3)*2) + 2) > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+                        {
+                            stall_control_endpoint();
+                            throw std::runtime_error("String request invalid");
+                        }
+
+                        /* We have a request to send back a string. Use the transfer request buffer.  */
+                        string_memory =  xfer -> data.data();
+
+                        /* Store the length in the string buffer. The length
+                           of the string descriptor is stored in the third byte,
+                           hence the ' + 3'. The encoding must be in 16-bit
+                           unicode, hence the '*2'. The length includes the size
+                           of the length itself as well as the descriptor type,
+                           hence the ' + 2'.  */
+                        *string_memory =  (UCHAR)((*(string_framework + 3)*2) + 2);
+
+                        /* Store the Descriptor type. */
+                        *(string_memory + 1) =  UX_STRING_DESCRIPTOR_ITEM;
+
+                        /* Create the Unicode string.  */
+                        for (string_length = 0; string_length <  *(string_framework + 3) ; string_length ++)
+                        {
+
+                            /* Insert a Unicode byte.  */
+                            *(string_memory + 2 + (string_length * 2)) =  *(string_framework + 4 + string_length);
+
+                            /* Insert a zero after the Unicode byte.  */
+                            *(string_memory + 2 + (string_length * 2) + 1) =  0;
+                        }
+
+                        auto len = std::min((uint32_t)req.length, (uint32_t)((*(string_framework + 3)*2) + 2));
+
+                        /* We can return the string descriptor.  */
+                        status = transfer_request(xfer, len, req.length);
+                        break;
+                    }
+                }
+
+                /* This is the wrong string descriptor, jump to the next.  */
+                string_framework_length -=  (ULONG) *(string_framework + 3) + 4;
+                string_framework +=  (ULONG) *(string_framework + 3) + 4;
+            }
+
+            /* Have we exhausted all the string descriptors?  */
+            if (string_framework_length == 0)
+            {
+                stall_control_endpoint();
+                return(UX_ERROR);
+            }
+        }
+        break;
+
+    default:
+      stall_control_endpoint();
+      return(UX_ERROR);
+    }
+
+    /* Return the status to the caller.  */
+    return(status);
+}
+#endif

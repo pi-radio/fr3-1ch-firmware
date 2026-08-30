@@ -1,12 +1,15 @@
 #pragma once
 
-#include <usbxx/device.hpp>
-#include <ux_device_class_cdc_acm.h>
 
 #include <threadxx/thread.hpp>
 #include <threadxx/ring_buffer.hpp>
 #include <threadxx/mutex.hpp>
 #include <threadxx/queue.hpp>
+
+#include <usbxx/class.hpp>
+#include <usbxx/device.hpp>
+#include <ux_device_class_cdc_acm.h>
+
 
 extern "C" VOID USBD_CDC_ACM_Activate(VOID *cdc_acm_instance);
 extern "C" VOID USBD_CDC_ACM_Deactivate(VOID *cdc_acm_instance);

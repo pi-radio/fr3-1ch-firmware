@@ -159,6 +159,10 @@ namespace USBXX
     uint16_t get_configuration_number(uint8_t class_type, uint8_t interface_type) {
       return 1;
     }
+
+
+
+    UINT send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length);
   };
 
 
