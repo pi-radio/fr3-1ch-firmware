@@ -11,14 +11,15 @@
 #include <usbxx/usbxx.hpp>
 
 #include <usbxx/ux_api.h>
+#include <usbxx/stm32/dcd.hpp>
 
 #include <usb.h>
 
-extern "C" {
 /* Includes ------------------------------------------------------------------*/
-#include "ux_device_descriptors.h"
-}
+#include <usbxx/ux_device_descriptors.h>
 
+UX_SYSTEM ux_system;
+UX_SYSTEM *_ux_system = &ux_system;
 
 void USBXX::DeviceBase::thread_entry()
 {
@@ -157,418 +158,84 @@ void USBXX::DeviceBase::start()
 }
 
 
-#if 0
-UINT USBXX::DeviceBase::initialize(UCHAR * device_framework_high_speed, ULONG device_framework_length_high_speed,
-                                   UCHAR * device_framework_full_speed, ULONG device_framework_length_full_speed,
-                                   UCHAR * string_framework, ULONG string_framework_length,
-                                   UCHAR * language_id_framework, ULONG language_id_framework_length,
-                                   UINT (*ux_system_slave_change_function)(ULONG))
+UINT  _ux_device_stack_class_register(UCHAR *class_name,
+                        UINT (*class_entry_function)(struct UX_SLAVE_CLASS_COMMAND_STRUCT *),
+                        ULONG configuration_number,
+                        ULONG interface_number,
+                        VOID *parameter)
 {
-UX_SLAVE_ENDPOINT               *endpoints_pool;
-UX_SLAVE_INTERFACE              *interfaces_pool;
-UX_SLAVE_TRANSFER               *transfer_request;
-UINT                            status;
-ULONG                           interfaces_found;
-ULONG                           endpoints_found;
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE)
-ULONG                           max_interface_number;
-ULONG                           local_interfaces_found;
-ULONG                           local_endpoints_found;
-ULONG                           endpoints_in_interface_found;
-UCHAR                           *device_framework;
-ULONG                           device_framework_length;
-UCHAR                           descriptor_type;
-ULONG                           descriptor_length;
+
+UX_SLAVE_CLASS              *class_inst;
+UINT                        status;
+UX_SLAVE_CLASS_COMMAND      command;
+UINT                        class_name_length =  0;
+#if UX_MAX_SLAVE_CLASS_DRIVER > 1
+ULONG                       class_index;
 #endif
-UCHAR                           *memory;
 
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INITIALIZE, 0, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
+  if(::strnlen((const char *)class_name, UX_MAX_CLASS_NAME_LENGTH) == UX_MAX_CLASS_NAME_LENGTH) {
+    throw std::runtime_error("Class name too long");
+  }
 
-    /* Get the pointer to the device. */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    /* Get first class.  */
+    class_inst =  _ux_system_slave -> ux_system_slave_class_array;
 
-    /* Store the high speed device framework address and length in the project structure.  */
-    _ux_system_slave -> ux_system_slave_device_framework_high_speed =             device_framework_high_speed;
-    _ux_system_slave -> ux_system_slave_device_framework_length_high_speed =      device_framework_length_high_speed;
+#if UX_MAX_SLAVE_CLASS_DRIVER > 1
+    /* We need to parse the class table to find an empty spot.  */
+    for (class_index = 0; class_index < _ux_system_slave -> ux_system_slave_max_class; class_index++)
+    {
+#endif
 
-    /* Store the string framework address and length in the project structure.  */
-    _ux_system_slave -> ux_system_slave_device_framework_full_speed =             device_framework_full_speed;
-    _ux_system_slave -> ux_system_slave_device_framework_length_full_speed =      device_framework_length_full_speed;
+        /* Check if this class is already used.  */
+        if (class_inst -> ux_slave_class_status == UX_UNUSED)
+        {
 
-    /* Store the string framework address and length in the project structure.  */
-    _ux_system_slave -> ux_system_slave_string_framework =                         string_framework;
-    _ux_system_slave -> ux_system_slave_string_framework_length =                  string_framework_length;
-
-    /* Store the language ID list in the project structure.  */
-    _ux_system_slave -> ux_system_slave_language_id_framework =                 language_id_framework;
-    _ux_system_slave -> ux_system_slave_language_id_framework_length =          language_id_framework_length;
-
-    /* Store the max number of slave class drivers in the project structure.  */
-    UX_SYSTEM_DEVICE_MAX_CLASS_SET(UX_MAX_SLAVE_CLASS_DRIVER);
-
-    /* Store the device state change function callback.  */
-    _ux_system_slave -> ux_system_slave_change_function =  ux_system_slave_change_function;
-
-    /* Allocate memory for the classes.
-     * sizeof(UX_SLAVE_CLASS) * UX_MAX_SLAVE_CLASS_DRIVER) overflow is checked
-     * outside of the function.
-     */
-    memory =  _ux_utility_memory_allocate(UX_NO_ALIGN, UX_REGULAR_MEMORY, sizeof(UX_SLAVE_CLASS) * UX_MAX_SLAVE_CLASS_DRIVER);
-    if (memory == UX_NULL)
-        return(UX_MEMORY_INSUFFICIENT);
-
-    /* Save this memory allocation in the USBX project.  */
-    _ux_system_slave -> ux_system_slave_class_array =  (UX_SLAVE_CLASS *) ((void *) memory);
-
-    /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the
-       control endpoint. */
-    transfer_request =  &device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request;
-
-    /* Acquire a buffer for the size of the endpoint.  */
-    transfer_request -> ux_slave_transfer_request_data_pointer =
-          _ux_utility_memory_allocate(UX_NO_ALIGN, UX_CACHE_SAFE_MEMORY, UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
-
-    /* Ensure we have enough memory.  */
-    if (transfer_request -> ux_slave_transfer_request_data_pointer == UX_NULL)
-        status = UX_MEMORY_INSUFFICIENT;
-    else
-        status = UX_SUCCESS;
-
-#if defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE)
-
-    /* No scan, just assign predefined value.  */
-    interfaces_found = UX_MAX_SLAVE_INTERFACES;
-    endpoints_found = UX_MAX_DEVICE_ENDPOINTS;
+#if defined(UX_NAME_REFERENCED_BY_POINTER)
+            class_inst -> ux_slave_class_name = (const UCHAR *)class_name;
 #else
+            /* We have found a free container for the class. Copy the name (with null-terminator).  */
+            ::memcpy(class_inst -> ux_slave_class_name, class_name, class_name_length + 1);
+#endif
 
-    /* Reset all values we are using during the scanning of the framework.  */
-    interfaces_found                   =  0;
-    endpoints_found                    =  0;
-    max_interface_number               =  0;
+            /* Memorize the entry function of this class.  */
+            class_inst -> ux_slave_class_entry_function =  class_entry_function;
 
-    /* Go on to scan interfaces if no error.  */
-    if (status == UX_SUCCESS)
-    {
+            /* Memorize the pointer to the application parameter.  */
+            class_inst -> ux_slave_class_interface_parameter =  parameter;
 
-        /* We need to determine the maximum number of interfaces and endpoints declared in the device framework.
-        This mechanism requires that both framework behave the same way regarding the number of interfaces
-        and endpoints.  */
-        device_framework        =  _ux_system_slave -> ux_system_slave_device_framework_full_speed;
-        device_framework_length =  _ux_system_slave -> ux_system_slave_device_framework_length_full_speed;
+            /* Memorize the configuration number on which this instance will be called.  */
+            class_inst -> ux_slave_class_configuration_number =  configuration_number;
 
-        /* Reset all values we are using during the scanning of the framework.  */
-        local_interfaces_found             =  0;
-        local_endpoints_found              =  0;
-        endpoints_in_interface_found       =  0;
+            /* Memorize the interface number on which this instance will be called.  */
+            class_inst -> ux_slave_class_interface_number =  interface_number;
 
-        /* Parse the device framework and locate interfaces and endpoint descriptor(s).  */
-        while (device_framework_length != 0)
-        {
+            /* Build all the fields of the Class Command to initialize the class.  */
+            command.ux_slave_class_command_request    =  UX_SLAVE_CLASS_COMMAND_INITIALIZE;
+            command.ux_slave_class_command_parameter  =  parameter;
+            command.ux_slave_class_command_class_ptr  =  class_inst;
 
-            /* Get the length of this descriptor.  */
-            descriptor_length =  (ULONG) *device_framework;
+            /* Call the class initialization routine.  */
+            status = class_entry_function(&command);
 
-            /* And its type.  */
-            descriptor_type =  *(device_framework + 1);
+            /* Check the status.  */
+            if (status != UX_SUCCESS)
+                return(status);
 
-            /* Check if this is an endpoint descriptor.  */
-            switch(descriptor_type)
-            {
+            /* Make this class used now.  */
+            class_inst -> ux_slave_class_status = UX_USED;
 
-            case UX_INTERFACE_DESCRIPTOR_ITEM:
-
-                /* Check if this is alternate setting 0. If not, do not add another interface found.
-                If this is alternate setting 0, reset the endpoints count for this interface.  */
-                if (*(device_framework + 3) == 0)
-                {
-
-                    /* Add the cumulated number of endpoints in the previous interface.  */
-                    local_endpoints_found += endpoints_in_interface_found;
-
-                    /* Read the number of endpoints for this alternate setting.  */
-                    endpoints_in_interface_found = (ULONG) *(device_framework + 4);
-
-                    /* Increment the number of interfaces found in the current configuration.  */
-                    local_interfaces_found++;
-                }
-                else
-                {
-
-                    /* Compare the number of endpoints found in this non 0 alternate setting.  */
-                    if (endpoints_in_interface_found < (ULONG) *(device_framework + 4))
-
-                        /* Adjust the number of maximum endpoints in this interface.  */
-                        endpoints_in_interface_found = (ULONG) *(device_framework + 4);
-                }
-
-                /* Check and update max interface number.  */
-                if (*(device_framework + 2) > max_interface_number)
-                    max_interface_number = *(device_framework + 2);
-
-                break;
-
-            case UX_CONFIGURATION_DESCRIPTOR_ITEM:
-
-                /* Check if the number of interfaces found in this configuration is the maximum so far. */
-                if (local_interfaces_found > interfaces_found)
-
-                    /* We need to adjust the number of maximum interfaces.  */
-                    interfaces_found =  local_interfaces_found;
-
-                /* We have a new configuration. We need to reset the number of local interfaces. */
-                local_interfaces_found =  0;
-
-                /* Add the cumulated number of endpoints in the previous interface.  */
-                local_endpoints_found += endpoints_in_interface_found;
-
-                /* Check if the number of endpoints found in the previous configuration is the maximum so far. */
-                if (local_endpoints_found > endpoints_found)
-
-                    /* We need to adjust the number of maximum endpoints.  */
-                    endpoints_found =  local_endpoints_found;
-
-                /* We have a new configuration. We need to reset the number of local endpoints. */
-                local_endpoints_found         =  0;
-                endpoints_in_interface_found  =  0;
-
-                break;
-
-            default:
-                break;
-            }
-
-            /* Adjust what is left of the device framework.  */
-            device_framework_length -=  descriptor_length;
-
-            /* Point to the next descriptor.  */
-            device_framework +=  descriptor_length;
+            /* Return successful completion.  */
+            return(UX_SUCCESS);
         }
 
-        /* Add the cumulated number of endpoints in the previous interface.  */
-        local_endpoints_found += endpoints_in_interface_found;
-
-        /* Check if the number of endpoints found in the previous interface is the maximum so far. */
-        if (local_endpoints_found > endpoints_found)
-
-            /* We need to adjust the number of maximum endpoints.  */
-            endpoints_found =  local_endpoints_found;
-
-
-        /* Check if the number of interfaces found in this configuration is the maximum so far. */
-        if (local_interfaces_found > interfaces_found)
-
-            /* We need to adjust the number of maximum interfaces.  */
-            interfaces_found =  local_interfaces_found;
-
-        /* We do a sanity check on the finding. At least there must be one interface but endpoints are
-        not necessary.  */
-        if (interfaces_found == 0)
-        {
-
-            /* Error trap. */
-            _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_INIT, UX_DESCRIPTOR_CORRUPTED);
-
-            /* If trace is enabled, insert this event into the trace buffer.  */
-            UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_DESCRIPTOR_CORRUPTED, device_framework, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-            status = UX_DESCRIPTOR_CORRUPTED;
-        }
-
-        /* We do a sanity check on the finding. Max interface number should not exceed limit.  */
-        if (status == UX_SUCCESS &&
-            max_interface_number >= UX_MAX_SLAVE_INTERFACES)
-        {
-
-            /* Error trap. */
-            _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_INIT, UX_MEMORY_INSUFFICIENT);
-
-            /* If trace is enabled, insert this event into the trace buffer.  */
-            UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device_framework, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-            status = UX_MEMORY_INSUFFICIENT;
-        }
+#if UX_MAX_SLAVE_CLASS_DRIVER > 1
+        /* Move to the next class.  */
+        class_inst ++;
     }
 #endif
 
-    /* Go on to allocate interfaces pool if no error.  */
-    if (status == UX_SUCCESS)
-    {
-
-        /* Memorize both pool sizes.  */
-        device -> ux_slave_device_interfaces_pool_number = interfaces_found;
-        device -> ux_slave_device_endpoints_pool_number  = endpoints_found;
-
-        /* We assign a pool for the interfaces.  */
-        interfaces_pool =  _ux_utility_memory_allocate_mulc_safe(UX_NO_ALIGN, UX_REGULAR_MEMORY, interfaces_found, sizeof(UX_SLAVE_INTERFACE));
-        if (interfaces_pool == UX_NULL)
-            status = UX_MEMORY_INSUFFICIENT;
-        else
-
-            /* Save the interface pool address in the device container.  */
-            device -> ux_slave_device_interfaces_pool =  interfaces_pool;
-    }
-
-    /* Do we need an endpoint pool ?  */
-    if (endpoints_found != 0 && status == UX_SUCCESS)
-    {
-
-        /* We assign a pool for the endpoints.  */
-        endpoints_pool =  _ux_utility_memory_allocate_mulc_safe(UX_NO_ALIGN, UX_REGULAR_MEMORY, endpoints_found, sizeof(UX_SLAVE_ENDPOINT));
-        if (endpoints_pool == UX_NULL)
-            status = UX_MEMORY_INSUFFICIENT;
-        else
-        {
-
-            /* Save the endpoint pool address in the device container.  */
-            device -> ux_slave_device_endpoints_pool =  endpoints_pool;
-
-            /* We need to assign a transfer buffer to each endpoint. Each endpoint is assigned the
-            maximum buffer size.  We also assign the semaphore used by the endpoint to synchronize transfer
-            completion. */
-            while (endpoints_pool < (device -> ux_slave_device_endpoints_pool + endpoints_found))
-            {
-
-#if UX_DEVICE_ENDPOINT_BUFFER_OWNER == 0
-
-                /* Obtain some memory.  */
-                endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer =
-                                _ux_utility_memory_allocate(UX_NO_ALIGN, UX_CACHE_SAFE_MEMORY, UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-
-                /* Ensure we could allocate memory.  */
-                if (endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer == UX_NULL)
-                {
-                    status = UX_MEMORY_INSUFFICIENT;
-                    break;
-                }
-#endif
-
-                /* Create the semaphore for the endpoint.  */
-                status =  _ux_device_semaphore_create(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore,
-                                                    "ux_transfer_request_semaphore", 0);
-
-                /* Check completion status.  */
-                if (status != UX_SUCCESS)
-                {
-                    status = UX_SEMAPHORE_ERROR;
-                    break;
-                }
-
-                /* Next endpoint.  */
-                endpoints_pool++;
-            }
-        }
-    }
-    else
-        endpoints_pool = UX_NULL;
-
-    /* Return successful completion.  */
-    if (status == UX_SUCCESS)
-        return(UX_SUCCESS);
-
-    /* Free resources when there is error.  */
-
-    /* Free device -> ux_slave_device_endpoints_pool.  */
-    if (endpoints_pool)
-    {
-
-        /* In error cases creating endpoint resources, endpoints_pool is endpoint that failed.
-         * Previously allocated things should be freed.  */
-        while(endpoints_pool >= device -> ux_slave_device_endpoints_pool)
-        {
-
-            /* Delete ux_slave_transfer_request_semaphore.  */
-            if (_ux_device_semaphore_created(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore))
-                _ux_device_semaphore_delete(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore);
-
-#if UX_DEVICE_ENDPOINT_BUFFER_OWNER == 0
-
-            /* Free ux_slave_transfer_request_data_pointer buffer.  */
-            if (endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer)
-                _ux_utility_memory_free(endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer);
-#endif
-
-            /* Move to previous endpoint.  */
-            endpoints_pool --;
-        }
-
-        _ux_utility_memory_free(device -> ux_slave_device_endpoints_pool);
-    }
-
-    /* Free device -> ux_slave_device_interfaces_pool.  */
-    if (device -> ux_slave_device_interfaces_pool)
-        _ux_utility_memory_free(device -> ux_slave_device_interfaces_pool);
-
-    /* Free device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer.  */
-    if (device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer)
-        _ux_utility_memory_free(device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer);
-
-    /* Free _ux_system_slave -> ux_system_slave_class_array.  */
-    _ux_utility_memory_free(_ux_system_slave -> ux_system_slave_class_array);
-
-    /* Return completion status.  */
-    return(status);
+    /* No more entries in the class table.  */
+    return(UX_MEMORY_INSUFFICIENT);
 }
 
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _uxe_device_stack_initialize                        PORTABLE C      */
-/*                                                           6.3.0        */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function checks errors in device stack initialization          */
-/*    function call.                                                      */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    class_name                            Name of class                 */
-/*    class_function_entry                  Class entry function          */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    _ux_device_stack_initialize           Device Stack Initialize       */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    Application                                                         */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
-/*    DATE              NAME                      DESCRIPTION             */
-/*                                                                        */
-/*  10-31-2023     Chaoqiong Xiao           Initial Version 6.3.0         */
-/*                                                                        */
-/**************************************************************************/
-UINT  _uxe_device_stack_initialize(UCHAR * device_framework_high_speed, ULONG device_framework_length_high_speed,
-                                  UCHAR * device_framework_full_speed, ULONG device_framework_length_full_speed,
-                                  UCHAR * string_framework, ULONG string_framework_length,
-                                  UCHAR * language_id_framework, ULONG language_id_framework_length,
-                                  UINT (*ux_system_slave_change_function)(ULONG))
-{
-
-    /* Sanity checks.  */
-    if (((device_framework_high_speed == UX_NULL) && (device_framework_length_high_speed != 0)) ||
-        (device_framework_full_speed == UX_NULL) || (device_framework_length_full_speed == 0) ||
-        ((string_framework == UX_NULL) && (string_framework_length != 0)) ||
-        (language_id_framework == UX_NULL) || (language_id_framework_length == 0))
-        return(UX_INVALID_PARAMETER);
-
-    /* Invoke stack initialize function.  */
-    return(_ux_device_stack_initialize(device_framework_high_speed, device_framework_length_high_speed,
-                                       device_framework_full_speed, device_framework_length_full_speed,
-                                       string_framework, string_framework_length,
-                                       language_id_framework, language_id_framework_length,
-                                       ux_system_slave_change_function));
-}
-#endif

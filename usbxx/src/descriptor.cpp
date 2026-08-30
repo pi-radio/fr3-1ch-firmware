@@ -20,7 +20,7 @@ using namespace USBXX;
 
 extern "C" {
 /* Includes ------------------------------------------------------------------*/
-//#include "ux_device_descriptors.h"
+//#include <usbxx/ux_device_descriptors.h>
 }
 
 #ifndef   __PACKED

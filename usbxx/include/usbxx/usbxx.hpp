@@ -8,7 +8,7 @@
 #ifndef USBXX_HPP_
 #define USBXX_HPP_
 
-#include <app_usbx_device.h>
+#include <usbxx/app_usbx_device.h>
 
 #include <usbxx/device.hpp>
 #include <usbxx/cdcacm.hpp>

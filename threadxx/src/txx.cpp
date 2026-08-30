@@ -7,8 +7,6 @@
 #include "app_threadx.h"
 #include "stm32h5xx_hal.h"
 
-#include "app_usbx_device.h"
-#include "usbpd.h"
 
 #include <stdint.h>
 

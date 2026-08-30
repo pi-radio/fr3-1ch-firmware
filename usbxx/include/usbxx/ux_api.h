@@ -160,7 +160,7 @@ extern   "C" {
 
 /* Include USBX port specific file.  */
 
-#include "ux_port.h"
+#include <usbxx/ux_port.h>
 
 /* Process compile options:
  *
@@ -2527,12 +2527,8 @@ typedef struct UX_MEMORY_BYTE_POOL_STRUCT
 
 typedef struct UX_SYSTEM_STRUCT
 {
-    UX_MEMORY_BYTE_POOL *ux_system_memory_byte_pool[UX_MEMORY_BYTE_POOL_NUM];
-
     UINT            ux_system_thread_lowest_priority;
-#if !defined(UX_STANDALONE)
     UX_MUTEX        ux_system_mutex;
-#endif
 
 #ifndef UX_DISABLE_ERROR_HANDLER
     UINT            ux_system_last_error;
@@ -2943,8 +2939,8 @@ UINT    ux_device_stack_transfer_run(UX_SLAVE_TRANSFER *transfer_request, ULONG 
 
 /* Include USBX utility and system file.  */
 
-#include "ux_utility.h"
-#include "ux_system.h"
+#include <usbxx/ux_utility.h>
+#include <usbxx/ux_system.h>
 
 
 
