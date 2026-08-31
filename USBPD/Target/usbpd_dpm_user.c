@@ -121,13 +121,13 @@ static uint32_t recieved_src_PDO[9];
   * @brief  Initialize DPM (port power role, PWR_IF, CAD and PE Init procedures)
   * @retval USBPD Status
   */
+
+
 USBPD_StatusTypeDef USBPD_DPM_UserInit(void)
 {
 /* USER CODE BEGIN USBPD_DPM_UserInit */
-  USBPD_dbgprintf("USBPD User Init\r\n");
   if(USBPD_OK !=  USBPD_PWR_IF_Init())
   {
-    USBPD_dbgprintf("USBPD User Init FAILED\r\n");
     return USBPD_ERROR;
   }
 
@@ -142,9 +142,7 @@ USBPD_StatusTypeDef USBPD_DPM_UserInit(void)
   */
 void USBPD_DPM_WaitForTime(uint32_t time)
 {
-  USBPD_dbgprintf("USBPD User wait: %u\r\n", time);
   tx_thread_sleep(time);
-  USBPD_dbgprintf("USBPD User wait end: %u\r\n", time);
 }
 
 /**
@@ -154,9 +152,6 @@ void USBPD_DPM_WaitForTime(uint32_t time)
   */
 void USBPD_DPM_UserExecute(void const *argument)
 {
-/* USER CODE BEGIN USBPD_DPM_UserExecute */
-  USBPD_dbgprintf("USBPD User Execute: %p\r\n", argument);
-/* USER CODE END USBPD_DPM_UserExecute */
 }
 
 /**
@@ -171,16 +166,14 @@ void USBPD_DPM_UserCableDetection(uint8_t PortNum, USBPD_CAD_EVENT State)
 
   switch(State) {
   case USBPD_CAD_EVENT_DETACHED:
-    dbgprint("Cable Detached\r\n");
     power_off();
     break;
 
   case USBPD_CAD_EVENT_ATTACHED:
-    dbgprint("Cable Attached\r\n");
     break;
 
   default:
-    USBPD_dbgprintf("USBPD Cable Detection: %d\r\n", State);
+    break;
   }
 
 /* USER CODE END USBPD_DPM_UserCableDetection */
@@ -221,36 +214,28 @@ void USBPD_DPM_Notification(uint8_t PortNum, USBPD_NotifyEventValue_TypeDef Even
   switch(EventVal)
   {
   case USBPD_NOTIFY_POWER_STATE_CHANGE:
-    USBPD_dbgprintf("Power state change\r\n");
     break;
 
   case USBPD_NOTIFY_REQUEST_ACCEPTED:
-    USBPD_dbgprintf("Power request accepted\r\n");
     break;
 
   case USBPD_NOTIFY_POWER_EXPLICIT_CONTRACT :
-    USBPD_dbgprintf("Power explicit contract\r\n");
     break;
 
   case USBPD_NOTIFY_STATE_SNK_READY:
   {
-    USBPD_dbgprintf("Sink ready\r\n");
-
     schedule_power_on();
 
     break;
   }
 
   case USBPD_NOTIFY_PE_DISABLED:
-    USBPD_dbgprintf("PE Disabled\r\n");
     break;
 
   case USBPD_NOTIFY_USBSTACK_START:
-    USBPD_dbgprintf("USB stack start\r\n");
     break;
 
   case USBPD_NOTIFY_USBSTACK_STOP:
-    USBPD_dbgprintf("USB stack stop\r\n");
     break;
 
 //    case USBPD_NOTIFY_REQUEST_ACCEPTED:
@@ -284,7 +269,6 @@ void USBPD_DPM_Notification(uint8_t PortNum, USBPD_NotifyEventValue_TypeDef Even
 //    case USBPD_NOTIFY_DATAROLESWAP_UFP :
 //      break;
     default:
-      USBPD_dbgprintf("USBPD Notification: port %d event: %d\r\n", (int)PortNum, (int)EventVal);
       break;
   }
 /* USER CODE END USBPD_DPM_Notification */
@@ -300,7 +284,6 @@ void USBPD_DPM_Notification(uint8_t PortNum, USBPD_NotifyEventValue_TypeDef Even
 void USBPD_DPM_HardReset(uint8_t PortNum, USBPD_PortPowerRole_TypeDef CurrentRole, USBPD_HR_Status_TypeDef Status)
 {
 /* USER CODE BEGIN USBPD_DPM_HardReset */
-  USBPD_dbgprintf("USBPD Port %d ADVICE: update USBPD_DPM_HardReset\r\n", PortNum);
   HAL_Delay(10);
 /* USER CODE END USBPD_DPM_HardReset */
 }
@@ -317,8 +300,6 @@ void USBPD_DPM_GetDataInfo(uint8_t PortNum, USBPD_CORE_DataInfoType_TypeDef Data
 {
 /* USER CODE BEGIN USBPD_DPM_GetDataInfo */
   /* Check type of information targeted by request */
-  USBPD_dbgprintf("DPM Get Data Info: %d %d %p %d\r\n", (int)PortNum, (int)DataId, Ptr, *Size);
-
   switch(DataId)
   {
   case USBPD_CORE_DATATYPE_SNK_PDO: /*!< Handling of port Sink PDO, requested by get sink capa*/
@@ -341,7 +322,6 @@ void USBPD_DPM_GetDataInfo(uint8_t PortNum, USBPD_CORE_DataInfoType_TypeDef Data
 //  case USBPD_CORE_BATTERY_CAPABILITY:         /*!< Retrieve of Battery capability message content      */
     // break;
   default:
-    USBPD_dbgprintf("ADVICE: update USBPD_DPM_GetDataInfo:%d\r\n", DataId);
     break;
 
   }
@@ -364,7 +344,6 @@ void USBPD_DPM_SetDataInfo(uint8_t PortNum, USBPD_CORE_DataInfoType_TypeDef Data
   {
   case USBPD_CORE_DATATYPE_RDO_POSITION:      /*!< Reset the PDO position selected by the sink only */
     if (Size == 4) {
-      USBPD_dbgprintf("RDO Position: %d\r\n", (int)*Ptr);
     }
     break;
   case USBPD_CORE_DATATYPE_RCV_SRC_PDO:       /*!< Storage of Received Source PDO values        */
@@ -376,15 +355,12 @@ void USBPD_DPM_SetDataInfo(uint8_t PortNum, USBPD_CORE_DataInfoType_TypeDef Data
       memcpy(dest, Ptr, Size);
 
       for (i = 0; i < n_src_PDO; i++) {
-        USBPD_dbgprintf("PDO %d: %08x\r\n", i, recieved_src_PDO[i]);
       }
     }
     break;
   case USBPD_CORE_DATATYPE_RCV_SNK_PDO:       /*!< Storage of Received Sink PDO values          */
-    USBPD_dbgprintf("ADVICE: receive sink PDO\r\n");
     break;
   case USBPD_CORE_DATATYPE_RCV_REQ_PDO:       /*!< Storage of Received Sink PDO values          */
-    USBPD_dbgprintf("ADVICE: receive request PDO Size: %d\r\n", Size);
     break;
     // break;
 //  case USBPD_CORE_EXTENDED_CAPA:              /*!< Source Extended capability message content   */
@@ -404,7 +380,6 @@ void USBPD_DPM_SetDataInfo(uint8_t PortNum, USBPD_CORE_DataInfoType_TypeDef Data
 //  case USBPD_CORE_SNK_EXTENDED_CAPA:          /*!< Storing of Sink Extended capability message content       */
     // break;
   default:
-    USBPD_dbgprintf("ADVICE: update USBPD_DPM_SetDataInfo:%d\r\n", DataId);
     break;
   }
 /* USER CODE END USBPD_DPM_SetDataInfo */
@@ -427,11 +402,8 @@ void USBPD_DPM_SNK_EvaluateCapabilities(uint8_t PortNum, uint32_t *PtrRequestDat
   for (i = 0; i < 8; i++) {
     pdo.d32 = recieved_src_PDO[i];
 
-    USBPD_dbgprintf("DPM Evaluate: type: %d V: %d\r\n", pdo.SRCFixedPDO.FixedSupply, 50 * pdo.SRCFixedPDO.VoltageIn50mVunits);
-
     if (pdo.SRCFixedPDO.VoltageIn50mVunits * 50 == 9000) {
       idx = i + 1;
-      USBPD_dbgprintf("DPM Found 9V\r\n", pdo.SRCFixedPDO.FixedSupply, pdo.SRCFixedPDO.VoltageIn50mVunits);
     }
   }
 
@@ -448,8 +420,6 @@ void USBPD_DPM_SNK_EvaluateCapabilities(uint8_t PortNum, uint32_t *PtrRequestDat
   *PtrRequestData = rdo.d32;
 
   //expected_voltage = 9000;
-
-  USBPD_dbgprintf("DPM Evaluate Capabilities: %d\r\n", (int)PortNum);
 /* USER CODE END USBPD_DPM_SNK_EvaluateCapabilities */
 }
 
@@ -511,7 +481,6 @@ void USBPD_DPM_EnterErrorRecovery(uint8_t PortNum)
 {
 /* USER CODE BEGIN USBPD_DPM_EnterErrorRecovery */
   /* Inform CAD to enter recovery mode */
-  USBPD_dbgprintf("USBPD CAD Error Recovery: %d\n", PortNum);
   USBPD_CAD_EnterErrorRecovery(PortNum);
 /* USER CODE END USBPD_DPM_EnterErrorRecovery */
 }
@@ -560,9 +529,7 @@ USBPD_FunctionalState USBPD_DPM_IsPowerReady(uint8_t PortNum, USBPD_VSAFE_Status
 /* USER CODE BEGIN USBPD_DPM_IsPowerReady */
   USBPD_FunctionalState retval = ((USBPD_OK == USBPD_PWR_IF_SupplyReady(PortNum, Vsafe)) ? USBPD_ENABLE : USBPD_DISABLE);
 
-  USBPD_dbgprintf("USBPD IsPowerReady %d\r\n", retval);
-
-  return USBPD_ENABLE;
+  return retval;
 /* USER CODE END USBPD_DPM_IsPowerReady */
 }
 
@@ -582,7 +549,6 @@ USBPD_FunctionalState USBPD_DPM_IsPowerReady(uint8_t PortNum, USBPD_VSAFE_Status
 USBPD_StatusTypeDef USBPD_DPM_RequestHardReset(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_HardReset(PortNum);
-  USBPD_dbgprintf("USBPD Request Hard Reset\r\n");
   return _status;
 }
 
@@ -596,7 +562,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestHardReset(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestCableReset(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CableReset(PortNum);
-  USBPD_dbgprintf("USBPD Request Cable Reset\n");
   return _status;
 }
 
@@ -608,7 +573,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestCableReset(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestGotoMin(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GOTOMIN, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("USBPD Request Goro min\r\n");
   return _status;
 }
 
@@ -622,7 +586,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGotoMin(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestPing(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_PING, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("USBPD Request Ping\r\n");
   return _status;
 }
 
@@ -636,11 +599,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestPing(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestMessageRequest(uint8_t PortNum, uint8_t IndexSrcPDO, uint16_t RequestedVoltage)
 {
   USBPD_StatusTypeDef _status = USBPD_ERROR;
-/* USER CODE BEGIN USBPD_DPM_RequestMessageRequest */
-  /* To be adapted to call the PE function */
-  /*       _status = USBPD_PE_Send_Request(PortNum, rdo.d32, pdo_object);*/
-  USBPD_dbgprintf("USBPD Request Message Request\r\n");
-/* USER CODE END USBPD_DPM_RequestMessageRequest */
 
   return _status;
 }
@@ -653,7 +611,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestMessageRequest(uint8_t PortNum, uint8_t Ind
 USBPD_StatusTypeDef USBPD_DPM_RequestGetSourceCapability(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_SRC_CAP, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("USBPD: Get Source Capability\r\n");
   return _status;
 }
 
@@ -665,7 +622,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetSourceCapability(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestGetSinkCapability(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_SNK_CAP, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("USBPD: Get Sink Capability\r\n");
   return _status;
 }
 
@@ -677,7 +633,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetSinkCapability(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestDataRoleSwap(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_DR_SWAP, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("USBPD: DRS\r\n");
   return _status;
 }
 
@@ -688,7 +643,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestDataRoleSwap(uint8_t PortNum)
   */
 USBPD_StatusTypeDef USBPD_DPM_RequestPowerRoleSwap(uint8_t PortNum)
 {
-  USBPD_dbgprintf("USBPD: PRS\r\n");
   return USBPD_ERROR;
 }
 
@@ -700,7 +654,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestPowerRoleSwap(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestVconnSwap(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_VCONN_SWAP, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("USBPD: Vconn\r\n");
   return _status;
 }
 
@@ -713,7 +666,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestVconnSwap(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestSoftReset(uint8_t PortNum, USBPD_SOPType_TypeDef SOPType)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_SOFT_RESET, SOPType);
-  USBPD_dbgprintf("USBPD: Soft Reset\r\n");
   return _status;
 }
 
@@ -726,7 +678,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestSourceCapability(uint8_t PortNum)
 {
   /* PE will directly get the PDO saved in structure @ref PWR_Port_PDO_Storage */
   USBPD_StatusTypeDef _status = USBPD_PE_Request_DataMessage(PortNum, USBPD_DATAMSG_SRC_CAPABILITIES, NULL);
-  USBPD_dbgprintf("USBPD: SRC Cap\r\n");
   return _status;
 }
 
@@ -745,7 +696,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestVDM_DiscoveryIdentify(uint8_t PortNum, USBP
     _status = USBPD_PE_SVDM_RequestIdentity(PortNum, SOPType);
   }
 /* USER CODE END USBPD_DPM_RequestVDM_DiscoveryIdentify */
-  USBPD_dbgprintf("USBPD: Discovery Identity\r\n");
   return _status;
 }
 
@@ -758,7 +708,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestVDM_DiscoveryIdentify(uint8_t PortNum, USBP
 USBPD_StatusTypeDef USBPD_DPM_RequestVDM_DiscoverySVID(uint8_t PortNum, USBPD_SOPType_TypeDef SOPType)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SVDM_RequestSVID(PortNum, SOPType);
-  USBPD_dbgprintf("USBPD: Discovery SVID\r\n");
   return _status;
 }
 
@@ -772,7 +721,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestVDM_DiscoverySVID(uint8_t PortNum, USBPD_SO
 USBPD_StatusTypeDef USBPD_DPM_RequestVDM_DiscoveryMode(uint8_t PortNum, USBPD_SOPType_TypeDef SOPType, uint16_t SVID)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SVDM_RequestMode(PortNum, SOPType, SVID);
-  USBPD_dbgprintf("USBPD: Discovery Mode\r\n");
   return _status;
 }
 
@@ -787,7 +735,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestVDM_DiscoveryMode(uint8_t PortNum, USBPD_SO
 USBPD_StatusTypeDef USBPD_DPM_RequestVDM_EnterMode(uint8_t PortNum, USBPD_SOPType_TypeDef SOPType, uint16_t SVID, uint8_t ModeIndex)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SVDM_RequestModeEnter(PortNum, SOPType, SVID, ModeIndex);
-  USBPD_dbgprintf("USBPD: Enter VDM\r\n");
   return _status;
 }
 
@@ -802,7 +749,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestVDM_EnterMode(uint8_t PortNum, USBPD_SOPTyp
 USBPD_StatusTypeDef USBPD_DPM_RequestVDM_ExitMode(uint8_t PortNum, USBPD_SOPType_TypeDef SOPType, uint16_t SVID, uint8_t ModeIndex)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SVDM_RequestModeExit(PortNum, SOPType, SVID, ModeIndex);
-  USBPD_dbgprintf("USBPD: Exit VDM\r\n");
   return _status;
 }
 
@@ -821,7 +767,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestDisplayPortStatus(uint8_t PortNum, USBPD_SO
   /*USBPD_VDM_FillDPStatus(PortNum, (USBPD_DPStatus_TypeDef*)pDPStatus);*/
 /* USER CODE END USBPD_DPM_RequestDisplayPortStatus */
   _status = USBPD_PE_SVDM_RequestSpecific(PortNum, SOPType, SVDM_SPECIFIC_1, SVID);
-  USBPD_dbgprintf("Display Port status not accepted by the stack\r\n");
   return _status;
 }
 /**
@@ -839,7 +784,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestDisplayPortConfig(uint8_t PortNum, USBPD_SO
   /*USBPD_VDM_FillDPConfig(PortNum, (USBPD_DPConfig_TypeDef*)pDPConfig);*/
 /* USER CODE END USBPD_DPM_RequestDisplayPortConfig */
   _status = USBPD_PE_SVDM_RequestSpecific(PortNum, SOPType, SVDM_SPECIFIC_2, SVID);
-  USBPD_dbgprintf("Display Port Config not accepted by the stack\r\n");
   return _status;
 }
 
@@ -853,7 +797,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestDisplayPortConfig(uint8_t PortNum, USBPD_SO
 USBPD_StatusTypeDef USBPD_DPM_RequestAttention(uint8_t PortNum, USBPD_SOPType_TypeDef SOPType, uint16_t SVID)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SVDM_RequestAttention(PortNum, SOPType, SVID);
-  USBPD_dbgprintf("VDM ATTENTION not accepted by the stack\r\n");
   return _status;
 }
 
@@ -866,7 +809,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestAttention(uint8_t PortNum, USBPD_SOPType_Ty
 USBPD_StatusTypeDef USBPD_DPM_RequestAlert(uint8_t PortNum, USBPD_ADO_TypeDef Alert)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_DataMessage(PortNum, USBPD_DATAMSG_ALERT, (uint32_t*)&Alert.d32);
-  USBPD_dbgprintf("ALERT not accepted by the stack\r\n");
   return _status;
 }
 
@@ -878,7 +820,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestAlert(uint8_t PortNum, USBPD_ADO_TypeDef Al
 USBPD_StatusTypeDef USBPD_DPM_RequestGetSourceCapabilityExt(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_SRC_CAPEXT, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("GET_SRC_CAPA_EXT not accepted by the stack\r\n");
   return _status;
 }
 
@@ -890,7 +831,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetSourceCapabilityExt(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestGetSinkCapabilityExt(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_SNK_CAPEXT, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("GET_SINK_CAPA_EXT not accepted by the stack\r\n");
   return _status;
 }
 
@@ -908,7 +848,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetManufacturerInfo(uint8_t PortNum, USBPD_
   {
     _status = USBPD_PE_SendExtendedMessage(PortNum, SOPType, USBPD_EXT_GET_MANUFACTURER_INFO, (uint8_t*)pManuInfoData, sizeof(USBPD_GMIDB_TypeDef));
   }
-  USBPD_dbgprintf("GET_MANU_INFO not accepted by the stack\r\n");
   return _status;
 }
 
@@ -920,7 +859,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetManufacturerInfo(uint8_t PortNum, USBPD_
 USBPD_StatusTypeDef USBPD_DPM_RequestGetPPS_Status(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_PPS_STATUS, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("GET_PPS_STATUS not accepted by the stack\r\n");
   return _status;
 }
 
@@ -932,7 +870,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetPPS_Status(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestGetStatus(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_STATUS, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("GET_STATUS not accepted by the stack\r\n");
   return _status;
 }
 
@@ -944,7 +881,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetStatus(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestFastRoleSwap(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_FR_SWAP, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("FRS not accepted by the stack\r\n");
   return _status;
 }
 
@@ -956,7 +892,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestFastRoleSwap(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestGetCountryCodes(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_CtrlMessage(PortNum, USBPD_CONTROLMSG_GET_COUNTRY_CODES, USBPD_SOPTYPE_SOP);
-  USBPD_dbgprintf("GET_COUNTRY_CODES not accepted by the stack\r\n");
   return _status;
 }
 
@@ -969,7 +904,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetCountryCodes(uint8_t PortNum)
 USBPD_StatusTypeDef USBPD_DPM_RequestGetCountryInfo(uint8_t PortNum, uint16_t CountryCode)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_Request_DataMessage(PortNum, USBPD_DATAMSG_GET_COUNTRY_INFO, (uint32_t*)&CountryCode);
-  USBPD_dbgprintf("GET_COUNTRY_INFO not accepted by the stack\r\n");
   return _status;
 }
 
@@ -982,7 +916,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetCountryInfo(uint8_t PortNum, uint16_t Co
 USBPD_StatusTypeDef USBPD_DPM_RequestGetBatteryCapability(uint8_t PortNum, uint8_t *pBatteryCapRef)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SendExtendedMessage(PortNum, USBPD_SOPTYPE_SOP, USBPD_EXT_GET_BATTERY_CAP, (uint8_t*)pBatteryCapRef, 1);
-  USBPD_dbgprintf("GET_BATTERY_CAPA not accepted by the stack\r\n");
   return _status;
 }
 
@@ -995,7 +928,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetBatteryCapability(uint8_t PortNum, uint8
 USBPD_StatusTypeDef USBPD_DPM_RequestGetBatteryStatus(uint8_t PortNum, uint8_t *pBatteryStatusRef)
 {
   USBPD_StatusTypeDef _status = USBPD_PE_SendExtendedMessage(PortNum, USBPD_SOPTYPE_SOP, USBPD_EXT_GET_BATTERY_STATUS, (uint8_t*)pBatteryStatusRef, 1);
-  USBPD_dbgprintf("GET_BATTERY_STATUS not accepted by the stack\r\n");
   return _status;
 }
 
@@ -1007,7 +939,6 @@ USBPD_StatusTypeDef USBPD_DPM_RequestGetBatteryStatus(uint8_t PortNum, uint8_t *
 USBPD_StatusTypeDef USBPD_DPM_RequestSecurityRequest(uint8_t PortNum)
 {
   USBPD_StatusTypeDef _status = USBPD_ERROR;
-  USBPD_dbgprintf("SECURITY_REQUEST not accepted by the stack\r\n");
   return _status;
 }
 

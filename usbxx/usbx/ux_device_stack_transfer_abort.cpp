@@ -80,6 +80,6 @@ USBXX::DCD    *dcd;
     }
 
     /* This function never fails.  */
-    return(UX_SUCCESS);       
+    return 0;       
 }
 

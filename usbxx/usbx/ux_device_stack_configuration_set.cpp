@@ -42,8 +42,8 @@ UCHAR *                         device_framework;
 ULONG                           device_framework_length;
 ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
-UX_CONFIGURATION_DESCRIPTOR     configuration_descriptor = { 0 };
-UX_INTERFACE_DESCRIPTOR         interface_descriptor;
+ConfigurationDescriptor     configuration_descriptor = { 0 };
+InterfaceDescriptor         interface_descriptor;
 UX_SLAVE_INTERFACE              *interface_ptr; 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
 UX_SLAVE_INTERFACE              *next_interface; 
@@ -51,7 +51,6 @@ UX_SLAVE_INTERFACE              *next_interface;
 UX_SLAVE_CLASS                  *class_inst;
 UX_SLAVE_CLASS                  *current_class =  nullptr;
 UX_SLAVE_CLASS_COMMAND          class_command;
-UX_SLAVE_DEVICE                 *device;
 ULONG                           iad_flag;
 ULONG                           iad_first_interface =  0;
 ULONG                           iad_number_interfaces =  0;
@@ -67,14 +66,14 @@ ULONG                           class_index;
     dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
     
     /* Reset the IAD flag.  */
     iad_flag =  UX_FALSE;
 
     /* If the configuration value is already selected, keep it.  */
     if (device -> ux_slave_device_configuration_selected == configuration_value)
-        return(UX_SUCCESS);
+        return 0;
 
     /* We may have multiple configurations !, the index will tell us what
        configuration descriptor we need to return.  */
@@ -93,13 +92,9 @@ ULONG                           class_index;
         /* Check if this is a configuration descriptor.  */
         if (descriptor_type == UX_CONFIGURATION_DESCRIPTOR_ITEM)
         {
-            /* Parse the descriptor in something more readable.  */
-            _ux_utility_descriptor_parse(device_framework,
-                        _ux_system_configuration_descriptor_structure,
-                        UX_CONFIGURATION_DESCRIPTOR_ENTRIES,
-                        (UCHAR *) &configuration_descriptor);
+          configuration_descriptor = read_in_descriptor<ConfigurationDescriptor>(device_framework);
 
-            /* Now we need to check the configuration value. It has
+          /* Now we need to check the configuration value. It has
                to be the same as the one specified in the setup function.  */
             if (configuration_descriptor.bConfigurationValue == configuration_value)
                 /* The configuration is found. */
@@ -171,17 +166,12 @@ ULONG                           class_index;
 
     /* If the host tries to unconfigure, we are done. */
     if (configuration_value == 0)
-        return(UX_SUCCESS);
+        return 0;
 
     /* Memorize the configuration selected.  */
     device -> ux_slave_device_configuration_selected =  configuration_value;
 
-    /* We have found the configuration value requested by the host.
-       Create the configuration descriptor and attach it to the device.  */
-    _ux_utility_descriptor_parse(device_framework,
-                _ux_system_configuration_descriptor_structure,
-                UX_CONFIGURATION_DESCRIPTOR_ENTRIES,
-                (UCHAR *) &device -> ux_slave_device_configuration_descriptor);
+    device->ux_slave_device_configuration_descriptor = read_in_descriptor<ConfigurationDescriptor>(device_framework);
 
     /* Configuration character D6 is for Self-powered */
     _ux_system_slave -> ux_system_slave_power_state = (configuration_descriptor.bmAttributes & 0x40) ? UX_DEVICE_SELF_POWERED : UX_DEVICE_BUS_POWERED;
@@ -221,12 +211,7 @@ ULONG                           class_index;
         /* Check if this is an interface descriptor.  */
         if(descriptor_type == UX_INTERFACE_DESCRIPTOR_ITEM)
         {
-
-            /* Parse the descriptor in something more readable.  */
-            _ux_utility_descriptor_parse(device_framework,
-                        _ux_system_interface_descriptor_structure,
-                        UX_INTERFACE_DESCRIPTOR_ENTRIES,
-                        (UCHAR *) &interface_descriptor);
+          interface_descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
 
             /* If the alternate setting is 0 for this interface, we need to
                memorize its class association and start it.  */
@@ -351,6 +336,6 @@ ULONG                           class_index;
     dcd->on_state_change(UX_DEVICE_CONFIGURED);
 
     /* Configuration mounted. */
-    return(UX_SUCCESS);
+    return 0;
 }
 

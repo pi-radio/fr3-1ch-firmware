@@ -84,9 +84,8 @@ UINT  _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *interface_ptr)
 {
 
 USBXX::DCD            *dcd;
-UX_SLAVE_DEVICE         *device;
-UX_SLAVE_ENDPOINT       *endpoint;
-UX_SLAVE_ENDPOINT       *next_endpoint;
+Endpoint       *endpoint;
+Endpoint       *next_endpoint;
 
     /* If trace is enabled, register this object.  */
     UX_TRACE_OBJECT_UNREGISTER(interface_ptr);
@@ -95,7 +94,7 @@ UX_SLAVE_ENDPOINT       *next_endpoint;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INTERFACE_DELETE, interface_ptr, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Find the first endpoints associated with this interface.  */    
     next_endpoint =  interface_ptr -> ux_slave_interface_first_endpoint;        
@@ -117,7 +116,7 @@ UX_SLAVE_ENDPOINT       *next_endpoint;
         dcd->destroy_endpoint(endpoint);
 
         /* Free the endpoint.  */
-        endpoint -> ux_slave_endpoint_status =  UX_UNUSED;
+        endpoint->used = false;
 
         /* Make sure the endpoint instance is now cleaned up.  */
         endpoint -> ux_slave_endpoint_state =  0;
@@ -138,6 +137,6 @@ UX_SLAVE_ENDPOINT       *next_endpoint;
     interface_ptr -> ux_slave_interface_status         =  UX_UNUSED;
 
     /* Return successful completion.  */    
-    return(UX_SUCCESS);       
+    return 0;       
 }
 

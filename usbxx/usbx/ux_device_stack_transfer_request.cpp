@@ -50,26 +50,26 @@ UINT            status;
         return(transfer_request -> ux_slave_transfer_request_completion_code);
 
     /* Started/done, things will be done in BG  */
-    return(UX_SUCCESS);
+    return 0;
 #else
 UX_INTERRUPT_SAVE_AREA
 
 USBXX::DCD            *dcd;
 UINT                    status;
-UX_SLAVE_ENDPOINT       *endpoint;
+Endpoint       *endpoint;
 ULONG                   device_state;
 
 
     /* Do we have to skip this transfer?  */
     if (transfer_request -> ux_slave_transfer_request_status_phase_ignore == UX_TRUE)
-        return(UX_SUCCESS);
+        return 0;
 
     /* Disable interrupts to prevent the disconnection ISR from preempting us
        while we check the device state and set the transfer status.  */
     UX_DISABLE
 
     /* Get the device state.  */
-    device_state =  _ux_system_slave -> ux_system_slave_device.ux_slave_device_state;
+    device_state =  _ux_system_slave->device->ux_slave_device_state;
 
     /* We can only transfer when the device is ATTACHED, ADDRESSED OR CONFIGURED.  */
     if ((device_state == UX_DEVICE_ATTACHED) || (device_state == UX_DEVICE_ADDRESSED)

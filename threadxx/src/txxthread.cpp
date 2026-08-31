@@ -15,12 +15,12 @@ TXX::ThreadBase::ThreadBase(const std::string &name,
     int preempt,
     int timeslice,
     bool autostart) : _name(name),
-        _stack(stack),
-        _stack_size(stack_size),
-        _priority(priority),
-        _preempt(preempt),
-        _timeslice(timeslice),
-        _autostart(autostart)
+    _priority(priority),
+    _preempt(preempt),
+    _autostart(autostart),
+    _timeslice(timeslice),
+    _stack(stack),
+    _stack_size(stack_size)
 {
 }
 

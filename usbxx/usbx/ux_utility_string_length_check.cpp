@@ -112,6 +112,6 @@ UINT    string_length;
     if (string_length_ptr)
         *string_length_ptr = string_length;
 
-    return(UX_SUCCESS); 
+    return 0; 
 }
 

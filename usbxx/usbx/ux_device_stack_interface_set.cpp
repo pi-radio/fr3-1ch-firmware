@@ -38,39 +38,26 @@ using namespace USBXX;
 UINT  _ux_device_stack_interface_set(UCHAR * device_framework, ULONG device_framework_length,
                                                     ULONG alternate_setting_value)
 {
-
-USBXX::DCD            *dcd;
-UX_SLAVE_DEVICE         *device;
 UX_SLAVE_TRANSFER       *transfer_request;
 UX_SLAVE_INTERFACE      *interface_ptr;
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
 UX_SLAVE_INTERFACE      *interface_link;
 ULONG                   interfaces_pool_number;
-#endif
-UX_SLAVE_ENDPOINT       *endpoint;
-UX_SLAVE_ENDPOINT       *endpoint_link;
+Endpoint       *endpoint;
+Endpoint       *endpoint_link;
 ULONG                   descriptor_length;
 UCHAR                   descriptor_type;
-ULONG                   endpoints_pool_number;
 UINT                    status;
 ULONG                   max_transfer_length, n_trans;
 
-    UX_PARAMETER_NOT_USED(alternate_setting_value);
-
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INTERFACE_SET, alternate_setting_value, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the DCD.  */
-    dcd = STM32::gDCD;
-
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave ->device;
+
+    auto dcd = device->get_dcd();
 
     /* Find a free interface in the pool and hook it to the 
        existing interface.  */
     interface_ptr = device -> ux_slave_device_interfaces_pool;
 
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
     interfaces_pool_number = device -> ux_slave_device_interfaces_pool_number;
     while (interfaces_pool_number != 0)
     {
@@ -87,28 +74,12 @@ ULONG                   max_transfer_length, n_trans;
 
     /* Did we find a free interface ?  */
     if (interfaces_pool_number == 0)
-        return(UX_MEMORY_INSUFFICIENT);
-#else
-
-    /* Check if this interface is free.  */
-    if (interface_ptr -> ux_slave_interface_status != UX_UNUSED)
-        return(UX_MEMORY_INSUFFICIENT);
-    
-#endif
+      throw std::runtime_error("Unable to allocate interface");
 
     /* Mark this interface as used now.  */
     interface_ptr -> ux_slave_interface_status = UX_USED;
 
-    /* If trace is enabled, register this object.  */
-    UX_TRACE_OBJECT_REGISTER(UX_TRACE_DEVICE_OBJECT_TYPE_INTERFACE, interface_ptr, 0, 0, 0)
-
-    /* Parse the descriptor in something more readable.  */
-    _ux_utility_descriptor_parse(device_framework,
-                _ux_system_interface_descriptor_structure,
-                UX_INTERFACE_DESCRIPTOR_ENTRIES,
-                (UCHAR *) &interface_ptr -> ux_slave_interface_descriptor);
-
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
+    interface_ptr -> ux_slave_interface_descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
 
     /* Attach this interface to the end of the interface chain.  */
     if (device -> ux_slave_device_first_interface == nullptr)
@@ -124,11 +95,7 @@ ULONG                   max_transfer_length, n_trans;
             interface_link =  interface_link -> ux_slave_interface_next_interface;
         interface_link -> ux_slave_interface_next_interface =  interface_ptr;
     }
-#else
 
-    /* It must be very first one.  */
-    device -> ux_slave_device_first_interface = interface_ptr;
-#endif
 
     /* Point beyond the interface descriptor.  */
     device_framework_length -=  (ULONG) *device_framework;
@@ -149,37 +116,12 @@ ULONG                   max_transfer_length, n_trans;
         {
 
         case UX_ENDPOINT_DESCRIPTOR_ITEM:
-
+        {
+          EndpointDescriptor desc = USBXX::read_in_descriptor<EndpointDescriptor>(device_framework);
             /* Find a free endpoint in the pool and hook it to the 
                existing interface after it's created by DCD.  */
-            endpoint = device -> ux_slave_device_endpoints_pool;
-            endpoints_pool_number = device -> ux_slave_device_endpoints_pool_number;
-            while (endpoints_pool_number != 0)
-            {
-                /* Check if this endpoint is free.  */
-                if (endpoint ->    ux_slave_endpoint_status == UX_UNUSED)
-                {
-                    /* Mark this endpoint as used now.  */
-                    endpoint ->    ux_slave_endpoint_status = UX_USED;
-                    break;
-                }
-            
-                /* Try the next endpoint.  */
-                endpoint++;
-                
-                /* Decrement the number of endpoints to scan from the pool.  */
-               endpoints_pool_number--; 
-            }
 
-            /* Did we find a free endpoint ?  */
-            if (endpoints_pool_number == 0)
-                return(UX_MEMORY_INSUFFICIENT);
-
-            /* Parse the descriptor in something more readable.  */
-            _ux_utility_descriptor_parse(device_framework,
-                            _ux_system_endpoint_descriptor_structure,
-                            UX_ENDPOINT_DESCRIPTOR_ENTRIES,
-                            (UCHAR *) &endpoint -> ux_slave_endpoint_descriptor);
+          endpoint = dcd->allocate_endpoint(desc);
 
             /* Now we create a transfer request to accept transfer on this endpoint.  */
             transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
@@ -228,7 +170,7 @@ ULONG                   max_transfer_length, n_trans;
             {
 
                 /* Error was returned, endpoint cannot be created.  */
-                endpoint -> ux_slave_endpoint_status = UX_UNUSED;
+                endpoint->used = false;
                 return(status);
             }
 
@@ -246,7 +188,8 @@ ULONG                   max_transfer_length, n_trans;
                     endpoint_link =  endpoint_link -> ux_slave_endpoint_next_endpoint;
                 endpoint_link -> ux_slave_endpoint_next_endpoint =  endpoint;
             }
-            break;
+        }
+        break;
 
         case UX_CONFIGURATION_DESCRIPTOR_ITEM:
         case UX_INTERFACE_DESCRIPTOR_ITEM:

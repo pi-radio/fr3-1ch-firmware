@@ -36,8 +36,6 @@ using namespace USBXX;
 
 UINT  _ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value)
 {
-
-UX_SLAVE_DEVICE                 *device;
 UX_SLAVE_INTERFACE              *interface_ptr;
 #if !defined(UX_DEVICE_ALTERNATE_SETTING_SUPPORT_DISABLE)
 USBXX::DCD                    *dcd;
@@ -46,12 +44,11 @@ UCHAR                           *device_framework;
 ULONG                           device_framework_length;
 ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
-UX_CONFIGURATION_DESCRIPTOR     configuration_descriptor;
-UX_INTERFACE_DESCRIPTOR         interface_descriptor;
-UX_SLAVE_ENDPOINT               *endpoint;
-UX_SLAVE_ENDPOINT               *next_endpoint;
-UX_SLAVE_ENDPOINT               *endpoint_link;
-ULONG                            endpoints_pool_number;
+ConfigurationDescriptor     configuration_descriptor;
+InterfaceDescriptor         interface_descriptor;
+Endpoint               *endpoint;
+Endpoint               *next_endpoint;
+Endpoint               *endpoint_link;
 UX_SLAVE_CLASS_COMMAND          class_command;
 UX_SLAVE_CLASS                  *class_ptr;
 UINT                            status;
@@ -62,7 +59,7 @@ ULONG                           max_transfer_length, n_trans;
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_ALTERNATE_SETTING_SET, interface_value, alternate_setting_value, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the device. */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Protocol error must be reported when it's unconfigured */
     if (device -> ux_slave_device_state != UX_DEVICE_CONFIGURED)
@@ -71,7 +68,6 @@ ULONG                           max_transfer_length, n_trans;
     /* Find the current interface.  */
     interface_ptr =  device -> ux_slave_device_first_interface;
 
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
     /* Scan all interfaces if any. */
     while (interface_ptr != nullptr)
     {
@@ -81,29 +77,18 @@ ULONG                           max_transfer_length, n_trans;
         else
             interface_ptr =  interface_ptr -> ux_slave_interface_next_interface;
     }
-#else
-    if (interface_ptr -> ux_slave_interface_descriptor.bInterfaceNumber != interface_value)
-        interface_ptr = nullptr;
-#endif
 
     /* We must have found the interface pointer for the interface value
        requested by the caller.  */
     if (interface_ptr == nullptr)
     {
-
-        /* Error trap. */
-        _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_CLASS, UX_INTERFACE_HANDLE_UNKNOWN);
-
-        /* If trace is enabled, insert this event into the trace buffer.  */
-        UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_INTERFACE_HANDLE_UNKNOWN, interface_ptr, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-        return(UX_INTERFACE_HANDLE_UNKNOWN);
+      throw std::runtime_error("Unable to find interface");
     }
 
     /* If the host is requesting a change of alternate setting to the current one,
        we do not need to do any work.  */
     if (interface_ptr -> ux_slave_interface_descriptor.bAlternateSetting == alternate_setting_value)
-        return(UX_SUCCESS);       
+        return 0;       
 
 #if defined(UX_DEVICE_ALTERNATE_SETTING_SUPPORT_DISABLE)
 
@@ -136,12 +121,8 @@ ULONG                           max_transfer_length, n_trans;
         /* Check if this is a configuration descriptor. */
         if (descriptor_type == UX_CONFIGURATION_DESCRIPTOR_ITEM)
         {
-
             /* Parse the descriptor in something more readable. */
-            _ux_utility_descriptor_parse(device_framework,
-                        _ux_system_configuration_descriptor_structure,
-                        UX_CONFIGURATION_DESCRIPTOR_ENTRIES,
-                        (UCHAR *) &configuration_descriptor);
+            configuration_descriptor = read_in_descriptor<ConfigurationDescriptor>(device_framework);
 
             /* Now we need to check the configuration value.  */
             if (configuration_descriptor.bConfigurationValue == device -> ux_slave_device_configuration_selected)
@@ -166,12 +147,7 @@ ULONG                           max_transfer_length, n_trans;
                     /* Check if this is an interface descriptor. */
                     if (descriptor_type == UX_INTERFACE_DESCRIPTOR_ITEM)
                     {
-
-                        /* Parse the descriptor in something more readable. */
-                        _ux_utility_descriptor_parse(device_framework,
-                                    _ux_system_interface_descriptor_structure,
-                                    UX_INTERFACE_DESCRIPTOR_ENTRIES,
-                                    (UCHAR *) &interface_descriptor);
+                      interface_descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
 
                         /* Check if this is the interface we are searching. */
                         if (interface_descriptor.bInterfaceNumber == interface_value &&
@@ -195,7 +171,7 @@ ULONG                           max_transfer_length, n_trans;
                                 next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
                 
                                 /* Free the endpoint.  */
-                                endpoint -> ux_slave_endpoint_status =  UX_UNUSED;
+                                endpoint->used = false;
                         
                                 /* Make sure the endpoint instance is now cleaned up.  */
                                 endpoint -> ux_slave_endpoint_state =  0;
@@ -229,37 +205,14 @@ ULONG                           max_transfer_length, n_trans;
                                 {
                         
                                 case UX_ENDPOINT_DESCRIPTOR_ITEM:
-                        
+                                {
+                                  USBXX::EndpointDescriptor desc;
+
+                                  desc = USBXX::read_in_descriptor<EndpointDescriptor>(device_framework);
+
                                     /* Find a free endpoint in the pool and hook it to the 
                                        existing interface after it's created by DCD.  */
-                                    endpoint = device -> ux_slave_device_endpoints_pool;
-                                    endpoints_pool_number = device -> ux_slave_device_endpoints_pool_number;
-                                    while (endpoints_pool_number != 0)
-                                    {
-                                        /* Check if this endpoint is free.  */
-                                        if (endpoint ->    ux_slave_endpoint_status == UX_UNUSED)
-                                        {
-                                            /* Mark this endpoint as used now.  */
-                                            endpoint ->    ux_slave_endpoint_status = UX_USED;
-                                            break;
-                                        }
-                                    
-                                        /* Try the next endpoint.  */
-                                        endpoint++;
-                                        
-                                        /* Decrement the number of endpoints to scan from the pool.  */
-                                       endpoints_pool_number--; 
-                                    }
-                        
-                                    /* Did we find a free endpoint ?  */
-                                    if (endpoints_pool_number == 0)
-                                        return(UX_MEMORY_INSUFFICIENT);
-
-                                    /* Parse the descriptor in something more readable.  */
-                                    _ux_utility_descriptor_parse(device_framework,
-                                                    _ux_system_endpoint_descriptor_structure,
-                                                    UX_ENDPOINT_DESCRIPTOR_ENTRIES,
-                                                    (UCHAR *) &endpoint -> ux_slave_endpoint_descriptor);
+                                    endpoint = dcd->allocate_endpoint(desc.bEndpointAddress);
 
                                     /* Now we create a transfer request to accept transfer on this endpoint.  */
                                     transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
@@ -308,7 +261,7 @@ ULONG                           max_transfer_length, n_trans;
                                     {
 
                                         /* Error was returned, endpoint cannot be created.  */
-                                        endpoint -> ux_slave_endpoint_status = UX_UNUSED;
+                                        endpoint->used = false;
                                         return(status);
                                     }
 
@@ -326,8 +279,8 @@ ULONG                           max_transfer_length, n_trans;
                                             endpoint_link =  endpoint_link -> ux_slave_endpoint_next_endpoint;
                                         endpoint_link -> ux_slave_endpoint_next_endpoint =  endpoint;
                                     }
-                        
-                                    break;
+                                }
+                                break;
                         
                                 case UX_CONFIGURATION_DESCRIPTOR_ITEM:
                                 case UX_INTERFACE_DESCRIPTOR_ITEM:

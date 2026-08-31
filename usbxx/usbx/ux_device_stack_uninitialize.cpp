@@ -82,59 +82,32 @@
 /**************************************************************************/
 UINT  _ux_device_stack_uninitialize(VOID)
 {
-UX_SLAVE_DEVICE                 *device;
-UX_SLAVE_ENDPOINT               *endpoints_pool;
-UX_SLAVE_TRANSFER               *transfer_request;
-ULONG                           endpoints_found;
+UX_SLAVE_TRANSFER               *xfer;
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INITIALIZE, 0, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the device. */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device =  _ux_system_slave->device;
 
     /* Free class memory. */
     ::free(_ux_system_slave -> ux_system_slave_class_array);
 
     /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the 
        control endpoint. */
-    transfer_request =  &device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request;
+    xfer = device->get_control_transfer();
 
     /* Free memory for the control endpoint buffer.  */
-    ::free(transfer_request -> ux_slave_transfer_request_data_pointer);
+    ::free(xfer -> ux_slave_transfer_request_data_pointer);
 
-    /* Get the number of endpoints found in the device framework.  */
-    endpoints_found = device -> ux_slave_device_endpoints_pool_number;
     
-    /* Get the endpoint pool address in the device container.  */
-    endpoints_pool =  device -> ux_slave_device_endpoints_pool;
-
-    /* Parse all endpoints and fee memory and semaphore. */
-    while (endpoints_found-- != 0)
-    {
-
-#if UX_DEVICE_ENDPOINT_BUFFER_OWNER == 0
-
-        /* Free the memory for endpoint data pointer.  */
-        ::free(endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer);
-#endif
-
-        /* Remove the TX semaphore for the endpoint.  */
-        _ux_device_semaphore_delete(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore);
+    // TODO -- RELEASE ALL ENDPOINTS
     
-        /* Next endpoint.  */
-        endpoints_pool++;
-    }
-
-    /* Free the endpoint pool address in the device container.  */
-    if (device -> ux_slave_device_endpoints_pool)
-        ::free(device -> ux_slave_device_endpoints_pool);
-
     /* Free memory for interface pool.  */
     ::free(device -> ux_slave_device_interfaces_pool);
 
     /* Return successful completion.  */
-    return(UX_SUCCESS);
+    return 0;
 }
 
 

@@ -116,7 +116,7 @@ void HEFlash::erase_sector(uint32_t sector)
       FLASH_NS->NSCCR = FLASH_CCR_CLR_PGSERR;
   }
 
-  while ((FLASH_NS->NSSR & (FLASH_FLAG_BSY | FLASH_FLAG_DBNE) != 0));
+  while ((FLASH_NS->NSSR & (FLASH_FLAG_BSY | FLASH_FLAG_DBNE)) != 0);
 
   sector = (sector & 0x7) + 120;
 

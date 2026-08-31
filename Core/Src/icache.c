@@ -24,6 +24,8 @@
 
 /* USER CODE END 0 */
 
+void Error_Handler();
+
 /* ICACHE init function */
 void MX_ICACHE_Init(void)
 {

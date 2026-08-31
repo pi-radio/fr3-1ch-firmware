@@ -2094,53 +2094,12 @@ struct UX_HCD
 
 /* Define USBX Device Transfer Request structure.  */
 
-struct UX_SLAVE_TRANSFER
-{
-
-    ULONG           ux_slave_transfer_request_status;
-    ULONG           ux_slave_transfer_request_type;
-    UX_SLAVE_ENDPOINT
-                    *ux_slave_transfer_request_endpoint;
-    UCHAR           *ux_slave_transfer_request_data_pointer;
-    UCHAR           *ux_slave_transfer_request_current_data_pointer;
-    ULONG           ux_slave_transfer_request_requested_length;
-    ULONG           ux_slave_transfer_request_actual_length;
-    ULONG           ux_slave_transfer_request_in_transfer_length;
-    ULONG           ux_slave_transfer_request_transfer_length;
-    ULONG           ux_slave_transfer_request_completion_code;
-    ULONG           ux_slave_transfer_request_phase;
-    VOID            (*ux_slave_transfer_request_completion_function) (UX_SLAVE_TRANSFER *);
-#if defined(UX_DEVICE_STANDALONE)
-    ULONG           ux_slave_transfer_request_state;
-#else
-    UX_SEMAPHORE    ux_slave_transfer_request_semaphore;
-#endif
-    ULONG           ux_slave_transfer_request_timeout;
-    ULONG           ux_slave_transfer_request_force_zlp;
-    UCHAR           ux_slave_transfer_request_setup[UX_SETUP_SIZE];
-    ULONG           ux_slave_transfer_request_status_phase_ignore;
-};
 
 
 
 
 
-/* Define USBX Device Controller Interface structure.  */
 
-struct UX_SLAVE_INTERFACE
-{
-    ULONG           ux_slave_interface_status;
-    UX_SLAVE_CLASS
-                    *ux_slave_interface_class;
-    VOID            *ux_slave_interface_class_instance;
-
-    UX_INTERFACE_DESCRIPTOR
-                    ux_slave_interface_descriptor;
-    UX_SLAVE_INTERFACE
-                    *ux_slave_interface_next_interface;
-    UX_SLAVE_ENDPOINT
-                    *ux_slave_interface_first_endpoint;
-};
 
 
 /* Define USBX Device Controller structure.  */

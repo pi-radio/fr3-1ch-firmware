@@ -28,6 +28,8 @@
 #define GET_SPI_DEV(x)     (((x) & SPI_DEV_MASK) >> SPI_DEV_BIT_START)
 #define GET_SPI_LEN(x)     (((x) & SPI_LEN_MASK) >> SPI_LEN_BIT_START)
 
+extern void Error_Handler(void);
+extern int dbgprint(const char *, ...);
 
 typedef struct {
   ULONG cmd_flags;
@@ -143,7 +145,7 @@ static void handle_spi_cmd(spi_req_t *req)
   } else if (GET_SPI_DEV(req->dev_flags_size) == SPI_DEVICE_LTC) {
     pin = GPIO_PIN_10;
   } else {
-    printf("Invalid SPI device: %d\n", GET_SPI_DEV(req->dev_flags_size));
+    printf("Invalid SPI device: %ld\n", GET_SPI_DEV(req->dev_flags_size));
     if (req->cmd_flags & CMD_FLAG_WAIT) {
       req->data = 0xFFFFFFFF;
 

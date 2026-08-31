@@ -23,6 +23,9 @@ UX_SYSTEM *_ux_system = &ux_system;
 
 using namespace USBXX;
 
+/* Define USBX Host variable.  */
+UX_SYSTEM_SLAVE ux_system_slave;
+UX_SYSTEM_SLAVE *_ux_system_slave = &ux_system_slave;
 
 
 void DeviceBase::thread_entry()
@@ -41,7 +44,9 @@ DeviceBase *_devbase = NULL;
 
 DeviceBase::DeviceBase() : fs_desc(USBD_FULL_SPEED), hs_desc(USBD_HIGH_SPEED)
 {
+  ::memset(&ux_system_slave, 0, sizeof(ux_system_slave));
   _devbase = this;
+  _ux_system_slave->device = this;
 }
 
 UINT DeviceBase::_usbxx_change_notification(ULONG new_state)
@@ -76,25 +81,13 @@ uint32_t DeviceBase::on_change(uint32_t new_state)
       return on_sof();
     default:
       dbg::dbgout << "Unknown state: " << new_state << std::endl;
-      return UX_SUCCESS;
+      return 0;
   }
 
 }
 
 void DeviceBase::setup_device()
 {
-#if 0
-  UCHAR *device_framework_high_speed;
-  UCHAR *device_framework_full_speed;
-  ULONG device_framework_hs_length;
-  ULONG device_framework_fs_length;
-#endif
-
-  ULONG string_framework_length;
-  ULONG language_id_framework_length;
-  UCHAR *string_framework;
-  UCHAR *language_id_framework;
-
   fs_desc.build();
   hs_desc.build();
 
@@ -104,38 +97,19 @@ void DeviceBase::setup_device()
 
   lang_ids.add_language();
 
-#if 0
-  /* Get Language Id Framework and get the length */
-  language_id_framework = USBD_Get_Language_Id_Framework(&language_id_framework_length);
-#endif
-
-#if 0
   /* Install the device portion of USBX */
-  if (ux_device_stack_initialize(device_framework_high_speed,
-                                 device_framework_hs_length,
-                                 device_framework_full_speed,
-                                 device_framework_fs_length,
-                                 string_framework,
-                                 string_framework_length,
-                                 language_id_framework,
-                                 language_id_framework_length,
+  if (ux_device_stack_initialize(hs_desc.get_desc(),
+                                 hs_desc.get_desc_len(),
+                                 fs_desc.get_desc(),
+                                 fs_desc.get_desc_len(),
+                                 strings.get_buffer(),
+                                 strings.get_buffer_len(),
+                                 lang_ids.get_buffer(),
+                                 lang_ids.get_buffer_len(),
                                  _usbxx_change_notification) != UX_SUCCESS)
-#else
-    /* Install the device portion of USBX */
-    if (ux_device_stack_initialize(hs_desc.get_desc(),
-                                   hs_desc.get_desc_len(),
-                                   fs_desc.get_desc(),
-                                   fs_desc.get_desc_len(),
-                                   strings.get_buffer(),
-                                   strings.get_buffer_len(),
-                                   lang_ids.get_buffer(),
-                                   lang_ids.get_buffer_len(),
-                                   _usbxx_change_notification) != UX_SUCCESS)
-#endif
   {
     throw std::runtime_error("Failed to initialize USB device stack\n");
   }
-
 }
 
 
@@ -149,8 +123,10 @@ void DeviceBase::start()
     start_app();
   } catch(std::runtime_error &e) {
     dbg::dbgout << "Exception in starting USB device: " << e.what() << std::endl;
+    __asm volatile ("BKPT     %0" : : "i"(0));
   } catch (...) {
     dbg::dbgout << "Unknown exception in starting USB device!" << std::endl;
+    __asm volatile ("BKPT     %0" : : "i"(0));
   }
 }
 
@@ -222,7 +198,7 @@ ULONG                       class_index;
             class_inst -> ux_slave_class_status = UX_USED;
 
             /* Return successful completion.  */
-            return(UX_SUCCESS);
+            return 0;
         }
 
 #if UX_MAX_SLAVE_CLASS_DRIVER > 1

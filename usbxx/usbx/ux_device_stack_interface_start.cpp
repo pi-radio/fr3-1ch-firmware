@@ -77,11 +77,9 @@
 /**************************************************************************/
 UINT  _ux_device_stack_interface_start(UX_SLAVE_INTERFACE *interface_ptr)
 {
-
-UX_SLAVE_DEVICE             *device;
-UX_SLAVE_CLASS              *class_ptr;
-UINT                        status;
-UX_SLAVE_CLASS_COMMAND      class_command;
+  UX_SLAVE_CLASS              *class_ptr;
+  UINT                        status;
+  UX_SLAVE_CLASS_COMMAND      class_command;
 
 
     /* Get the class for the interface.  */
@@ -94,7 +92,7 @@ UX_SLAVE_CLASS_COMMAND      class_command;
         return (UX_NO_CLASS_MATCH);
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Build all the fields of the Class Command.  */
     class_command.ux_slave_class_command_request   =    UX_SLAVE_CLASS_COMMAND_QUERY;

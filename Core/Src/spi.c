@@ -26,6 +26,8 @@
 
 SPI_HandleTypeDef hspi4;
 
+void Error_Handler();
+
 /* SPI4 init function */
 void MX_SPI4_Init(void)
 {

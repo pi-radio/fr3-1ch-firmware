@@ -72,7 +72,7 @@
 /*                                            resulting in version 6.1    */
 /*                                                                        */
 /**************************************************************************/
-UINT  _ux_device_stack_transfer_all_request_abort(UX_SLAVE_ENDPOINT *endpoint, ULONG completion_code)
+UINT  _ux_device_stack_transfer_all_request_abort(USBXX::Endpoint *endpoint, ULONG completion_code)
 {
 
 UX_SLAVE_TRANSFER       *transfer_request;    
@@ -87,6 +87,6 @@ UX_SLAVE_TRANSFER       *transfer_request;
     _ux_device_stack_transfer_abort(transfer_request, completion_code);
 
     /* Return successful completion.  */
-    return(UX_SUCCESS);
+    return 0;
 }
 

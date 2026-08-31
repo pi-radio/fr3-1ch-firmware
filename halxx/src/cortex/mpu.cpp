@@ -5,7 +5,7 @@
 using namespace halxx::cortex::mpu;
 
 MPU_CSR *const MPU::mpu_csr = (MPU_CSR *)(SCS_BASE + 0x0D90);
-MPU_CSR *const MPU::mpu_csr_ns = (MPU_CSR *)(SCS_BASE_NS + 0x0D90);
+MPU_CSR *const MPU::mpu_csr_ns = (MPU_CSR *)((char *)SCS_BASE_NS + 0x0D90);
 
 MPU::MPU()
 {

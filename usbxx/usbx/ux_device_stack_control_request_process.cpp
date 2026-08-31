@@ -40,7 +40,6 @@ UINT  _ux_device_stack_control_request_process(UX_SLAVE_TRANSFER *transfer_reque
 {
 
 USBXX::DCD                *dcd;
-UX_SLAVE_DEVICE             *device;
 UX_SLAVE_CLASS              *class_ptr;
 UX_SLAVE_CLASS_COMMAND      class_command;
 ULONG                       request_type;
@@ -50,14 +49,15 @@ ULONG                       request_index;
 ULONG                       request_length;
 ULONG                       class_index;
 UINT                        status =  UX_ERROR;
-UX_SLAVE_ENDPOINT           *endpoint;
 ULONG                       application_data_length;
 
-    /* Get the pointer to the DCD.  */
-    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
+
+    /* Get the pointer to the DCD.  */
+    dcd = device->get_dcd();
+
 
     /* Ensure that the Setup request has been received correctly.  */
     if (transfer_request -> ux_slave_transfer_request_completion_code == UX_SUCCESS)
@@ -102,12 +102,8 @@ ULONG                       application_data_length;
                 /* Check the status from the application.  */
                 if (status == UX_SUCCESS)
                 {
-                
-                    /* Get the control endpoint associated with the device.  */
-                    endpoint =  &device -> ux_slave_device_control_endpoint;
-    
                     /* Get the pointer to the transfer request associated with the control endpoint.  */
-                    transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+                    auto transfer_request = device->get_control_transfer();
     
                     /* Set the direction to OUT.  */
                     transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
@@ -116,16 +112,16 @@ ULONG                       application_data_length;
                     _ux_device_stack_transfer_request(transfer_request, application_data_length, request_length);
 
                     /* We are done here.  */
-                    return(UX_SUCCESS);
+                    return 0;
                 }
                 else
                 {
 
                     /* The application did not like the vendor command format, stall the control endpoint.  */
-                    _ux_device_stack_endpoint_stall(&device -> ux_slave_device_control_endpoint);
+                    dcd->stall(device -> get_control_endpoint());
                     
                     /* We are done here.  */
-                    return(UX_SUCCESS);
+                    return 0;
                 }
             }
         }
@@ -199,7 +195,7 @@ ULONG                       application_data_length;
             if (status != UX_SUCCESS)
 
                 /* We stall the command (request not supported).  */
-                _ux_device_stack_endpoint_stall(&device -> ux_slave_device_control_endpoint);
+                dcd->stall(device->get_control_endpoint());
 
             /* We are done for class/vendor request.  */
             return(status);
@@ -281,7 +277,7 @@ ULONG                       application_data_length;
         if (status != UX_SUCCESS)
 
             /* Stall the control endpoint to issue protocol error. */
-            _ux_device_stack_endpoint_stall(&device -> ux_slave_device_control_endpoint);
+            dcd->stall(device->get_control_endpoint());
     }
 
     /* Return the function status.  */

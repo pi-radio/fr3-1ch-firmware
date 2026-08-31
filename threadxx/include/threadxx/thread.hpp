@@ -32,8 +32,12 @@ namespace TXX {
 
   protected:
     static void launch(ULONG a) {
-      ThreadBase *p = (ThreadBase *)a;
-      p->entry();
+      try {
+        ThreadBase *p = (ThreadBase *)a;
+        p->entry();
+      } catch(...) {
+        __asm volatile ("BKPT     %0" : : "i"(0));
+      }
     }
 
     void entry() {

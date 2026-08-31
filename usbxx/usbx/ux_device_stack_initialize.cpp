@@ -50,86 +50,15 @@ UCHAR _ux_system_device_class_printer_name[] =                              "ux_
 UCHAR _ux_system_device_class_ccid_name[] =                                 "ux_device_class_ccid";
 UCHAR _ux_system_device_class_video_name[] =                                "ux_device_class_video";
 
-/* Define USBX Host variable.  */
-UX_SYSTEM_SLAVE ux_system_slave;
-UX_SYSTEM_SLAVE *_ux_system_slave = &ux_system_slave;
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _ux_device_stack_initialize                         PORTABLE C      */
-/*                                                           6.3.0        */
-/*  AUTHOR                                                                */
-/*                                                                        */
-/*    Chaoqiong Xiao, Microsoft Corporation                               */
-/*                                                                        */
-/*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function initializes the generic portion of the device side of */
-/*    USBX.                                                               */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    device_framework_high_speed           Pointer to high speed FW      */ 
-/*    device_framework_length_high_speed    Length of high speed FW       */ 
-/*    device_framework_full_speed           Pointer to full speed FW      */ 
-/*    device_framework_length_full_speed    Length of full speed FW       */ 
-/*    string_framework                      Pointer to string FW          */ 
-/*    string_framework_length               Length of string FW           */ 
-/*    language_id_framework                 Pointer to language ID FW     */ 
-/*    language_id_framework_length          Length of language ID FW      */ 
-/*    (ux_system_slave_change_function)     Pointer to callback function  */ 
-/*                                            for device changes          */ 
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */ 
-/*                                                                        */
-/*  CALLS                                                                 */ 
-/*                                                                        */ 
-/*    _ux_utility_memory_allocate           Allocate memory               */ 
-/*    _ux_utility_memory_free               Free memory                   */ 
-/*    _ux_utility_semaphore_create          Create semaphore              */
-/*    _ux_utility_semaphore_delete          Delete semaphore              */
-/*                                                                        */ 
-/*  CALLED BY                                                             */ 
-/*                                                                        */ 
-/*    Application                                                         */ 
-/*                                                                        */ 
-/*  RELEASE HISTORY                                                       */ 
-/*                                                                        */ 
-/*    DATE              NAME                      DESCRIPTION             */ 
-/*                                                                        */ 
-/*  05-19-2020     Chaoqiong Xiao           Initial Version 6.0           */
-/*  09-30-2020     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            optimized based on compile  */
-/*                                            definitions,                */
-/*                                            resulting in version 6.1    */
-/*  01-31-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added standalone support,   */
-/*                                            added printer support,      */
-/*                                            resulting in version 6.1.10 */
-/*  04-25-2022     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added CCID support,         */
-/*                                            added video support,        */
-/*                                            resulting in version 6.1.11 */
-/*  10-31-2023     Chaoqiong Xiao           Modified comment(s),          */
-/*                                            added a new mode to manage  */
-/*                                            endpoint buffer in classes, */
-/*                                            resulting in version 6.3.0  */
-/*                                                                        */
-/**************************************************************************/
 UINT  _ux_device_stack_initialize(UCHAR * device_framework_high_speed, ULONG device_framework_length_high_speed,
                                   UCHAR * device_framework_full_speed, ULONG device_framework_length_full_speed,
                                   UCHAR * string_framework, ULONG string_framework_length,
                                   UCHAR * language_id_framework, ULONG language_id_framework_length,
                                   UINT (*ux_system_slave_change_function)(ULONG))
 {
-UX_SLAVE_DEVICE                 *device;
-UX_SLAVE_ENDPOINT               *endpoints_pool;
 UX_SLAVE_INTERFACE              *interfaces_pool;
-UX_SLAVE_TRANSFER               *transfer_request;
+UX_SLAVE_TRANSFER               *xfer;
 UINT                            status;
 ULONG                           interfaces_found;
 ULONG                           endpoints_found;
@@ -145,13 +74,13 @@ ULONG                           descriptor_length;
 #endif
 UCHAR                           *memory;
 
-  ::memset(&ux_system_slave, 0, sizeof(ux_system_slave));
+
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INITIALIZE, 0, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the device. */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Store the high speed device framework address and length in the project structure.  */
     _ux_system_slave -> ux_system_slave_device_framework_high_speed =             device_framework_high_speed;
@@ -190,19 +119,19 @@ UCHAR                           *memory;
 
     /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the 
        control endpoint. */
-    transfer_request =  &device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request;
+    xfer = device->get_control_transfer();
 
     /* Acquire a buffer for the size of the endpoint.  */
-    transfer_request -> ux_slave_transfer_request_data_pointer =
+    xfer -> ux_slave_transfer_request_data_pointer =
           (UCHAR *)::malloc(UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
 
     /* Ensure we have enough memory.  */
-    if (transfer_request -> ux_slave_transfer_request_data_pointer == nullptr)
+    if (xfer -> ux_slave_transfer_request_data_pointer == nullptr)
         status = UX_MEMORY_INSUFFICIENT;
     else
         status = UX_SUCCESS;
 
-    ::memset(transfer_request -> ux_slave_transfer_request_data_pointer, 0, UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
+    ::memset(xfer -> ux_slave_transfer_request_data_pointer, 0, UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
 
 #if defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE)
 
@@ -379,101 +308,21 @@ UCHAR                           *memory;
         ::memset(interfaces_pool, 0, interfaces_found * sizeof(UX_SLAVE_INTERFACE));
     }
 
-    /* Do we need an endpoint pool ?  */
-    if (endpoints_found != 0 && status == UX_SUCCESS)
-    {
-
-        /* We assign a pool for the endpoints.  */
-        endpoints_pool = (UX_SLAVE_ENDPOINT*)::malloc(endpoints_found * sizeof(UX_SLAVE_ENDPOINT));
-        if (endpoints_pool == nullptr)
-            status = UX_MEMORY_INSUFFICIENT;
-        else
-        {
-          ::memset(endpoints_pool, 0, endpoints_found * sizeof(UX_SLAVE_ENDPOINT));
-
-
-            /* Save the endpoint pool address in the device container.  */
-            device -> ux_slave_device_endpoints_pool =  endpoints_pool;
-
-            /* We need to assign a transfer buffer to each endpoint. Each endpoint is assigned the
-            maximum buffer size.  We also assign the semaphore used by the endpoint to synchronize transfer
-            completion. */
-            while (endpoints_pool < (device -> ux_slave_device_endpoints_pool + endpoints_found))
-            {
-
-#if UX_DEVICE_ENDPOINT_BUFFER_OWNER == 0
-
-                /* Obtain some memory.  */
-                endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer = 
-                                (UCHAR *)::malloc(UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-
-                /* Ensure we could allocate memory.  */
-                if (endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer == nullptr)
-                {
-                    status = UX_MEMORY_INSUFFICIENT;
-                    break;
-                }
-#endif
-
-                /* Create the semaphore for the endpoint.  */
-                status =  _ux_device_semaphore_create(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore,
-                                                    "ux_transfer_request_semaphore", 0);
-
-                /* Check completion status.  */
-                if (status != UX_SUCCESS)
-                {
-                    status = UX_SEMAPHORE_ERROR;
-                    break;
-                }
-        
-                /* Next endpoint.  */
-                endpoints_pool++;
-            }
-        }
-    }
-    else
-        endpoints_pool = nullptr;
 
     /* Return successful completion.  */
     if (status == UX_SUCCESS)
-        return(UX_SUCCESS);
+        return 0;
     
-    /* Free resources when there is error.  */
-
-    /* Free device -> ux_slave_device_endpoints_pool.  */
-    if (endpoints_pool)
-    {
-
-        /* In error cases creating endpoint resources, endpoints_pool is endpoint that failed.
-         * Previously allocated things should be freed.  */
-        while(endpoints_pool >= device -> ux_slave_device_endpoints_pool)
-        {
-
-            /* Delete ux_slave_transfer_request_semaphore.  */
-            if (_ux_device_semaphore_created(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore))
-                _ux_device_semaphore_delete(&endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore);
-
-#if UX_DEVICE_ENDPOINT_BUFFER_OWNER == 0
-
-            /* Free ux_slave_transfer_request_data_pointer buffer.  */
-            if (endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer)
-                ::free(endpoints_pool -> ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer);
-#endif
-
-            /* Move to previous endpoint.  */
-            endpoints_pool --;
-        }
-
-        ::free(device -> ux_slave_device_endpoints_pool);
-    }
 
     /* Free device -> ux_slave_device_interfaces_pool.  */
     if (device -> ux_slave_device_interfaces_pool)
         ::free(device -> ux_slave_device_interfaces_pool);
 
+#if 0
     /* Free device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer.  */
     if (device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer)
         ::free(device -> ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer);
+#endif
 
     /* Free _ux_system_slave -> ux_system_slave_class_array.  */
     ::free(_ux_system_slave -> ux_system_slave_class_array);

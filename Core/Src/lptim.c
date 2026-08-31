@@ -26,6 +26,9 @@
 
 LPTIM_HandleTypeDef hlptim1;
 
+extern void Error_Handler(void);
+
+
 /* LPTIM1 init function */
 void MX_LPTIM1_Init(void)
 {

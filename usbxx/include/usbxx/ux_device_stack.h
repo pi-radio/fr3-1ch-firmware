@@ -72,7 +72,9 @@ extern   "C" {
 
 #endif  
 
-
+namespace USBXX {
+  class Endpoint;
+}
 /* Define USB Device Stack prototypes.  */
 
 UINT    _ux_device_stack_alternate_setting_get(ULONG interface_value);
@@ -102,7 +104,7 @@ UINT    _ux_device_stack_interface_set(UCHAR * device_framework, ULONG device_fr
                     ULONG alternate_setting_value);
 UINT    _ux_device_stack_interface_start(UX_SLAVE_INTERFACE *ux_interface);
 UINT    _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULONG request_index);
-UINT    _ux_device_stack_transfer_all_request_abort(UX_SLAVE_ENDPOINT *endpoint, ULONG completion_code);
+UINT    _ux_device_stack_transfer_all_request_abort(USBXX::Endpoint *endpoint, ULONG completion_code);
 UINT    _ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, ULONG slave_length, ULONG host_length);
 UINT    _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
 UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));

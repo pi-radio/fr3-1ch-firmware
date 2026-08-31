@@ -17,16 +17,17 @@ CDCACM *CDCACM::stupid_global = NULL;
 
 
 
-CDCACM::CDCACM() : tx_queue("CDC ACM TX Queue"),
-                   tx_thread("CDCACM TX Thread", this, &CDCACM::_tx_thread),
-                   rx_mutex("CDCACM RX Mutex"),
-                   tx_mutex("CDCACM TX Mutex"),
-                   ep_out_mutex("CDCACM EP Out Mutex"),
-                   ep_in_mutex("CDCACM EP In Mutex")
+CDCACM::CDCACM() :
+    ep_in_mutex("CDCACM EP In Mutex"),
+    ep_out_mutex("CDCACM EP Out Mutex"),
+    tx_queue("CDC ACM TX Queue"),
+    tx_thread("CDCACM TX Thread", this, &CDCACM::_tx_thread),
+    rx_mutex("CDCACM RX Mutex"),
+    tx_mutex("CDCACM TX Mutex")
 {
   add_class(USBXX::CLASS_TYPE_CDC_ACM);
 
-  tx_event_flags_create(&flags, "CDCACM flags");
+  tx_event_flags_create(&flags, (char *)"CDCACM flags");
   
   if (stupid_global != NULL) {
     dbgprint("Multiple CDCACM instances");
@@ -217,7 +218,7 @@ UINT USBXX::CDCACM::device_entry(UX_SLAVE_CLASS_COMMAND *command)
 
   case UX_SLAVE_CLASS_COMMAND_QUERY:
     if (command -> ux_slave_class_command_class == UX_SLAVE_CLASS_CDC_ACM_CLASS)
-        return(UX_SUCCESS);
+        return 0;
     else
         return(UX_NO_CLASS_MATCH);
 
@@ -243,7 +244,6 @@ UINT USBXX::CDCACM::_device_entry(UX_SLAVE_CLASS_COMMAND *command)
 UINT USBXX::CDCACM::acm_initialize(UX_SLAVE_CLASS_COMMAND *command)
 {
   UX_SLAVE_CLASS *class_ptr;
-  UINT status;
 
   class_ptr = command->ux_slave_class_command_class_ptr;
 
@@ -255,11 +255,11 @@ UINT USBXX::CDCACM::acm_initialize(UX_SLAVE_CLASS_COMMAND *command)
   parity    =  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY;
   data_bit  =  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT;
 
-  return UX_SUCCESS;
+  return 0;
 }
 UINT USBXX::CDCACM::acm_uninitialize(UX_SLAVE_CLASS_COMMAND *command)
 {
-  return UX_SUCCESS;
+  return 0;
 }
 
 
@@ -278,19 +278,19 @@ UINT USBXX::CDCACM::activate(UX_SLAVE_CLASS_COMMAND *command)
 
     tx_event_flags_set(&flags, FLAG_STARTED, TX_OR);
 
-    return UX_SUCCESS;
+    return 0;
 }
 
 extern "C" UINT  _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
-extern "C" UINT  _ux_device_stack_transfer_all_request_abort(UX_SLAVE_ENDPOINT *endpoint, ULONG completion_code);
+extern "C" UINT  _ux_device_stack_transfer_all_request_abort(Endpoint *endpoint, ULONG completion_code);
 
 UINT USBXX::CDCACM::deactivate(UX_SLAVE_CLASS_COMMAND *command)
 {
 
   UX_SLAVE_INTERFACE          *interface_ptr;
   //UX_SLAVE_CLASS              *class_ptr;
-  UX_SLAVE_ENDPOINT           *endpoint_in;
-  UX_SLAVE_ENDPOINT           *endpoint_out;
+  Endpoint           *endpoint_in;
+  Endpoint           *endpoint_out;
 
   interface_ptr =  cdc_acm_interface;
 
@@ -320,24 +320,20 @@ UINT USBXX::CDCACM::deactivate(UX_SLAVE_CLASS_COMMAND *command)
   dtr_state = 0;
   rts_state = 0;
 
-  return UX_SUCCESS;
+  return 0;
 }
 
 UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
 {
   //UX_SLAVE_CLASS                          *class_ptr;
   UX_SLAVE_TRANSFER                       *transfer_request;
-  UX_SLAVE_DEVICE                         *device;
   ULONG                                   request;
   ULONG                                   value;
   ULONG                                   request_length;
   ULONG                                   transmit_length;
 
-    /* Get the pointer to the device.  */
-    device =  &_ux_system_slave->ux_system_slave_device;
-
     /* Get the pointer to the transfer request associated with the control endpoint.  */
-    transfer_request =  &device->ux_slave_device_control_endpoint.ux_slave_endpoint_transfer_request;
+    transfer_request = get_control_transfer();
 
     /* Extract all necessary fields of the request.  */
     request =  *(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_REQUEST);
@@ -408,31 +404,23 @@ UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
     set_rts(rts_state);
 
     /* It's handled.  */
-    return(UX_SUCCESS);
+    return 0;
 }
 
 UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
 {
-  UX_SLAVE_ENDPOINT           *endpoint;
-  UX_SLAVE_DEVICE             *device;
+  Endpoint           *endpoint;
   UX_SLAVE_INTERFACE          *interface_ptr;
   UX_SLAVE_TRANSFER           *transfer_request;
   UINT                        status= UX_SUCCESS;
   ULONG                       local_requested_length;
 
-  /* Get the pointer to the device.  */
-  device =  &_ux_system_slave->ux_system_slave_device;
-
   /* As long as the device is in the CONFIGURED state.  */
-  if (device->ux_slave_device_state != UX_DEVICE_CONFIGURED)
-  {
-      _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_CLASS, UX_CONFIGURATION_HANDLE_UNKNOWN);
-
-      return UX_CONFIGURATION_HANDLE_UNKNOWN;
-  }
+  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
+    throw std::runtime_error("CDCACM read on unconfigured device");
 
   /* This is the first time we are activated. We need the interface to the class.  */
-  interface_ptr =  cdc_acm_interface;
+  interface_ptr = cdc_acm_interface;
 
   /* Locate the endpoints.  */
   endpoint =  interface_ptr->ux_slave_interface_first_endpoint;
@@ -450,7 +438,7 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
 
     *actual_length =  0;
 
-    while (device->ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length)
+    while (ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length)
     {
       /* Check if we have enough in the local buffer.  */
       if (requested_length > endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
@@ -462,7 +450,7 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
       status =  _ux_device_stack_transfer_request(transfer_request, local_requested_length, local_requested_length);
 
       if (status != UX_SUCCESS) {
-        return status;
+        throw std::runtime_error("read transfer failed");
       }
 
       /* We need to copy the buffer locally.  */
@@ -481,12 +469,12 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
 
       /* Is this a short packet or a ZLP indicating we are done with this transfer ?  */
       if (transfer_request->ux_slave_transfer_request_actual_length < endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
-          return(UX_SUCCESS);
+          return 0;
     }
   }
 
-  if (device -> ux_slave_device_state != UX_DEVICE_CONFIGURED)
-      return UX_TRANSFER_NO_ANSWER;
+  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
+    return UX_TRANSFER_NO_ANSWER;
 
   return status;
 }
@@ -496,8 +484,7 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
                           ULONG requested_length,
                           ULONG *actual_length)
 {
-  UX_SLAVE_ENDPOINT           *endpoint;
-  UX_SLAVE_DEVICE             *device;
+  Endpoint           *endpoint;
   UX_SLAVE_INTERFACE          *interface_ptr;
   UX_SLAVE_TRANSFER           *transfer_request;
   ULONG                       local_requested_length;
@@ -505,10 +492,9 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
   UINT                        status = 0;
 
   /* Get the pointer to the device.  */
-  device =  &_ux_system_slave->ux_system_slave_device;
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (device->ux_slave_device_state != UX_DEVICE_CONFIGURED)
+  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
   {
     return UX_CONFIGURATION_HANDLE_UNKNOWN;
   }
@@ -536,14 +522,14 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
     *actual_length =  0;
 
     /* Check if the application forces a 0 length packet.  */
-    if (device->ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length == 0)
+    if (ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length == 0)
       return _ux_device_stack_transfer_request(transfer_request, 0, 0);
 
 
     /* Check if we need more transactions.  */
     local_host_length = UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE;
 
-    while (device -> ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length != 0)
+    while (ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length != 0)
     {
 
       /* Check if we have enough in the local buffer.  */
@@ -565,7 +551,7 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
       status =  _ux_device_stack_transfer_request(transfer_request, local_requested_length, local_host_length);
 
       if (status != UX_SUCCESS) {
-        return status;
+        throw std::runtime_error("Unable to complete transfer on CDCACM write");
       }
           /* Next buffer address.  */
       buffer += transfer_request -> ux_slave_transfer_request_actual_length;
@@ -580,7 +566,7 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
   }
 
   /* Check why we got here, either completion or device was extracted.  */
-  if (device -> ux_slave_device_state != UX_DEVICE_CONFIGURED)
+  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
       return UX_TRANSFER_NO_ANSWER;
 
   /* Simply return the last transaction result.  */
@@ -593,7 +579,7 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
   UINT status;
   UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
   UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *line_state;
-  UX_SLAVE_ENDPOINT *endpoint;
+  Endpoint *endpoint;
   UX_SLAVE_INTERFACE *interface_ptr;
   UX_SLAVE_TRANSFER *transfer_request;
 
@@ -685,10 +671,8 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
 
 
 
-        default :
-
-        /* Parameter not supported. Return an error.  */
-        status =  UX_ENDPOINT_HANDLE_UNKNOWN;
+        default:
+          throw std::runtime_error("Unknown endpoint handle");
     }
 
     /* Get the transfer request associated with the endpoint.  */
@@ -731,13 +715,7 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
       break;
 
   default:
-    /* Error trap. */
-    _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_CLASS, UX_FUNCTION_NOT_SUPPORTED);
-
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_FUNCTION_NOT_SUPPORTED, 0, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-    /* Function not supported. Return an error.  */
+    __asm volatile ("BKPT     %0" : : "i"(0));
     status =  UX_FUNCTION_NOT_SUPPORTED;
   }
 

@@ -70,10 +70,10 @@ void queue_io::wait_started()
 terminal_adapter::terminal_adapter(termobj *parent, termio *_main_io) :
     terminal("Adapter Terminal", parent, _main_io),
     mode(RAW),
-    cooked_io(this, "Cooked IO", true),
-    raw_io(this, "Raw IO", false),
     cooked(this, &cooked_io),
-    raw(this, &raw_io)
+    cooked_io(this, "Cooked IO", true),
+    raw(this, &raw_io),
+    raw_io(this, "Raw IO", false)
 {
 
 }

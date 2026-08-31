@@ -41,8 +41,7 @@ UINT  _ux_device_stack_interface_get(UINT interface_value)
 USBXX::DCD            *dcd;
 UX_SLAVE_TRANSFER       *transfer_request;
 UX_SLAVE_INTERFACE      *interface_ptr;
-UX_SLAVE_DEVICE         *device;
-UX_SLAVE_ENDPOINT       *endpoint;
+Endpoint       *endpoint;
 UINT                    status;
 
     /* If trace is enabled, insert this event into the trace buffer.  */
@@ -52,10 +51,10 @@ UINT                    status;
     dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Get the control endpoint for the device.  */
-    endpoint =  &device -> ux_slave_device_control_endpoint;
+    endpoint = device->get_control_endpoint();
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */

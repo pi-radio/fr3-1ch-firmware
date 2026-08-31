@@ -26,6 +26,9 @@
 
 DCACHE_HandleTypeDef hdcache1;
 
+extern void Error_Handler(void);
+
+
 /* DCACHE1 init function */
 void MX_DCACHE1_Init(void)
 {

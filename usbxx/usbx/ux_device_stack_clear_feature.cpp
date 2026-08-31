@@ -86,10 +86,9 @@ UINT  _ux_device_stack_clear_feature(ULONG request_type, ULONG request_value, UL
 {
 
 USBXX::DCD            *dcd;
-UX_SLAVE_DEVICE         *device;
 UX_SLAVE_INTERFACE      *interface_ptr;
-UX_SLAVE_ENDPOINT       *endpoint;
-UX_SLAVE_ENDPOINT       *endpoint_target;
+Endpoint       *endpoint;
+Endpoint       *endpoint_target;
                                 
     UX_PARAMETER_NOT_USED(request_value);
 
@@ -100,10 +99,10 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
     dcd =  STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Get the control endpoint for the device.  */
-    endpoint =  &device -> ux_slave_device_control_endpoint;
+    endpoint = device->get_control_endpoint();
 
     /* The request can be for either the device or the endpoint.  */
     switch (request_type & UX_REQUEST_TARGET)
@@ -161,7 +160,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
                     endpoint_target -> ux_slave_endpoint_state = UX_ENDPOINT_RESET;
 
                     /* Return the function status.  */
-                    return(UX_SUCCESS);
+                    return 0;
                 }
 
                 /* Next endpoint.  */
@@ -184,10 +183,10 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
         dcd->stall(endpoint);
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-        return(UX_SUCCESS);            
+        return 0;            
     }
 
     /* Return the function status.  */
-    return(UX_SUCCESS);
+    return 0;
 }
 

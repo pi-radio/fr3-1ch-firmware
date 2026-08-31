@@ -34,7 +34,7 @@
 
 using namespace USBXX;
 
-UINT  _ux_device_stack_endpoint_stall(UX_SLAVE_ENDPOINT *endpoint)
+UINT  _ux_device_stack_endpoint_stall(Endpoint *endpoint)
 {
 
 UX_INTERRUPT_SAVE_AREA
@@ -58,7 +58,7 @@ UINT                status;
 
     /* Check if the device is in a valid state; as soon as the device is out 
        of the RESET state, transfers occur and thus endpoints may be stalled. */
-    if (_ux_system_slave -> ux_system_slave_device.ux_slave_device_state != UX_DEVICE_RESET &&
+    if (_ux_system_slave -> device->ux_slave_device_state != UX_DEVICE_RESET &&
         endpoint -> ux_slave_endpoint_state != UX_ENDPOINT_HALTED)
     {
 

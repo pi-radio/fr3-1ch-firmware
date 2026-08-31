@@ -24,24 +24,15 @@
 
 /* Define USB STM32 physical endpoint status definition.  */
 
-#define UX_DCD_STM32_ED_STATUS_UNUSED                            0u
-#define UX_DCD_STM32_ED_STATUS_USED                              1u
-#define UX_DCD_STM32_ED_STATUS_TRANSFER                          2u
-#define UX_DCD_STM32_ED_STATUS_STALLED                           4u
-#define UX_DCD_STM32_ED_STATUS_DONE                              8u
-#define UX_DCD_STM32_ED_STATUS_SETUP_IN                          (1u<<8)
-#define UX_DCD_STM32_ED_STATUS_SETUP_STATUS                      (2u<<8)
-#define UX_DCD_STM32_ED_STATUS_SETUP_OUT                         (3u<<8)
-#define UX_DCD_STM32_ED_STATUS_SETUP                             (3u<<8)
-#define UX_DCD_STM32_ED_STATUS_TASK_PENDING                      (1u<<10)
+
 
 /* Define USB STM32 physical endpoint state machine definition.  */
 
-#define UX_DCD_STM32_ED_STATE_IDLE                               0
-#define UX_DCD_STM32_ED_STATE_DATA_TX                            1
-#define UX_DCD_STM32_ED_STATE_DATA_RX                            2
-#define UX_DCD_STM32_ED_STATE_STATUS_TX                          3
-#define UX_DCD_STM32_ED_STATE_STATUS_RX                          4
+#define STM32Endpoint_STATE_IDLE                               0
+#define STM32Endpoint_STATE_DATA_TX                            1
+#define STM32Endpoint_STATE_DATA_RX                            2
+#define STM32Endpoint_STATE_STATUS_TX                          3
+#define STM32Endpoint_STATE_STATUS_RX                          4
 
 /* Define USB STM32 device callback notification state definition.  */
 
@@ -53,10 +44,10 @@
 
 /* Define USB STM32 endpoint transfer status definition.  */
 
-#define UX_DCD_STM32_ED_TRANSFER_STATUS_IDLE                     0
-#define UX_DCD_STM32_ED_TRANSFER_STATUS_SETUP                    1
-#define UX_DCD_STM32_ED_TRANSFER_STATUS_IN_COMPLETION            2
-#define UX_DCD_STM32_ED_TRANSFER_STATUS_OUT_COMPLETION           3
+#define STM32Endpoint_TRANSFER_STATUS_IDLE                     0
+#define STM32Endpoint_TRANSFER_STATUS_SETUP                    1
+#define STM32Endpoint_TRANSFER_STATUS_IN_COMPLETION            2
+#define STM32Endpoint_TRANSFER_STATUS_OUT_COMPLETION           3
 
 /* Define USB STM32 physical endpoint structure.  */
 
@@ -70,15 +61,15 @@ namespace USBXX
     {
       PCD_TypeDef *pcd;
       PCD_HandleTypeDef hpcd;
-      struct UX_SLAVE_DCD_STRUCT
-                          *ux_dcd_stm32_dcd_owner;
-      UX_DCD_STM32_ED ux_dcd_stm32_ed[UX_DCD_STM32_MAX_ED];
-  #if defined(UX_DEVICE_BIDIRECTIONAL_ENDPOINT_SUPPORT)
-      UX_DCD_STM32_ED ux_dcd_stm32_ed_in[UX_DCD_STM32_MAX_ED];
-  #endif /* defined(UX_DEVICE_BIDIRECTIONAL_ENDPOINT_SUPPORT) */
+      STM32Endpoint ep_out[UX_DCD_STM32_MAX_ED];
+      STM32Endpoint ep_in[UX_DCD_STM32_MAX_ED];
       PCD_HandleTypeDef   *pcd_handle;
 
+      void control_IRQ();
+      void endpoint_IRQ();
 
+      HAL_StatusTypeDef transmit(PCD_EPTypeDef *ep, uint16_t wEPVal);
+      uint16_t receive(PCD_EPTypeDef *ep, uint16_t wEPVal);
 
     public:
       DCD(PCD_TypeDef *_pcd);
@@ -91,31 +82,45 @@ namespace USBXX
 
 
 
-      inline struct UX_DCD_STM32_ED *_stm32_ed_get(ULONG ep_addr)
+      inline struct STM32Endpoint *__get_endpoint(ULONG ep_addr)
       {
-        ULONG ep_dir = ep_addr & 0x80u;
-        ULONG ep_num = ep_addr & 0x7Fu;
+        ULONG ep_dir = ep_addr & 0x80;
+        ULONG ep_num = ep_addr & 0x7F;
+
+        if (ep_num == 0) {
+          return &ep_out[0];
+        }
 
         if (ep_num >= UX_DCD_STM32_MAX_ED ||
             ep_num >= pcd_handle->Init.dev_endpoints)
-            return (struct UX_DCD_STM32_ED *)(UX_NULL);
+            return (struct STM32Endpoint *)(UX_NULL);
 
         if (ep_dir)
-            return &ux_dcd_stm32_ed_in[ep_num];
+            return &ep_in[ep_num];
 
-        return &ux_dcd_stm32_ed[ep_num];
+        return &ep_out[ep_num];
       }
 
-      UINT create_endpoint(UX_SLAVE_ENDPOINT *endpoint) override;
-      UINT destroy_endpoint(UX_SLAVE_ENDPOINT *endpoint) override;
-      UINT reset_endpoint(UX_SLAVE_ENDPOINT *endpoint) override;
-      UINT stall(UX_SLAVE_ENDPOINT *endpoint) override;
+      Endpoint *get_endpoint(uint8_t epaddr) { return __get_endpoint(epaddr); }
+      Endpoint *get_control_endpoint() override { return &ep_out[0]; };
+      UX_SLAVE_TRANSFER *get_control_transfer() override { return &ep_out[0].ux_slave_endpoint_transfer_request; };
+
+      Endpoint *allocate_endpoint(const EndpointDescriptor &) override;
+      UINT create_endpoint(Endpoint *endpoint) override;
+      UINT destroy_endpoint(Endpoint *endpoint) override;
+      UINT reset_endpoint(Endpoint *endpoint) override;
+      UINT stall(Endpoint *endpoint) override;
       UINT get_endpoint_status(ULONG endpoint_index) override;
       uint32_t get_frame_number() override;
       UINT complete_initialization() override;
       UINT abort_transfer(UX_SLAVE_TRANSFER *transfer_request) override;
       UINT transfer_request(UX_SLAVE_TRANSFER *transfer_request) override;
       UINT uninitialize() override;
+
+      UINT transfer_out(UX_SLAVE_TRANSFER *xfer);
+      UINT transfer_in(UX_SLAVE_TRANSFER *xfer);
+
+      void on_control_in();
 
       void setup() override;
       void on_data_in(uint8_t epnum) override;

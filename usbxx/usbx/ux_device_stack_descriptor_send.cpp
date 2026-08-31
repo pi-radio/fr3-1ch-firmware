@@ -48,46 +48,33 @@ using namespace USBXX;
 
 UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_index, ULONG host_length)
 {
-
-USBXX::DCD                    *dcd;
-UX_SLAVE_DEVICE                 *device;
-ULONG                           descriptor_index;
-ULONG                           parsed_descriptor_index;
-UX_SLAVE_TRANSFER               *transfer_request;
-UX_CONFIGURATION_DESCRIPTOR     configuration_descriptor;
-#ifndef UX_BOS_SUPPORT_DISABLE
-UX_BOS_DESCRIPTOR               bos_descriptor;
-#endif
-UX_SLAVE_ENDPOINT               *endpoint;
-UCHAR                           *device_framework;
-UCHAR                           *device_framework_end;
-ULONG                           device_framework_length;
-ULONG                           descriptor_length;
-ULONG                           target_descriptor_length = 0;
-UINT                            status =  UX_ERROR;
-ULONG                           length;
-UCHAR                           *string_memory;
-UCHAR                           *string_framework;
-ULONG                           string_framework_length;
-ULONG                           string_length;
-
-
-    /* Build option check.  */
-    UX_ASSERT((UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH >= UX_DEVICE_DESCRIPTOR_LENGTH) &&
-              (UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH >= UX_DEVICE_QUALIFIER_DESCRIPTOR_LENGTH) &&
-              (UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH >= UX_OTG_DESCRIPTOR_LENGTH));
-
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_DESCRIPTOR_SEND, descriptor_type, request_index, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
+  USBXX::DCD                    *dcd;
+  ULONG                           descriptor_index;
+  ULONG                           parsed_descriptor_index;
+  UX_SLAVE_TRANSFER               *transfer_request;
+  ConfigurationDescriptor     configuration_descriptor;
+  BOSDescriptor               bos_descriptor;
+  Endpoint               *endpoint;
+  UCHAR                           *device_framework;
+  UCHAR                           *device_framework_end;
+  ULONG                           device_framework_length;
+  ULONG                           descriptor_length;
+  ULONG                           target_descriptor_length = 0;
+  UINT                            status =  UX_ERROR;
+  ULONG                           length;
+  UCHAR                           *string_memory;
+  UCHAR                           *string_framework;
+  ULONG                           string_framework_length;
+  ULONG                           string_length;
 
     /* Get the pointer to the DCD.  */
     dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Get the control endpoint associated with the device.  */
-    endpoint =  &device -> ux_slave_device_control_endpoint;
+    endpoint = device->get_control_endpoint();
 
     /* Get the pointer to the transfer request associated with the endpoint.  */
     transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
@@ -111,7 +98,7 @@ ULONG                           string_length;
     switch (descriptor_type)
     {
 
-    case UX_DEVICE_DESCRIPTOR_ITEM:
+    case DeviceDescriptor::desc_type:
 
 		/* Setup device descriptor length.  */
         if (host_length > UX_DEVICE_DESCRIPTOR_LENGTH)
@@ -199,31 +186,22 @@ ULONG                           string_length;
             /* Get descriptor length. */
             descriptor_length =  (ULONG) *device_framework;
 
-#ifndef UX_BOS_SUPPORT_DISABLE
-
             /* Check if we are finding BOS descriptor.  */
             if (descriptor_type == UX_BOS_DESCRIPTOR_ITEM)
             {
                 if (*(device_framework + 1) == UX_BOS_DESCRIPTOR_ITEM)
                 {
+                  bos_descriptor = read_in_descriptor<BOSDescriptor>(device_framework);
 
-                    /* Parse the BOS descriptor.  */
-                    _ux_utility_descriptor_parse(device_framework,
-                                _ux_system_bos_descriptor_structure,
-                                UX_BOS_DESCRIPTOR_ENTRIES,
-                                (UCHAR *) &bos_descriptor);
+                  /* Get the length of entire BOS descriptor.  */
+                  target_descriptor_length = bos_descriptor.wTotalLength;
 
-                    /* Get the length of entire BOS descriptor.  */
-                    target_descriptor_length = bos_descriptor.wTotalLength;
-
-                    /* Descriptor is found.  */
-                    status = UX_SUCCESS;
-                    break;
+                  /* Descriptor is found.  */
+                  status = UX_SUCCESS;
+                  break;
                 }
             }
             else
-#endif
-
             {
 
                 /* Check if this is a configuration descriptor.  We are cheating here. Instead of creating
@@ -236,12 +214,7 @@ ULONG                           string_length;
                     /* Check the index. It must be the same as the one requested.  */
                     if (parsed_descriptor_index == descriptor_index)
                     {
-
-                        /* Parse the configuration descriptor. */
-                        _ux_utility_descriptor_parse(device_framework,
-                                    _ux_system_configuration_descriptor_structure,
-                                    UX_CONFIGURATION_DESCRIPTOR_ENTRIES,
-                                    (UCHAR *) &configuration_descriptor);
+                      configuration_descriptor = read_in_descriptor<ConfigurationDescriptor>(device_framework);
 
                         /* Get the length of entire configuration descriptor.  */
                         target_descriptor_length = configuration_descriptor.wTotalLength;
@@ -280,13 +253,6 @@ ULONG                           string_length;
             /* Check buffer length, since total descriptors length may exceed buffer...  */
             if (length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
             {
-                /* Error trap. */
-                _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_DEVICE_STACK, UX_MEMORY_INSUFFICIENT);
-
-                /* If trace is enabled, insert this event into the trace buffer.  */
-                UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-                /* Stall the endpoint.  */
                 status =  dcd ->stall(endpoint);
                 break;
             }
@@ -312,14 +278,6 @@ ULONG                           string_length;
             /* We need to check request buffer size in case it's possible exceed. */
             if (_ux_system_slave -> ux_system_slave_language_id_framework_length + 2 > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
             {
-
-                /* Error trap. */
-                _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_DEVICE_STACK, UX_MEMORY_INSUFFICIENT);
-
-                /* If trace is enabled, insert this event into the trace buffer.  */
-                UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-                /* Stall the endpoint.  */
                 status = dcd->stall(endpoint);
                 break;
             }
@@ -348,17 +306,6 @@ ULONG                           string_length;
         }
         else
         {
-#ifdef UX_DEVICE_ENABLE_GET_STRING_WITH_ZERO_LANGUAGE_ID
-
-            /* Check if the language ID is zero.  */
-            if (request_index == 0)
-            {
-
-                /* Get the first language ID in the language ID framework.  */
-                request_index =  _ux_utility_short_get(_ux_system_slave -> ux_system_slave_language_id_framework);
-            }
-#endif
-
             /* The host wants a specific string index returned. Get the string framework pointer
                and length.  */
             string_framework =  _ux_system_slave -> ux_system_slave_string_framework;
@@ -446,10 +393,11 @@ ULONG                           string_length;
         break;
 
     default:
+      // TODO -- SEND CDCACM descriptor
 
-        /* Stall the endpoint.  */
-        dcd->stall(endpoint);
-        return(UX_ERROR);
+      dcd->stall(endpoint);
+      return UX_ERROR;
+        throw std::runtime_error("Invalid descriptor in send descriptor");
     }
 
     /* Return the status to the caller.  */

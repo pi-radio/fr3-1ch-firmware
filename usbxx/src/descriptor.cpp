@@ -225,6 +225,7 @@ void USBXX::Descriptor::add_class_to_conf(uint8_t cls)
       is_hs() ? USBD_CDCACM_EPOUT_HS_MPS : USBD_CDCACM_EPOUT_FS_MPS);
   assign_endpoint(cls, USBD_CDCACM_EPIN_ADDR, USBD_EP_TYPE_BULK,
       is_hs() ? USBD_CDCACM_EPIN_HS_MPS : USBD_CDCACM_EPIN_FS_MPS);
+
   assign_endpoint(cls, USBD_CDCACM_EPINCMD_ADDR, USBD_EP_TYPE_INTR,
       is_hs() ? USBD_CDCACM_EPINCMD_HS_MPS : USBD_CDCACM_EPINCMD_FS_MPS);
 
@@ -535,14 +536,14 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
             if (string_framework_length == 0)
             {
                 stall_control_endpoint();
-                return(UX_ERROR);
+                throw std::runtime_error("Unable to send string");
             }
         }
         break;
 
     default:
       stall_control_endpoint();
-      return(UX_ERROR);
+      throw std::runtime_error("Invalid string descriptor type");
     }
 
     /* Return the status to the caller.  */

@@ -105,7 +105,7 @@ void Parser::parse_lmx_prog() {
 
 
 void Parser::parse_lmx_read() {
-  int reg, result;
+  int reg;
   auto cur_tok = tokenizer.get_token();
 
   if (cur_tok != keywords::REG) {
@@ -128,7 +128,6 @@ void Parser::parse_lmx_read() {
 
 void Parser::parse_lmx_drive() {
 	int val = shift_int();
-	uint16_t blob;
 
 	if (val < 0 || val > 7) {
     throw GeneralError::fmt("Invalid LMX drive {}", val);
@@ -138,7 +137,7 @@ void Parser::parse_lmx_drive() {
 }
 
 void Parser::parse_lmx_write() {
-  int reg, val;
+  int reg;
   auto cur_tok = tokenizer.get_token();
 
   if (cur_tok != keywords::REG) {
@@ -154,7 +153,10 @@ void Parser::parse_lmx_write() {
     throw GeneralError::fmt("Invalid register {}", reg);
   }
 
-  val = shift_int();
+  auto val = shift_int();
+
+  // TODO -- write me
+  val = val;
 
   parse_statement_end();
 }

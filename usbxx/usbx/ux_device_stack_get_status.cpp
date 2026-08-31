@@ -39,8 +39,6 @@ UINT  _ux_device_stack_get_status(ULONG request_type, ULONG request_index, ULONG
 
 USBXX::DCD            *dcd;
 UX_SLAVE_TRANSFER       *transfer_request;
-UX_SLAVE_DEVICE         *device;
-UX_SLAVE_ENDPOINT       *endpoint;
 UINT                    status;
 ULONG                   data_length;
 
@@ -53,13 +51,13 @@ ULONG                   data_length;
     dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave->device;
 
     /* Get the control endpoint for the device.  */
-    endpoint =  &device -> ux_slave_device_control_endpoint;
+    auto endpoint =  device -> get_control_endpoint();
 
     /* Get the pointer to the transfer request associated with the endpoint.  */
-    transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+    transfer_request = device->get_control_transfer();
 
     /* Reset the status buffer.  */
     *transfer_request -> ux_slave_transfer_request_data_pointer =  0;
@@ -131,7 +129,7 @@ ULONG                   data_length;
             dcd->stall(endpoint);
     
             /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-            return(UX_SUCCESS);            
+            return 0;            
         }
         break;
 
@@ -141,7 +139,7 @@ ULONG                   data_length;
         dcd->stall(endpoint);
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-        return(UX_SUCCESS);            
+        return 0;            
     }
     
     /* Set the phase of the transfer to data out.  */

@@ -15,35 +15,16 @@
 
 #include <usbxx/dcd.hpp>
 #include <usbxx/endpoint.hpp>
+#include <usbxx/interface.hpp>
 
-
-struct UX_SLAVE_DEVICE
+namespace USBXX
 {
-
-    ULONG           ux_slave_device_state;
-    struct UX_DEVICE_DESCRIPTOR_STRUCT
-                    ux_slave_device_descriptor;
-    UX_SLAVE_ENDPOINT
-                    ux_slave_device_control_endpoint;
-    ULONG           ux_slave_device_configuration_selected;
-    struct UX_CONFIGURATION_DESCRIPTOR_STRUCT
-                    ux_slave_device_configuration_descriptor;
-    UX_SLAVE_INTERFACE
-                    *ux_slave_device_first_interface;
-    UX_SLAVE_INTERFACE
-                    *ux_slave_device_interfaces_pool;
-    ULONG           ux_slave_device_interfaces_pool_number;
-    UX_SLAVE_ENDPOINT
-                    *ux_slave_device_endpoints_pool;
-    ULONG           ux_slave_device_endpoints_pool_number;
-    ULONG           ux_slave_device_power_state;
-
-};
-
+  class DeviceBase;
+}
 
 struct UX_SYSTEM_SLAVE
 {
-    UX_SLAVE_DEVICE ux_system_slave_device;
+    USBXX::DeviceBase *device;
     UCHAR           *ux_system_slave_device_framework;
     ULONG           ux_system_slave_device_framework_length;
     UCHAR           *ux_system_slave_device_framework_full_speed;
@@ -93,13 +74,37 @@ namespace USBXX
 
     DCD *dcd;
 
+  public:
+
+    ULONG            ux_slave_device_state;
+    DeviceDescriptor ux_slave_device_descriptor;
+    ULONG            ux_slave_device_configuration_selected;
+    ConfigurationDescriptor
+                    ux_slave_device_configuration_descriptor;
+    UX_SLAVE_INTERFACE
+                    *ux_slave_device_first_interface;
+    UX_SLAVE_INTERFACE
+                    *ux_slave_device_interfaces_pool;
+    ULONG           ux_slave_device_interfaces_pool_number;
+    ULONG           ux_slave_device_endpoints_pool_number;
+    ULONG           ux_slave_device_power_state;
+
   protected:
     void thread_entry();
 
   public:
     DeviceBase();
 
-    void set_dcd(DCD *_dcd) { dcd = _dcd; }
+    void set_dcd(DCD *_dcd)
+    {
+      dcd = _dcd;
+      dcd->set_device(this);
+    }
+
+    DCD *get_dcd()
+    {
+      return dcd;
+    }
 
     void add_class(uint8_t cls) {
       fs_desc.add_class(cls);
@@ -140,16 +145,16 @@ namespace USBXX
     virtual void register_class() {}
     virtual void start_app() {}
 
-    virtual uint32_t on_attached() { return UX_SUCCESS; }
-    virtual uint32_t on_removed() { return UX_SUCCESS; }
+    virtual uint32_t on_attached() { return 0; }
+    virtual uint32_t on_removed() { return 0; }
 
-    virtual uint32_t on_connected() { return UX_SUCCESS; }
-    virtual uint32_t on_disconnected() { return UX_SUCCESS; }
+    virtual uint32_t on_connected() { return 0; }
+    virtual uint32_t on_disconnected() { return 0; }
 
-    virtual uint32_t on_suspended() { return UX_SUCCESS; }
-    virtual uint32_t on_resumed() { return UX_SUCCESS; }
+    virtual uint32_t on_suspended() { return 0; }
+    virtual uint32_t on_resumed() { return 0; }
 
-    virtual uint32_t on_sof() { return UX_SUCCESS; }
+    virtual uint32_t on_sof() { return 0; }
 
     void start();
 
@@ -161,7 +166,11 @@ namespace USBXX
       return 1;
     }
 
+    UX_SLAVE_TRANSFER *get_control_transfer() { return dcd->get_control_transfer(); };
+    Endpoint *get_control_endpoint() { return dcd->get_control_endpoint(); }
 
+    void set_state(uint32_t state) { ux_slave_device_state = state; }
+    uint32_t get_state() { return ux_slave_device_state; }
 
     UINT send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length);
   };

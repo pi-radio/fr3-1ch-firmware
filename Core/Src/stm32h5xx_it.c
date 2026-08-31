@@ -30,6 +30,9 @@
 #include <halxx/fault.hpp>
 /* USER CODE END Includes */
 
+extern void handle_flash(void);
+
+
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
 

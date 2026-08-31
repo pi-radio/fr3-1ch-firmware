@@ -38,10 +38,9 @@ UINT  _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULON
 {
 
 USBXX::DCD            *dcd;
-UX_SLAVE_DEVICE         *device;
 UX_SLAVE_INTERFACE      *interface_ptr;
-UX_SLAVE_ENDPOINT       *endpoint;
-UX_SLAVE_ENDPOINT       *endpoint_target;
+Endpoint       *endpoint;
+Endpoint       *endpoint_target;
 
     UX_PARAMETER_NOT_USED(request_value);
 
@@ -52,10 +51,10 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
     dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device =  _ux_system_slave->device;
 
     /* Get the control endpoint for the device.  */
-    endpoint =  &device -> ux_slave_device_control_endpoint;
+    endpoint = device->get_control_endpoint();
 
     /* The feature can be for either the device or the endpoint.  */
     switch (request_type & UX_REQUEST_TARGET)
@@ -92,7 +91,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
             _ux_system_otg -> ux_system_otg_slave_set_feature_flag |= UX_OTG_FEATURE_A_HNP_SUPPORT;
 
             /* OK.  */
-            return(UX_SUCCESS);
+            return 0;
         }
 
         /* Check if the host asks us to perform HNP.  If also we become the host.  */
@@ -103,7 +102,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
             _ux_system_otg -> ux_system_otg_slave_set_feature_flag |= UX_OTG_FEATURE_B_HNP_ENABLE;
 
             /* OK.  */
-            return(UX_SUCCESS);
+            return 0;
         }
 #endif
 
@@ -136,7 +135,7 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
                     dcd->stall(endpoint_target);
 
                     /* Return the function status.  */
-                    return(UX_SUCCESS);
+                    return 0;
                 }
 
                 /* Next endpoint.  */
@@ -158,6 +157,6 @@ UX_SLAVE_ENDPOINT       *endpoint_target;
         dcd->stall(endpoint);
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-        return(UX_SUCCESS);            
+        return 0;            
     }
 }

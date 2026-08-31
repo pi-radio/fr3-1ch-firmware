@@ -37,9 +37,7 @@ using namespace USBXX;
 
 UINT  _ux_device_stack_disconnect(VOID)
 {
-
 USBXX::DCD                *dcd;
-UX_SLAVE_DEVICE             *device;
 UX_SLAVE_INTERFACE          *interface_ptr; 
 UX_SLAVE_INTERFACE          *next_interface; 
 UX_SLAVE_CLASS              *class_ptr;
@@ -50,13 +48,8 @@ UINT                        status = UX_ERROR;
     dcd =  STM32::gDCD;
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device =  _ux_system_slave->device;
 
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_DISCONNECT, device, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* If trace is enabled, register this object.  */
-    UX_TRACE_OBJECT_UNREGISTER(device);
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */
@@ -109,7 +102,7 @@ UINT                        status = UX_ERROR;
     if (device -> ux_slave_device_state == UX_DEVICE_ATTACHED)
 
         /* Now we can destroy the default control endpoint.  */
-        status =  dcd->destroy_endpoint(&device -> ux_slave_device_control_endpoint);
+        status =  dcd->destroy_endpoint(device -> get_control_endpoint());
 
     /* We are reverting to configuration 0.  */
     device -> ux_slave_device_configuration_selected =  0;

@@ -26,6 +26,9 @@
 
 DTS_HandleTypeDef hdts;
 
+extern void Error_Handler(void);
+
+
 /* DTS init function */
 void MX_DTS_Init(void)
 {

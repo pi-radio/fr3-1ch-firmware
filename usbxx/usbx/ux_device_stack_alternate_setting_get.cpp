@@ -82,15 +82,14 @@ extern "C" UINT  _ux_device_stack_alternate_setting_get(ULONG interface_value)
 
 UX_SLAVE_TRANSFER       *transfer_request;
 UX_SLAVE_INTERFACE      *interface_ptr;
-UX_SLAVE_DEVICE         *device;
-UX_SLAVE_ENDPOINT       *endpoint;
+USBXX::Endpoint       *endpoint;
 UINT                    status;
                                 
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_ALTERNATE_SETTING_GET, interface_value, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the pointer to the device.  */
-    device =  &_ux_system_slave -> ux_system_slave_device;
+    auto device = _ux_system_slave -> device;
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */
@@ -113,7 +112,7 @@ UINT                    status;
             {
 
                 /* Get the control endpoint of the device.  */                
-                endpoint =  &device -> ux_slave_device_control_endpoint;
+                endpoint = device ->get_control_endpoint();
 
                 /* Get the pointer to the transfer request associated with the endpoint.  */
                 transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
