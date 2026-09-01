@@ -33,7 +33,7 @@ namespace USBXX
       EndpointState           state;
       UCHAR           index;
       UCHAR           direction;
-      USBXX::STM32::DCD      *dcd;
+      DCD      *dcd;
 
       Endpoint() :
         state(EndpointState::IDLE),

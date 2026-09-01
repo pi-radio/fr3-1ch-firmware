@@ -40,7 +40,7 @@ static inline void _ux_dcd_stm32_setup_in(STM32::Endpoint * ed, UX_SLAVE_TRANSFE
 {
     ed -> direction = UX_ENDPOINT_IN;
     ed -> state = STM32::EndpointState::DATA_TX;
-    _ux_device_stack_control_request_process(transfer_request);
+    ed->ux_slave_endpoint_device->process_control_event(transfer_request);
 }
 
 static inline void _ux_dcd_stm32_setup_out(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
@@ -48,7 +48,7 @@ static inline void _ux_dcd_stm32_setup_out(STM32::Endpoint * ed, UX_SLAVE_TRANSF
 {
   transfer_request -> ux_slave_transfer_request_completion_code =  UX_SUCCESS;
   ed -> direction = UX_ENDPOINT_IN;
-  if (_ux_device_stack_control_request_process(transfer_request) == UX_SUCCESS)
+  if (ed->ux_slave_endpoint_device->process_control_event(transfer_request) == UX_SUCCESS)
   {
     ed -> state = STM32::EndpointState::STATUS_TX;
     HAL_PCD_EP_Transmit(hpcd, 0x00U, nullptr, 0U);
@@ -60,7 +60,7 @@ static inline void _ux_dcd_stm32_setup_status(STM32::Endpoint * ed, UX_SLAVE_TRA
 {
   ed -> direction = UX_ENDPOINT_IN;
 
-  if (_ux_device_stack_control_request_process(transfer_request) == UX_SUCCESS)
+  if (ed->ux_slave_endpoint_device->process_control_event(transfer_request) == UX_SUCCESS)
   {
 
     /* Set the state to STATUS RX.  */

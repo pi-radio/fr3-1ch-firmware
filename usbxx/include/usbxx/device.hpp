@@ -173,6 +173,13 @@ namespace USBXX
     uint32_t get_state() { return ux_slave_device_state; }
 
     UINT send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length);
+
+
+
+    uint32_t on_get_alternate_setting(ULONG interface_value);
+    uint32_t on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value);
+    uint32_t on_get_configuration();
+    uint32_t process_control_event(UX_SLAVE_TRANSFER *transfer_request);
   };
 
 
