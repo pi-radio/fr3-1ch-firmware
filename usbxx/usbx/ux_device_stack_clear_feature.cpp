@@ -152,14 +152,8 @@ Endpoint       *endpoint_target;
                 /* Check the endpoint index.  */
                 if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress == request_index)
                 {
-
-                    /* Reset the endpoint.  */
-                    dcd->reset_endpoint(endpoint_target);
-                    
-                    /* Mark its state now.  */
+                    endpoint_target->reset();
                     endpoint_target -> ux_slave_endpoint_state = UX_ENDPOINT_RESET;
-
-                    /* Return the function status.  */
                     return 0;
                 }
 
@@ -180,8 +174,8 @@ Endpoint       *endpoint_target;
     default:
         
         /* We stall the command.  */
-        dcd->stall(endpoint);
-    
+      endpoint->stall();
+
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
         return 0;            
     }

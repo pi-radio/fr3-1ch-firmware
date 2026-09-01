@@ -36,26 +36,26 @@
 
 using namespace USBXX;
 
-static inline void _ux_dcd_stm32_setup_in(STM32Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request)
+static inline void _ux_dcd_stm32_setup_in(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request)
 {
     ed -> direction = UX_ENDPOINT_IN;
-    ed -> state = STM32Endpoint_STATE_DATA_TX;
+    ed -> state = STM32::EndpointState::DATA_TX;
     _ux_device_stack_control_request_process(transfer_request);
 }
 
-static inline void _ux_dcd_stm32_setup_out(STM32Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
+static inline void _ux_dcd_stm32_setup_out(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
                                            PCD_HandleTypeDef *hpcd)
 {
   transfer_request -> ux_slave_transfer_request_completion_code =  UX_SUCCESS;
   ed -> direction = UX_ENDPOINT_IN;
   if (_ux_device_stack_control_request_process(transfer_request) == UX_SUCCESS)
   {
-    ed -> state = STM32Endpoint_STATE_STATUS_TX;
+    ed -> state = STM32::EndpointState::STATUS_TX;
     HAL_PCD_EP_Transmit(hpcd, 0x00U, nullptr, 0U);
   }
 }
 
-static inline void _ux_dcd_stm32_setup_status(STM32Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
+static inline void _ux_dcd_stm32_setup_status(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
                                               PCD_HandleTypeDef *hpcd)
 {
   ed -> direction = UX_ENDPOINT_IN;
@@ -64,7 +64,7 @@ static inline void _ux_dcd_stm32_setup_status(STM32Endpoint * ed, UX_SLAVE_TRANS
   {
 
     /* Set the state to STATUS RX.  */
-    ed -> state = STM32Endpoint_STATE_STATUS_RX;
+    ed -> state = STM32::EndpointState::STATUS_RX;
     HAL_PCD_EP_Transmit(hpcd, 0x00U, nullptr, 0U);
   }
 }
@@ -72,9 +72,9 @@ static inline void _ux_dcd_stm32_setup_status(STM32Endpoint * ed, UX_SLAVE_TRANS
 void STM32::DCD::setup()
 {
   UX_SLAVE_TRANSFER *transfer_request;
-  STM32Endpoint     *endpoint;
+  STM32::Endpoint     *endpoint;
 
-  endpoint = (STM32Endpoint *)get_control_endpoint();
+  endpoint = (STM32::Endpoint *)get_control_endpoint();
 
   /* Get the pointer to the transfer request.  */
   transfer_request =  &endpoint->ux_slave_endpoint_transfer_request;
@@ -117,7 +117,7 @@ void STM32::DCD::setup()
         }
         else
         {
-          endpoint = (STM32Endpoint *)transfer_request -> ux_slave_transfer_request_endpoint;
+          endpoint = (STM32::Endpoint *)transfer_request -> ux_slave_transfer_request_endpoint;
 
           /* Get the length we expect from the SETUP packet.  */
           transfer_request -> ux_slave_transfer_request_requested_length = usb_get_short(transfer_request -> ux_slave_transfer_request_setup + 6);
@@ -127,10 +127,10 @@ void STM32::DCD::setup()
             {
 
                 /* No space available, stall the endpoint.  */
-                stall(endpoint);
+              endpoint->stall();
 
                 /* Next phase is a SETUP.  */
-                endpoint->state =  STM32Endpoint_STATE_IDLE;
+                endpoint->state =  EndpointState::IDLE;
 
                 /* We are done.  */
                 return;
@@ -151,7 +151,7 @@ void STM32::DCD::setup()
                             transfer_request -> ux_slave_transfer_request_requested_length);
 
                 /* Set the state to RX.  */
-                endpoint->state =  STM32Endpoint_STATE_DATA_RX;
+                endpoint->state =  EndpointState::DATA_RX;
             }
         }
     }
@@ -161,13 +161,13 @@ void STM32::DCD::on_control_in()
 {
   UX_SLAVE_TRANSFER *transfer_request;
   ULONG             transfer_length;
-  STM32Endpoint     *endpoint;
+  STM32::Endpoint     *endpoint;
 
-  endpoint = (STM32Endpoint *)get_endpoint(0);
+  endpoint = (STM32::Endpoint *)get_endpoint(0);
   transfer_request =  &(endpoint->ux_slave_endpoint_transfer_request);
 
   /* Check if we need to send data again on control endpoint. */
-  if (endpoint->state == STM32Endpoint_STATE_DATA_TX)
+  if (endpoint->state == EndpointState::DATA_TX)
   {
     HAL_PCD_EP_Receive(&hpcd, 0, 0, 0);
 
@@ -202,7 +202,7 @@ void STM32::DCD::on_control_in()
 #if defined(UX_DEVICE_STANDALONE)
 
             /* Control status phase done.  */
-            ed -> status |= STM32Endpoint_STATUS_DONE;
+            ed -> status |= STM32::Endpoint_STATUS_DONE;
 #endif
 
             /* We are using a Control endpoint, if there is a callback, invoke it. We are still under ISR.  */
@@ -210,7 +210,7 @@ void STM32::DCD::on_control_in()
                 transfer_request -> ux_slave_transfer_request_completion_function (transfer_request) ;
 
             /* State is now STATUS RX.  */
-            endpoint -> state = STM32Endpoint_STATE_STATUS_RX;
+            endpoint -> state = EndpointState::STATUS_RX;
         }
     }
     else
@@ -252,9 +252,9 @@ void STM32::DCD::on_data_in(uint8_t epnum)
 
   UX_SLAVE_TRANSFER *xfer;
   ULONG             transfer_length;
-  STM32Endpoint     *endpoint;
+  STM32::Endpoint     *endpoint;
 
-  endpoint = (STM32Endpoint *)get_endpoint(epnum | 0x80);
+  endpoint = (STM32::Endpoint *)get_endpoint(epnum | 0x80);
 
     /* Get the pointer to the transfer request.  */
   xfer = &(endpoint->ux_slave_endpoint_transfer_request);
@@ -287,7 +287,7 @@ void STM32::DCD::on_data_in(uint8_t epnum)
 void STM32::DCD::on_data_out(uint8_t epnum)
 {
 
-STM32Endpoint         *ed;
+STM32::Endpoint         *ed;
 UX_SLAVE_TRANSFER       *xfer;
 ULONG                   transfer_length;
 Endpoint       *endpoint;
@@ -304,11 +304,11 @@ Endpoint       *endpoint;
     {
 
         /* Check if we have received something on endpoint 0 during data phase .  */
-        if (ed -> state == STM32Endpoint_STATE_DATA_RX)
+        if (ed -> state == EndpointState::DATA_RX)
         {
 
             /* Get the pointer to the logical endpoint from the transfer request.  */
-            endpoint = xfer -> ux_slave_transfer_request_endpoint;
+            endpoint = (STM32::Endpoint *)xfer -> ux_slave_transfer_request_endpoint;
 
             /* Read the received data length for the Control endpoint.  */
             transfer_length = HAL_PCD_EP_GetRxCount(&hpcd, epnum);
@@ -351,7 +351,7 @@ Endpoint       *endpoint;
 #if defined(UX_DEVICE_STANDALONE)
 
                 /* Control status phase done.  */
-                ed -> status |= STM32Endpoint_STATUS_DONE;
+                ed -> status |= STM32::Endpoint_STATUS_DONE;
 #endif
 
                 /* We are using a Control endpoint, if there is a callback, invoke it. We are still under ISR.  */
@@ -374,7 +374,7 @@ Endpoint       *endpoint;
         xfer -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_COMPLETED;
 
 #if defined(UX_DEVICE_STANDALONE)
-        ed -> status |= STM32Endpoint_STATUS_DONE;
+        ed -> status |= STM32::Endpoint_STATUS_DONE;
 #else
 
         /* Non control endpoint operation, use semaphore.  */

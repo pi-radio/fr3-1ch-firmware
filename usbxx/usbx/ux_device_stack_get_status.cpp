@@ -102,41 +102,18 @@ ULONG                   data_length;
         break;
             
     case UX_REQUEST_TARGET_ENDPOINT:
+    {
+      auto tgt = dcd->get_endpoint(request_index);
 
-#ifndef UX_DEVICE_BIDIRECTIONAL_ENDPOINT_SUPPORT
+      if (tgt->is_stalled()) {
+        *transfer_request -> ux_slave_transfer_request_data_pointer = 1;
+      }
 
-        /* This feature returns the halt state of a specific endpoint.  The endpoint index
-           is used to retrieve the endpoint container.  */
-        status =  dcd -> ux_slave_dcd_function(dcd, UX_DCD_ENDPOINT_STATUS, (VOID *)(ALIGN_TYPE)(request_index & (UINT)~UX_ENDPOINT_DIRECTION));
-#else
-
-        /* This feature returns the halt state of a specific endpoint.  The endpoint address
-           is used to retrieve the endpoint container.  */
-        status =  dcd->get_endpoint_status(request_index);
-#endif
-
-        /* Check the status. We may have a unknown endpoint.  */
-        if (status != UX_ERROR)
-        {
-
-            if (status == UX_TRUE)
-                *transfer_request -> ux_slave_transfer_request_data_pointer =  1;
-        }                        
-        else
-        {
-    
-            /* We stall the command. Endpoint is wrong.  */
-            dcd->stall(endpoint);
-    
-            /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-            return 0;            
-        }
-        break;
+      break;
+    }
 
     default:
-        
-        /* We stall the command.  */
-        dcd->stall(endpoint);
+        endpoint->stall();
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
         return 0;            

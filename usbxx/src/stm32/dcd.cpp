@@ -51,6 +51,8 @@ uint32_t STM32::DCD::initialize()
   for (int i = 0; i < 8; i++) {
     ep_in[i].index = i;
     ep_out[i].index = i;
+    ep_in[i].dcd = this;
+    ep_out[i].dcd = this;
 
     /* Create the semaphore for the endpoint.  */
     if (_ux_device_semaphore_create(&ep_in[i].ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore,
@@ -94,7 +96,7 @@ uint32_t STM32::DCD::initialize()
   return 0;
 }
 
-Endpoint *STM32::DCD::allocate_endpoint(const EndpointDescriptor &desc)
+USBXX::Endpoint *STM32::DCD::allocate_endpoint(const EndpointDescriptor &desc)
 {
   Endpoint *retval;
 
@@ -204,7 +206,7 @@ UINT  STM32::DCD::complete_initialization()
   Once this endpoint is enabled, the host can then send a setup packet
   The device controller will receive it and will call the setup function
   module.  */
-  create_endpoint(control_endpoint);
+  control_endpoint->create();
 
   /* Open Control OUT endpoint.  */
   HAL_PCD_EP_Flush(pcd_handle, 0x00U);

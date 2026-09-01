@@ -28,11 +28,6 @@
 
 /* Define USB STM32 physical endpoint state machine definition.  */
 
-#define STM32Endpoint_STATE_IDLE                               0
-#define STM32Endpoint_STATE_DATA_TX                            1
-#define STM32Endpoint_STATE_DATA_RX                            2
-#define STM32Endpoint_STATE_STATUS_TX                          3
-#define STM32Endpoint_STATE_STATUS_RX                          4
 
 /* Define USB STM32 device callback notification state definition.  */
 
@@ -44,10 +39,10 @@
 
 /* Define USB STM32 endpoint transfer status definition.  */
 
-#define STM32Endpoint_TRANSFER_STATUS_IDLE                     0
-#define STM32Endpoint_TRANSFER_STATUS_SETUP                    1
-#define STM32Endpoint_TRANSFER_STATUS_IN_COMPLETION            2
-#define STM32Endpoint_TRANSFER_STATUS_OUT_COMPLETION           3
+#define TRANSFER_STATUS_IDLE                     0
+#define TRANSFER_STATUS_SETUP                    1
+#define TRANSFER_STATUS_IN_COMPLETION            2
+#define TRANSFER_STATUS_OUT_COMPLETION           3
 
 /* Define USB STM32 physical endpoint structure.  */
 
@@ -57,12 +52,13 @@ namespace USBXX
 {
   namespace STM32
   {
+
     class DCD : public USBXX::DCD
     {
       PCD_TypeDef *pcd;
       PCD_HandleTypeDef hpcd;
-      STM32Endpoint ep_out[UX_DCD_STM32_MAX_ED];
-      STM32Endpoint ep_in[UX_DCD_STM32_MAX_ED];
+      STM32::Endpoint ep_out[UX_DCD_STM32_MAX_ED];
+      STM32::Endpoint ep_in[UX_DCD_STM32_MAX_ED];
       PCD_HandleTypeDef   *pcd_handle;
 
       void control_IRQ();
@@ -80,9 +76,9 @@ namespace USBXX
 
       void handle_IRQ();
 
+      PCD_HandleTypeDef *get_pcd_handle() { return pcd_handle; }
 
-
-      inline struct STM32Endpoint *__get_endpoint(ULONG ep_addr)
+      inline struct STM32::Endpoint *__get_endpoint(ULONG ep_addr)
       {
         ULONG ep_dir = ep_addr & 0x80;
         ULONG ep_num = ep_addr & 0x7F;
@@ -93,7 +89,7 @@ namespace USBXX
 
         if (ep_num >= UX_DCD_STM32_MAX_ED ||
             ep_num >= pcd_handle->Init.dev_endpoints)
-            return (struct STM32Endpoint *)(UX_NULL);
+            return nullptr;
 
         if (ep_dir)
             return &ep_in[ep_num];
@@ -105,12 +101,7 @@ namespace USBXX
       Endpoint *get_control_endpoint() override { return &ep_out[0]; };
       UX_SLAVE_TRANSFER *get_control_transfer() override { return &ep_out[0].ux_slave_endpoint_transfer_request; };
 
-      Endpoint *allocate_endpoint(const EndpointDescriptor &) override;
-      UINT create_endpoint(Endpoint *endpoint) override;
-      UINT destroy_endpoint(Endpoint *endpoint) override;
-      UINT reset_endpoint(Endpoint *endpoint) override;
-      UINT stall(Endpoint *endpoint) override;
-      UINT get_endpoint_status(ULONG endpoint_index) override;
+      USBXX::Endpoint *allocate_endpoint(const EndpointDescriptor &) override;
       uint32_t get_frame_number() override;
       UINT complete_initialization() override;
       UINT abort_transfer(UX_SLAVE_TRANSFER *transfer_request) override;

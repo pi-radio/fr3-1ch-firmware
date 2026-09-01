@@ -163,7 +163,7 @@ ULONG                   max_transfer_length, n_trans;
             endpoint -> ux_slave_endpoint_device =  device;
                 
             /* Create the endpoint at the DCD level.  */
-            status =  dcd->create_endpoint(endpoint);
+            status = endpoint->create();
             
             /* Do a sanity check on endpoint creation.  */
             if (status != UX_SUCCESS)

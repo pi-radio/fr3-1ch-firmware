@@ -35,5 +35,11 @@ namespace USBXX
     {
       used = false;
     }
+
+    virtual UINT create() = 0;
+    virtual UINT destroy() = 0;
+    virtual bool is_stalled() = 0;
+    virtual UINT reset() = 0;
+    virtual void stall() = 0;
   };
 }

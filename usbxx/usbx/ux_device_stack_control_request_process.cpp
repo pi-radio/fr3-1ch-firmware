@@ -118,7 +118,7 @@ ULONG                       application_data_length;
                 {
 
                     /* The application did not like the vendor command format, stall the control endpoint.  */
-                    dcd->stall(device -> get_control_endpoint());
+                    device -> get_control_endpoint()->stall();
                     
                     /* We are done here.  */
                     return 0;
@@ -195,7 +195,7 @@ ULONG                       application_data_length;
             if (status != UX_SUCCESS)
 
                 /* We stall the command (request not supported).  */
-                dcd->stall(device->get_control_endpoint());
+                device->get_control_endpoint()->stall();
 
             /* We are done for class/vendor request.  */
             return(status);
@@ -277,7 +277,7 @@ ULONG                       application_data_length;
         if (status != UX_SUCCESS)
 
             /* Stall the control endpoint to issue protocol error. */
-            dcd->stall(device->get_control_endpoint());
+           device->get_control_endpoint()->stall();
     }
 
     /* Return the function status.  */

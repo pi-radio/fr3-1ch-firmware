@@ -48,7 +48,6 @@ using namespace USBXX;
 
 UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_index, ULONG host_length)
 {
-  USBXX::DCD                    *dcd;
   ULONG                           descriptor_index;
   ULONG                           parsed_descriptor_index;
   UX_SLAVE_TRANSFER               *transfer_request;
@@ -67,8 +66,6 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
   ULONG                           string_framework_length;
   ULONG                           string_length;
 
-    /* Get the pointer to the DCD.  */
-    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     auto device = _ux_system_slave->device;
@@ -253,7 +250,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
             /* Check buffer length, since total descriptors length may exceed buffer...  */
             if (length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
             {
-                status =  dcd ->stall(endpoint);
+                endpoint->stall();
                 break;
             }
 
@@ -278,7 +275,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
             /* We need to check request buffer size in case it's possible exceed. */
             if (_ux_system_slave -> ux_system_slave_language_id_framework_length + 2 > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
             {
-                status = dcd->stall(endpoint);
+                endpoint->stall();
                 break;
             }
 
@@ -327,16 +324,8 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
                         /* We need to check request buffer size in case it's possible exceed. */
                         if (((*(string_framework + 3)*2) + 2) > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
                         {
-
-                            /* Error trap. */
-                            _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_DEVICE_STACK, UX_MEMORY_INSUFFICIENT);
-
-                            /* If trace is enabled, insert this event into the trace buffer.  */
-                            UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-                            /* Stall the endpoint.  */
-                            status =  dcd->stall(endpoint);
-                            break;
+                          endpoint->stall();
+                          break;
                         }
 
                         /* We have a request to send back a string. Use the transfer request buffer.  */
@@ -386,7 +375,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
             {
 
                 /* Could not find the required string index. Stall the endpoint.  */
-                dcd->stall(endpoint);
+              endpoint->stall();
                 return(UX_ERROR);
             }
         }
@@ -395,7 +384,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
     default:
       // TODO -- SEND CDCACM descriptor
 
-      dcd->stall(endpoint);
+      endpoint->stall();
       return UX_ERROR;
         throw std::runtime_error("Invalid descriptor in send descriptor");
     }

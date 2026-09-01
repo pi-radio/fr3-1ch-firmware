@@ -102,7 +102,7 @@ UINT                        status = UX_ERROR;
     if (device -> ux_slave_device_state == UX_DEVICE_ATTACHED)
 
         /* Now we can destroy the default control endpoint.  */
-        status =  dcd->destroy_endpoint(device -> get_control_endpoint());
+        status =  device->get_control_endpoint()->destroy();
 
     /* We are reverting to configuration 0.  */
     device -> ux_slave_device_configuration_selected =  0;

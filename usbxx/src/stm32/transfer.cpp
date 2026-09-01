@@ -9,7 +9,7 @@ UINT  STM32::DCD::abort_transfer(UX_SLAVE_TRANSFER *transfer_request)
 {
   Endpoint       *endpoint;
 
-  endpoint =  transfer_request -> ux_slave_transfer_request_endpoint;
+  endpoint =  (Endpoint *)transfer_request -> ux_slave_transfer_request_endpoint;
 
   HAL_PCD_EP_Abort(pcd_handle, endpoint->ux_slave_endpoint_descriptor.bEndpointAddress);
   HAL_PCD_EP_Flush(pcd_handle, endpoint->ux_slave_endpoint_descriptor.bEndpointAddress);

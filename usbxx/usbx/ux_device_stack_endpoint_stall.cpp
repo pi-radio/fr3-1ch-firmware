@@ -63,7 +63,7 @@ UINT                status;
     {
 
         /* Stall the endpoint.  */
-        status =  dcd -> stall(endpoint);
+        endpoint->stall();
 
         /* Mark the endpoint state.  */
         if ((endpoint -> ux_slave_endpoint_descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE) !=

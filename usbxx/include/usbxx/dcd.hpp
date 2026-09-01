@@ -30,12 +30,7 @@ namespace USBXX
     virtual UX_SLAVE_TRANSFER *get_control_transfer() = 0;
 
     virtual Endpoint *allocate_endpoint(const EndpointDescriptor &) = 0;
-    virtual UINT create_endpoint(Endpoint *endpoint) = 0;
-    virtual UINT destroy_endpoint(Endpoint *endpoint) = 0;
-    virtual UINT reset_endpoint(Endpoint *endpoint) = 0;
     virtual uint32_t get_frame_number() = 0;
-    virtual UINT stall(Endpoint *endpoint) = 0;
-    virtual UINT get_endpoint_status(ULONG endpoint_index) = 0;
     virtual UINT abort_transfer(UX_SLAVE_TRANSFER *xfer) = 0;
     virtual UINT transfer_request(UX_SLAVE_TRANSFER *xfer) = 0;
     virtual UINT complete_initialization() = 0;

@@ -103,7 +103,7 @@ UINT                    status;
     }
 
     /* The alternate setting value was not found, so we return a stall error.  */
-    dcd->stall(endpoint);
+    endpoint->stall();
 
     /* Return the status to the caller.  */
     return(UX_ERROR);

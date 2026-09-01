@@ -113,7 +113,7 @@ Endpoint       *next_endpoint;
         dcd = STM32::gDCD;
 
         /* The endpoint must be destroyed.  */
-        dcd->destroy_endpoint(endpoint);
+        endpoint->destroy();
 
         /* Free the endpoint.  */
         endpoint->used = false;

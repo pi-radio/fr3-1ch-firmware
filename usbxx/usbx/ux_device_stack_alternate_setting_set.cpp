@@ -165,7 +165,7 @@ ULONG                           max_transfer_length, n_trans;
                                 _ux_device_stack_transfer_all_request_abort(endpoint, UX_TRANSFER_BUS_RESET);
 
                                 /* The device controller must be called to destroy the endpoint.  */
-                                dcd->destroy_endpoint(endpoint);
+                                endpoint->destroy();
 
                                 /* Get the next endpoint.  */
                                 next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
@@ -254,7 +254,7 @@ ULONG                           max_transfer_length, n_trans;
                                     endpoint -> ux_slave_endpoint_device =  device;
 
                                     /* Create the endpoint at the DCD level.  */
-                                    status =  dcd->create_endpoint(endpoint);
+                                    status = endpoint->create();
 
                                     /* Do a sanity check on endpoint creation.  */
                                     if (status != UX_SUCCESS)

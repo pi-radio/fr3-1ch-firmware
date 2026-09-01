@@ -132,7 +132,7 @@ Endpoint       *endpoint_target;
                 {
 
                     /* Stall the endpoint.  */
-                    dcd->stall(endpoint_target);
+                    endpoint_target->stall();
 
                     /* Return the function status.  */
                     return 0;
@@ -154,7 +154,7 @@ Endpoint       *endpoint_target;
     default:
         
         /* We stall the command.  */
-        dcd->stall(endpoint);
+        endpoint->stall();
     
         /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
         return 0;            
