@@ -48,13 +48,13 @@ USBXX::DCD    *dcd;
     dcd = STM32::gDCD;
 
     /* Sets the completion code due to bus reset.  */
-    xfer -> ux_slave_transfer_request_completion_code = completion_code;
+    xfer -> completion_code = completion_code;
 
     /* Ensure we're not preempted by the transfer completion ISR.  */
     UX_DISABLE
 
     /* It's possible the transfer already completed. Ensure it hasn't before doing the abort.  */
-    if (xfer -> ux_slave_transfer_request_status == UX_TRANSFER_STATUS_PENDING)
+    if (xfer -> status == UX_TRANSFER_STATUS_PENDING)
     {
 
         /* Call the DCD if necessary for cleaning up the pending transfer.  */
@@ -67,10 +67,10 @@ USBXX::DCD    *dcd;
            that the transfer request function cannot simultaneously modify this 
            because if the transfer was pending, then the transfer's thread is 
            currently waiting for it to complete.  */
-        xfer -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_ABORT;
+        xfer -> status =  UX_TRANSFER_STATUS_ABORT;
 
         /* Wake up the device driver who is waiting on the semaphore.  */
-        _ux_device_semaphore_put(&xfer -> ux_slave_transfer_request_semaphore);
+        _ux_device_semaphore_put(&xfer -> semaphore);
     }
     else
     {

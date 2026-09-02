@@ -46,6 +46,7 @@ using namespace USBXX;
 
 using namespace USBXX;
 
+#if 0
 UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_index, ULONG host_length)
 {
   ULONG                           descriptor_index;
@@ -77,7 +78,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
     transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
 
     /* Set the direction to OUT.  */
-    transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
+    transfer_request -> phase =  TransferPhase::DATA_OUT;
 
     /* Isolate the descriptor index.  */
     descriptor_index =  descriptor_type & 0xff;
@@ -132,7 +133,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
             /* Check if this is a descriptor expected.  */
             if (*(device_framework + 1) == descriptor_type)
             {
-                ::memcpy(transfer_request->ux_slave_transfer_request_data_pointer,
+                ::memcpy(transfer_request->data,
                     device_framework, length);
 
                 /* Perform the data transfer.  */
@@ -254,12 +255,12 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
                 break;
             }
 
-            ::memcpy(transfer_request -> ux_slave_transfer_request_data_pointer,
+            ::memcpy(transfer_request -> data,
                 device_framework, length);
 
             /* Now we need to hack the found descriptor because this request expect a requested
                 descriptor type instead of the regular descriptor.  */
-            *(transfer_request -> ux_slave_transfer_request_data_pointer + 1) = (UCHAR)descriptor_type;
+            *(transfer_request -> data + 1) = (UCHAR)descriptor_type;
 
             /* We can return the configuration descriptor.  */
             status =  _ux_device_stack_transfer_request(transfer_request, length, host_length);
@@ -280,7 +281,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
             }
 
             /* We have a request to send back the language ID list. Use the transfer request buffer.  */
-            string_memory =  transfer_request -> ux_slave_transfer_request_data_pointer;
+            string_memory =  transfer_request -> data;
 
             /* Store the total length of the response.  */
             *string_memory =  (UCHAR)(_ux_system_slave -> ux_system_slave_language_id_framework_length + 2);
@@ -329,7 +330,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
                         }
 
                         /* We have a request to send back a string. Use the transfer request buffer.  */
-                        string_memory =  transfer_request -> ux_slave_transfer_request_data_pointer;
+                        string_memory =  transfer_request -> data;
 
                         /* Store the length in the string buffer. The length
                            of the string descriptor is stored in the third byte,
@@ -393,3 +394,4 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
     return(status);
 }
 
+#endif

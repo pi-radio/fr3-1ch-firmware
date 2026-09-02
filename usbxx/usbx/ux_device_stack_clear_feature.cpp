@@ -84,8 +84,6 @@ using namespace USBXX;
 /**************************************************************************/
 UINT  _ux_device_stack_clear_feature(ULONG request_type, ULONG request_value, ULONG request_index)
 {
-
-USBXX::DCD            *dcd;
 UX_SLAVE_INTERFACE      *interface_ptr;
 Endpoint       *endpoint;
 Endpoint       *endpoint_target;
@@ -94,9 +92,6 @@ Endpoint       *endpoint_target;
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_CLEAR_FEATURE, request_type, request_value, request_index, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the DCD.  */
-    dcd =  STM32::gDCD;
 
     /* Get the pointer to the device.  */
     auto device = _ux_system_slave->device;
@@ -135,7 +130,7 @@ Endpoint       *endpoint_target;
         /* The only clear feature for endpoint is ENDPOINT_STALL. This clears
            the endpoint of the stall situation and resets its data toggle. 
            We need to find the endpoint through the interface(s). */
-        interface_ptr =  device -> ux_slave_device_first_interface;
+        interface_ptr =  device -> first_interface;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
         while (interface_ptr != nullptr)

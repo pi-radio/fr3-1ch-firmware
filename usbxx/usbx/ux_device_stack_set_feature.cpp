@@ -36,19 +36,14 @@ using namespace USBXX;
 
 UINT  _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULONG request_index)
 {
-
-USBXX::DCD            *dcd;
-UX_SLAVE_INTERFACE      *interface_ptr;
-Endpoint       *endpoint;
-Endpoint       *endpoint_target;
+  UX_SLAVE_INTERFACE      *interface_ptr;
+  Endpoint       *endpoint;
+  Endpoint       *endpoint_target;
 
     UX_PARAMETER_NOT_USED(request_value);
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_SET_FEATURE, request_value, request_index, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the DCD.  */
-    dcd = STM32::gDCD;
 
     /* Get the pointer to the device.  */
     auto device =  _ux_system_slave->device;
@@ -114,7 +109,7 @@ Endpoint       *endpoint_target;
         /* The only set feature for endpoint is ENDPOINT_STALL. This forces
            the endpoint to the stall situation.
            We need to find the endpoint through the interface(s). */
-        interface_ptr =  device -> ux_slave_device_first_interface;
+        interface_ptr =  device -> first_interface;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
         while (interface_ptr != nullptr)

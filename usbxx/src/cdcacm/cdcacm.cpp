@@ -326,23 +326,23 @@ UINT USBXX::CDCACM::deactivate(UX_SLAVE_CLASS_COMMAND *command)
 UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
 {
   //UX_SLAVE_CLASS                          *class_ptr;
-  UX_SLAVE_TRANSFER                       *transfer_request;
+  UX_SLAVE_TRANSFER                       *xfer;
   ULONG                                   request;
   ULONG                                   value;
   ULONG                                   request_length;
   ULONG                                   transmit_length;
 
     /* Get the pointer to the transfer request associated with the control endpoint.  */
-    transfer_request = get_control_transfer();
+    xfer = get_control_transfer();
 
     /* Extract all necessary fields of the request.  */
-    request =  *(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_REQUEST);
+    request =  *(xfer -> setup + UX_SETUP_REQUEST);
 
     /* Extract all necessary fields of the value.  */
-    value =  usb_get_short(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_VALUE);
+    value =  usb_get_short(xfer -> setup + UX_SETUP_VALUE);
 
     /* Pickup the request length.  */
-    request_length =   usb_get_short(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_LENGTH);
+    request_length =   usb_get_short(xfer -> setup + UX_SETUP_LENGTH);
 
     transmit_length = request_length ;
 
@@ -371,26 +371,26 @@ UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
                 transmit_length = UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
 
             /* Send the line coding default parameters back to the host.  */
-            usb_put_long(transfer_request->ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
+            usb_put_long(xfer->data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
                                  baudrate);
-            *(transfer_request->ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
-            *(transfer_request -> ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
-            *(transfer_request -> ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
+            *(xfer->data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
+            *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
+            *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
 
             /* Set the phase of the transfer to data out.  */
-            transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
+            xfer -> phase =  TransferPhase::DATA_OUT;
 
             /* Perform the data transfer.  */
-            _ux_device_stack_transfer_request(transfer_request, transmit_length, request_length);
+            transfer_request(xfer, transmit_length, request_length);
             break;
 
         case UX_SLAVE_CLASS_CDC_ACM_SET_LINE_CODING:
 
             /* Get the line coding parameters from the host.  */
-            baudrate  = usb_get_long(transfer_request -> ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
-            stop_bit  = *(transfer_request -> ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
-            parity    = *(transfer_request -> ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY_STRUCT);
-            data_bit  = *(transfer_request -> ux_slave_transfer_request_data_pointer + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
+            baudrate  = usb_get_long(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
+            stop_bit  = *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
+            parity    = *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY_STRUCT);
+            data_bit  = *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
 
             break ;
 
@@ -411,12 +411,12 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
 {
   Endpoint           *endpoint;
   UX_SLAVE_INTERFACE          *interface_ptr;
-  UX_SLAVE_TRANSFER           *transfer_request;
+  UX_SLAVE_TRANSFER           *xfer;
   UINT                        status= UX_SUCCESS;
   ULONG                       local_requested_length;
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
+  if (state != UX_DEVICE_CONFIGURED)
     throw std::runtime_error("CDCACM read on unconfigured device");
 
   /* This is the first time we are activated. We need the interface to the class.  */
@@ -434,11 +434,11 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
 
   {
     TXX::Mutex::guard guard(ep_in_mutex);
-    transfer_request = &endpoint->ux_slave_endpoint_transfer_request;
+    xfer = &endpoint->ux_slave_endpoint_transfer_request;
 
     *actual_length =  0;
 
-    while (ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length)
+    while (state == UX_DEVICE_CONFIGURED && requested_length)
     {
       /* Check if we have enough in the local buffer.  */
       if (requested_length > endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
@@ -447,33 +447,33 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
           local_requested_length = requested_length;
 
       /* Send the request to the device controller.  */
-      status =  _ux_device_stack_transfer_request(transfer_request, local_requested_length, local_requested_length);
+      status = transfer_request(xfer, local_requested_length, local_requested_length);
 
       if (status != UX_SUCCESS) {
         throw std::runtime_error("read transfer failed");
       }
 
       /* We need to copy the buffer locally.  */
-      ::memcpy(buffer, transfer_request -> ux_slave_transfer_request_data_pointer,
-                      transfer_request -> ux_slave_transfer_request_actual_length); /* Use case of memcpy is verified. */
+      ::memcpy(buffer, xfer -> data,
+                      xfer -> actual_length); /* Use case of memcpy is verified. */
 
       /* Next buffer address.  */
-      buffer += transfer_request -> ux_slave_transfer_request_actual_length;
+      buffer += xfer -> actual_length;
 
       /* Set the length actually received. */
-      *actual_length += transfer_request -> ux_slave_transfer_request_actual_length;
+      *actual_length += xfer -> actual_length;
 
       /* Decrement what left has to be done.  */
-      requested_length -= transfer_request -> ux_slave_transfer_request_actual_length;
+      requested_length -= xfer -> actual_length;
 
 
       /* Is this a short packet or a ZLP indicating we are done with this transfer ?  */
-      if (transfer_request->ux_slave_transfer_request_actual_length < endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
+      if (xfer->actual_length < endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
           return 0;
     }
   }
 
-  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
+  if (state != UX_DEVICE_CONFIGURED)
     return UX_TRANSFER_NO_ANSWER;
 
   return status;
@@ -486,7 +486,7 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
 {
   Endpoint           *endpoint;
   UX_SLAVE_INTERFACE          *interface_ptr;
-  UX_SLAVE_TRANSFER           *transfer_request;
+  UX_SLAVE_TRANSFER           *xfer;
   ULONG                       local_requested_length;
   ULONG                       local_host_length;
   UINT                        status = 0;
@@ -494,7 +494,7 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
   /* Get the pointer to the device.  */
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
+  if (state != UX_DEVICE_CONFIGURED)
   {
     return UX_CONFIGURATION_HANDLE_UNKNOWN;
   }
@@ -516,20 +516,20 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
     TXX::Mutex::guard guard(ep_out_mutex);
 
     /* We are writing to the IN endpoint.  */
-    transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+    xfer =  &endpoint -> ux_slave_endpoint_transfer_request;
 
     /* Reset the actual length.  */
     *actual_length =  0;
 
     /* Check if the application forces a 0 length packet.  */
-    if (ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length == 0)
-      return _ux_device_stack_transfer_request(transfer_request, 0, 0);
+    if (state == UX_DEVICE_CONFIGURED && requested_length == 0)
+      return transfer_request(xfer, 0, 0);
 
 
     /* Check if we need more transactions.  */
     local_host_length = UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE;
 
-    while (ux_slave_device_state == UX_DEVICE_CONFIGURED && requested_length != 0)
+    while (state == UX_DEVICE_CONFIGURED && requested_length != 0)
     {
 
       /* Check if we have enough in the local buffer.  */
@@ -544,29 +544,29 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
 
       /* On a out, we copy the buffer to the caller. Not very efficient but it makes the API
          easier.  */
-      ::memcpy(transfer_request -> ux_slave_transfer_request_data_pointer,
+      ::memcpy(xfer -> data,
                           buffer, local_requested_length); /* Use case of memcpy is verified. */
 
       /* Send the request to the device controller.  */
-      status =  _ux_device_stack_transfer_request(transfer_request, local_requested_length, local_host_length);
+      status = transfer_request(xfer, local_requested_length, local_host_length);
 
       if (status != UX_SUCCESS) {
         throw std::runtime_error("Unable to complete transfer on CDCACM write");
       }
           /* Next buffer address.  */
-      buffer += transfer_request -> ux_slave_transfer_request_actual_length;
+      buffer += xfer -> actual_length;
 
       /* Set the length actually received. */
-      *actual_length += transfer_request -> ux_slave_transfer_request_actual_length;
+      *actual_length += xfer -> actual_length;
 
       /* Decrement what left has to be done.  */
-      requested_length -= transfer_request -> ux_slave_transfer_request_actual_length;
+      requested_length -= xfer -> actual_length;
 
     }
   }
 
   /* Check why we got here, either completion or device was extracted.  */
-  if (ux_slave_device_state != UX_DEVICE_CONFIGURED)
+  if (state != UX_DEVICE_CONFIGURED)
       return UX_TRANSFER_NO_ANSWER;
 
   /* Simply return the last transaction result.  */
@@ -680,7 +680,7 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
 
 
     /* Check the status of the transfer. */
-    if (transfer_request -> ux_slave_transfer_request_status ==  UX_TRANSFER_STATUS_PENDING)
+    if (transfer_request -> status ==  UX_TRANSFER_STATUS_PENDING)
     {
 
         /* Abort the transfer.  */
@@ -707,10 +707,10 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
       transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
 
       /* Check the status of the transfer.  */
-      if (transfer_request -> ux_slave_transfer_request_status ==  UX_TRANSFER_STATUS_PENDING)
+      if (transfer_request -> status ==  UX_TRANSFER_STATUS_PENDING)
           status = UX_ERROR;
       else
-          transfer_request -> ux_slave_transfer_request_timeout = (ULONG) (ALIGN_TYPE) parameter;
+          transfer_request -> timeout = (ULONG) (ALIGN_TYPE) parameter;
 
       break;
 

@@ -532,15 +532,15 @@ namespace USBXX
 
     void build();
 
-    uint8_t  *get_desc() { return desc; }
-    size_t get_desc_len() { return p_cur - desc; /* dev_class.CurrDevDescSz + dev_class.CurrConfDescSz; */ }
+    const uint8_t *get_desc() const { return desc; }
+    size_t get_desc_len() const { return p_cur - desc; /* dev_class.CurrDevDescSz + dev_class.CurrConfDescSz; */ }
 
     uint16_t get_interface_number(uint8_t class_type, uint8_t interface_type);
 
     bool is_hs() { return speed == USBD_HIGH_SPEED; }
 
-    DescriptorIterator begin() { return DescriptorIterator(get_desc_len(), get_desc()); }
-    DescriptorIterator end() { return DescriptorIterator(0, nullptr); }
+    DescriptorIterator begin() const { return DescriptorIterator(get_desc_len(), get_desc()); }
+    DescriptorIterator end() const { return DescriptorIterator(0, nullptr); }
   };
 
 

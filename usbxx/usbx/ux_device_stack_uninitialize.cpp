@@ -98,13 +98,13 @@ UX_SLAVE_TRANSFER               *xfer;
     xfer = device->get_control_transfer();
 
     /* Free memory for the control endpoint buffer.  */
-    ::free(xfer -> ux_slave_transfer_request_data_pointer);
+    ::free(xfer -> data);
 
     
     // TODO -- RELEASE ALL ENDPOINTS
     
     /* Free memory for interface pool.  */
-    ::free(device -> ux_slave_device_interfaces_pool);
+    ::free(device -> interfaces_pool);
 
     /* Return successful completion.  */
     return 0;

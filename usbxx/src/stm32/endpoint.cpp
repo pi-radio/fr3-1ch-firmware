@@ -70,8 +70,8 @@ UINT  STM32::Endpoint::reset()
   HAL_PCD_EP_Flush(pcd_handle, ux_slave_endpoint_descriptor.bEndpointAddress);
 
   /* Wakeup pending thread.  */
-  if (ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore.tx_semaphore_suspended_count)
-    _ux_utility_semaphore_put(&ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore);
+  if (ux_slave_endpoint_transfer_request.semaphore.tx_semaphore_suspended_count)
+    _ux_utility_semaphore_put(&ux_slave_endpoint_transfer_request.semaphore);
 
   UX_RESTORE
 

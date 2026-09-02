@@ -58,11 +58,11 @@ UINT                    status;
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */
-    if (device -> ux_slave_device_state == UX_DEVICE_CONFIGURED)
+    if (device -> state == UX_DEVICE_CONFIGURED)
     {
 
         /* Get the pointer to the first interface.  */
-        interface_ptr =  device -> ux_slave_device_first_interface;
+        interface_ptr =  device -> first_interface;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
         /* Parse the interfaces if any.  */
@@ -78,14 +78,14 @@ UINT                    status;
                 transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
 
                 /* Set the value of the alternate setting in the buffer.  */
-                *transfer_request -> ux_slave_transfer_request_data_pointer =
+                *transfer_request -> data =
                                 (UCHAR) interface_ptr -> ux_slave_interface_descriptor.bAlternateSetting;
 
                 /* Setup the length appropriately.  */
-                transfer_request -> ux_slave_transfer_request_requested_length =  1;
+                transfer_request -> requested_length =  1;
 
                 /* Set the phase of the transfer to data out.  */
-                transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
+                transfer_request -> phase =  TransferPhase::DATA_OUT;
 
                 /* Send the descriptor with the appropriate length to the host.  */
                 status = dcd->transfer_request(transfer_request);

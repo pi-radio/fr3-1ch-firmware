@@ -38,7 +38,7 @@ UINT  _ux_device_stack_get_status(ULONG request_type, ULONG request_index, ULONG
 {
 
 USBXX::DCD            *dcd;
-UX_SLAVE_TRANSFER       *transfer_request;
+UX_SLAVE_TRANSFER       *xfer;
 UINT                    status;
 ULONG                   data_length;
 
@@ -57,11 +57,11 @@ ULONG                   data_length;
     auto endpoint =  device -> get_control_endpoint();
 
     /* Get the pointer to the transfer request associated with the endpoint.  */
-    transfer_request = device->get_control_transfer();
+    xfer = device->get_control_transfer();
 
     /* Reset the status buffer.  */
-    *transfer_request -> ux_slave_transfer_request_data_pointer =  0;
-    *(transfer_request -> ux_slave_transfer_request_data_pointer + 1) =  0;
+    *xfer -> data =  0;
+    *(xfer -> data + 1) =  0;
     
     /* The default length for GET_STATUS is 2, except for OTG get Status.  */
     data_length = 2;
@@ -79,24 +79,19 @@ ULONG                   data_length;
 
             /* Set the data length to 1.  */
             data_length = 1;
-            
-#ifdef UX_OTG_SUPPORT
-            /* Store the Role Swap flag.  */
-            *transfer_request -> ux_slave_transfer_request_data_pointer =  (UCHAR) _ux_system_otg -> ux_system_otg_slave_role_swap_flag;
-#endif
-            
+
         }
         else
         {
 
             /* Store the current power state in the status buffer. */
             if (_ux_system_slave -> ux_system_slave_power_state == UX_DEVICE_SELF_POWERED)
-                *transfer_request -> ux_slave_transfer_request_data_pointer =  1;
+                *xfer -> data =  1;
 
             /* Store the remote wakeup capability state in the status buffer.  */
 
             if (_ux_system_slave -> ux_system_slave_remote_wakeup_enabled)
-                *transfer_request -> ux_slave_transfer_request_data_pointer |=  2;
+                *xfer -> data |=  2;
         }
         
         break;
@@ -106,7 +101,7 @@ ULONG                   data_length;
       auto tgt = dcd->get_endpoint(request_index);
 
       if (tgt->is_stalled()) {
-        *transfer_request -> ux_slave_transfer_request_data_pointer = 1;
+        *xfer -> data = 1;
       }
 
       break;
@@ -120,10 +115,10 @@ ULONG                   data_length;
     }
     
     /* Set the phase of the transfer to data out.  */
-    transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
+    xfer -> phase =  TransferPhase::DATA_OUT;
 
     /* Send the descriptor with the appropriate length to the host.  */
-    status =  _ux_device_stack_transfer_request(transfer_request, data_length, data_length);
+    status = device->transfer_request(xfer, data_length, data_length);
 
     /* Return the function status.  */
     return(status);

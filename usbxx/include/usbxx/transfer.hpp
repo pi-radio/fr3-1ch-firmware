@@ -4,28 +4,41 @@ namespace USBXX {
 struct Endpoint;
 }
 
+enum class TransferPhase {
+  SETUP,
+  DATA_IN,
+  DATA_OUT,
+  STATUS_IN,
+  STATUS_OUT
+};
+
+enum class TransferType {
+  NORMAL,
+  SETUP
+};
+
 struct UX_SLAVE_TRANSFER
 {
 
-    ULONG           ux_slave_transfer_request_status;
-    ULONG           ux_slave_transfer_request_type;
-    USBXX::Endpoint *ux_slave_transfer_request_endpoint;
-    UCHAR           *ux_slave_transfer_request_data_pointer;
-    UCHAR           *ux_slave_transfer_request_current_data_pointer;
-    ULONG           ux_slave_transfer_request_requested_length;
-    ULONG           ux_slave_transfer_request_actual_length;
-    ULONG           ux_slave_transfer_request_in_transfer_length;
-    ULONG           ux_slave_transfer_request_transfer_length;
-    ULONG           ux_slave_transfer_request_completion_code;
-    ULONG           ux_slave_transfer_request_phase;
-    VOID            (*ux_slave_transfer_request_completion_function) (UX_SLAVE_TRANSFER *);
+    ULONG           status;
+    TransferType           type;
+    USBXX::Endpoint *endpoint;
+    UCHAR           *data;
+    UCHAR           *current_data_pointer;
+    ULONG           requested_length;
+    ULONG           actual_length;
+    ULONG           in_transfer_length;
+    ULONG           transfer_length;
+    ULONG           completion_code;
+    TransferPhase   phase;
+    VOID            (*completion_function) (UX_SLAVE_TRANSFER *);
 #if defined(UX_DEVICE_STANDALONE)
-    ULONG           ux_slave_transfer_request_state;
+    ULONG           state;
 #else
-    UX_SEMAPHORE    ux_slave_transfer_request_semaphore;
+    UX_SEMAPHORE    semaphore;
 #endif
-    ULONG           ux_slave_transfer_request_timeout;
-    ULONG           ux_slave_transfer_request_force_zlp;
-    UCHAR           ux_slave_transfer_request_setup[UX_SETUP_SIZE];
-    ULONG           ux_slave_transfer_request_status_phase_ignore;
+    ULONG           timeout;
+    ULONG           force_zlp;
+    UCHAR           setup[UX_SETUP_SIZE];
+    ULONG           status_phase_ignore;
 };

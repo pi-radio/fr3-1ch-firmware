@@ -1128,11 +1128,7 @@ VOID    _ux_trace_event_update(TX_TRACE_BUFFER_ENTRY *event, ULONG timestamp, UL
 
 /* END OF 5.8 BACKWARD COMPATIBILITY DEFINITIONS. */
 
-#define UX_TRANSFER_PHASE_SETUP                                         1
-#define UX_TRANSFER_PHASE_DATA_IN                                       2
-#define UX_TRANSFER_PHASE_DATA_OUT                                      3
-#define UX_TRANSFER_PHASE_STATUS_IN                                     4
-#define UX_TRANSFER_PHASE_STATUS_OUT                                    5
+
 
 
 /* Host change callback events : _callback(event, *class, *instance)  */
@@ -2578,7 +2574,7 @@ UINT    ux_device_stack_initialize(UCHAR * device_framework_high_speed, ULONG de
 UINT    ux_device_stack_uninitialize(VOID);
 UINT    ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *ux_interface);
 UINT    ux_device_stack_interface_get(UINT interface_value);
-UINT    ux_device_stack_interface_set(UCHAR * device_framework, ULONG device_framework_length,
+UINT    ux_device_stack_interface_set(const UCHAR * device_framework, ULONG device_framework_length,
                                     ULONG alternate_setting_value);
 UINT    ux_device_stack_interface_start(UX_SLAVE_INTERFACE *ux_interface);
 UINT    ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, ULONG slave_length, ULONG host_length);

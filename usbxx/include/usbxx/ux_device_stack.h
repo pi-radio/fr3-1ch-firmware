@@ -100,7 +100,7 @@ UINT    _ux_device_stack_initialize(UCHAR * device_framework_high_speed, ULONG d
                     UINT (*ux_system_slave_change_function)(ULONG));
 UINT    _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *ux_interface);
 UINT    _ux_device_stack_interface_get(UINT interface_value);
-UINT    _ux_device_stack_interface_set(UCHAR * device_framework, ULONG device_framework_length,
+UINT    _ux_device_stack_interface_set(const UCHAR * device_framework, ULONG device_framework_length,
                     ULONG alternate_setting_value);
 UINT    _ux_device_stack_interface_start(UX_SLAVE_INTERFACE *ux_interface);
 UINT    _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULONG request_index);

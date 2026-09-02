@@ -100,8 +100,8 @@ UINT  _ux_device_stack_interface_start(UX_SLAVE_INTERFACE *interface_ptr)
     class_command.ux_slave_class_command_class     =   interface_ptr -> ux_slave_interface_descriptor.bInterfaceClass;
     class_command.ux_slave_class_command_subclass  =   interface_ptr -> ux_slave_interface_descriptor.bInterfaceSubClass;
     class_command.ux_slave_class_command_protocol  =   interface_ptr -> ux_slave_interface_descriptor.bInterfaceProtocol;
-    class_command.ux_slave_class_command_vid       =   device -> ux_slave_device_descriptor.idVendor;
-    class_command.ux_slave_class_command_pid       =   device -> ux_slave_device_descriptor.idProduct;
+    class_command.ux_slave_class_command_vid       =   device -> descriptor.idVendor;
+    class_command.ux_slave_class_command_pid       =   device -> descriptor.idProduct;
 
     /* We can now memorize the interface pointer associated with this class.  */
     class_ptr -> ux_slave_class_interface = interface_ptr;

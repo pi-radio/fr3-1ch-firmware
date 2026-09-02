@@ -25,6 +25,7 @@ namespace USBXX
 struct UX_SYSTEM_SLAVE
 {
     USBXX::DeviceBase *device;
+#if 0
     UCHAR           *ux_system_slave_device_framework;
     ULONG           ux_system_slave_device_framework_length;
     UCHAR           *ux_system_slave_device_framework_full_speed;
@@ -35,6 +36,7 @@ struct UX_SYSTEM_SLAVE
     ULONG           ux_system_slave_string_framework_length;
     UCHAR           *ux_system_slave_language_id_framework;
     ULONG           ux_system_slave_language_id_framework_length;
+#endif
     UCHAR           *ux_system_slave_dfu_framework;
     ULONG           ux_system_slave_dfu_framework_length;
 #if UX_MAX_SLAVE_CLASS_DRIVER > 1
@@ -51,9 +53,7 @@ struct UX_SYSTEM_SLAVE
     ULONG           ux_system_slave_device_dfu_transfer_size;
     ULONG           ux_system_slave_device_dfu_state_machine;
     ULONG           ux_system_slave_device_dfu_mode;
-    UINT            (*ux_system_slave_change_function) (ULONG);
     ULONG           ux_system_slave_device_vendor_request;
-    UINT            (*ux_system_slave_device_vendor_request_function) (ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *);
 
 } ;
 
@@ -67,6 +67,8 @@ namespace USBXX
 
     uint32_t on_change(uint32_t);
 
+    UX_SLAVE_CLASS classes[UX_MAX_SLAVE_CLASS_DRIVER];
+
     Descriptor  fs_desc;
     Descriptor  hs_desc;
     Strings     strings;
@@ -76,18 +78,18 @@ namespace USBXX
 
   public:
 
-    ULONG            ux_slave_device_state;
-    DeviceDescriptor ux_slave_device_descriptor;
-    ULONG            ux_slave_device_configuration_selected;
+    ULONG            state;
+    DeviceDescriptor descriptor;
+    ULONG            configuration_selected;
     ConfigurationDescriptor
-                    ux_slave_device_configuration_descriptor;
+                    configuration_descriptor;
     UX_SLAVE_INTERFACE
-                    *ux_slave_device_first_interface;
+                    *first_interface;
     UX_SLAVE_INTERFACE
-                    *ux_slave_device_interfaces_pool;
-    ULONG           ux_slave_device_interfaces_pool_number;
-    ULONG           ux_slave_device_endpoints_pool_number;
-    ULONG           ux_slave_device_power_state;
+                    *interfaces_pool;
+    ULONG           interfaces_pool_number;
+    ULONG           endpoints_pool_number;
+    ULONG           power_state;
 
   protected:
     void thread_entry();
@@ -157,6 +159,9 @@ namespace USBXX
     virtual uint32_t on_sof() { return 0; }
 
     void start();
+    uint32_t transfer_request(UX_SLAVE_TRANSFER *transfer_request,
+                                                ULONG slave_length,
+                                                ULONG host_length);
 
     uint16_t get_interface_number(uint8_t class_type, uint8_t interface_type) {
       return fs_desc.get_interface_number(class_type, interface_type);
@@ -169,17 +174,28 @@ namespace USBXX
     UX_SLAVE_TRANSFER *get_control_transfer() { return dcd->get_control_transfer(); };
     Endpoint *get_control_endpoint() { return dcd->get_control_endpoint(); }
 
-    void set_state(uint32_t state) { ux_slave_device_state = state; }
-    uint32_t get_state() { return ux_slave_device_state; }
+    void set_state(uint32_t state) { state = state; }
+    uint32_t get_state() { return state; }
+
+    const Descriptor &get_current_descriptor() { return fs_desc; }
 
     UINT send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length);
+    UINT send_compound_descriptor(ULONG descriptor_type, ULONG descriptor_index, ULONG request_index, ULONG host_length);
+    UINT send_descriptor(const ControlRequest &);
 
+    void disconnect();
 
 
     uint32_t on_get_alternate_setting(ULONG interface_value);
     uint32_t on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value);
     uint32_t on_get_configuration();
+    uint32_t on_set_configuration(uint32_t configuration_value);
+
     uint32_t process_control_event(UX_SLAVE_TRANSFER *transfer_request);
+
+    UINT on_vendor_request(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *) { return 0; };
+
+
   };
 
 

@@ -54,22 +54,25 @@ uint32_t STM32::DCD::initialize()
     ep_in[i].dcd = this;
     ep_out[i].dcd = this;
 
+    ep_in[i].ux_slave_endpoint_device = device;
+    ep_out[i].ux_slave_endpoint_device = device;
+
     /* Create the semaphore for the endpoint.  */
-    if (_ux_device_semaphore_create(&ep_in[i].ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore,
+    if (_ux_device_semaphore_create(&ep_in[i].ux_slave_endpoint_transfer_request.semaphore,
                                         (char *)"ux_transfer_request_semaphore", 0) != 0) {
       throw std::runtime_error("Failed to create semaphore for in endpoint");
     }
 
-    ep_in[i].ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer =
+    ep_in[i].ux_slave_endpoint_transfer_request.data =
                     (UCHAR *)::malloc(UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
 
 
-    if(_ux_device_semaphore_create(&ep_out[i].ux_slave_endpoint_transfer_request.ux_slave_transfer_request_semaphore,
+    if(_ux_device_semaphore_create(&ep_out[i].ux_slave_endpoint_transfer_request.semaphore,
         (char *)"ux_transfer_request_semaphore", 0) != 0) {
       throw std::runtime_error("Failed to create semaphore for in endpoint");
     }
 
-    ep_out[i].ux_slave_endpoint_transfer_request.ux_slave_transfer_request_data_pointer =
+    ep_out[i].ux_slave_endpoint_transfer_request.data =
                     (UCHAR *)::malloc(UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
 
   }
@@ -120,7 +123,7 @@ USBXX::Endpoint *STM32::DCD::allocate_endpoint(const EndpointDescriptor &desc)
     throw std::runtime_error(std::format("Unable to allocate endpoint {}", epaddr));
   }
 
-  if (desc.bEndpointAddress & 0x7F != 0) {
+  if ((desc.bEndpointAddress & 0x7F) != 0) {
     int a = 0;
   }
   retval->ux_slave_endpoint_descriptor = desc;
@@ -131,9 +134,9 @@ USBXX::Endpoint *STM32::DCD::allocate_endpoint(const EndpointDescriptor &desc)
 
 UINT  STM32::DCD::complete_initialization()
 {
-  UCHAR                     *device_framework;
   UX_SLAVE_TRANSFER       *xfer;
 
+#if 0
   /* Are we in DFU mode ? If so, check if we are in a Reset mode.  */
   if (_ux_system_slave->ux_system_slave_device_dfu_state_machine == UX_SYSTEM_DFU_STATE_APP_DETACH)
   {
@@ -163,17 +166,16 @@ UINT  STM32::DCD::complete_initialization()
       _ux_system_slave -> ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_device_framework_length_high_speed;
     }
   }
+#endif
 
-  /* Get the device framework pointer.  */
-  device_framework = _ux_system_slave -> ux_system_slave_device_framework;
 
-  device->ux_slave_device_descriptor = read_in_descriptor<DeviceDescriptor>(device_framework);
+  device->descriptor = read_in_descriptor<DeviceDescriptor>(device->get_current_descriptor().get_desc());
 #if 0
   /* And create the decompressed device descriptor structure.  */
   _ux_utility_descriptor_parse(device_framework,
                           _ux_system_device_descriptor_structure,
                           UX_DEVICE_DESCRIPTOR_ENTRIES,
-                          (UCHAR *) &device -> ux_slave_device_descriptor);
+                          (UCHAR *) &device -> descriptor);
 #endif
 
   /* Now we create a transfer request to accept the first SETUP packet
@@ -182,25 +184,25 @@ UINT  STM32::DCD::complete_initialization()
   xfer = device->get_control_transfer();
 
   /* Set the timeout to be for Control Endpoint.  */
-  xfer->ux_slave_transfer_request_timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
+  xfer->timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
 
   /* Adjust the current data pointer as well.  */
-  xfer -> ux_slave_transfer_request_current_data_pointer =
-                      xfer -> ux_slave_transfer_request_data_pointer;
+  xfer -> current_data_pointer =
+                      xfer -> data;
 
   /* Update the transfer request endpoint pointer with the default endpoint.  */
 
   auto control_endpoint = get_control_endpoint();
 
-  xfer -> ux_slave_transfer_request_endpoint =  control_endpoint;
+  xfer -> endpoint =  control_endpoint;
 
   /* The control endpoint max packet size needs to be filled manually in its descriptor.  */
-  xfer -> ux_slave_transfer_request_endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize =
-                          device -> ux_slave_device_descriptor.bMaxPacketSize0;
+  xfer -> endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize =
+                          device -> descriptor.bMaxPacketSize0;
 
   /* On the control endpoint, always expect the maximum.  */
-  xfer -> ux_slave_transfer_request_requested_length =
-                          device -> ux_slave_device_descriptor.bMaxPacketSize0;
+  xfer -> requested_length =
+                          device -> descriptor.bMaxPacketSize0;
 
   /* Create the default control endpoint attached to the device.
   Once this endpoint is enabled, the host can then send a setup packet
@@ -210,33 +212,30 @@ UINT  STM32::DCD::complete_initialization()
 
   /* Open Control OUT endpoint.  */
   HAL_PCD_EP_Flush(pcd_handle, 0x00U);
-  HAL_PCD_EP_Open(pcd_handle, 0x00U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+  HAL_PCD_EP_Open(pcd_handle, 0x00U, device -> descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
 
   /* Open Control IN endpoint.  */
   HAL_PCD_EP_Flush(pcd_handle, 0x80U);
-  HAL_PCD_EP_Open(pcd_handle, 0x80U, device -> ux_slave_device_descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+  HAL_PCD_EP_Open(pcd_handle, 0x80U, device -> descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
 
   /* Ensure the control endpoint is properly reset.  */
   control_endpoint->ux_slave_endpoint_state = UX_ENDPOINT_RESET;
 
   /* Mark the phase as SETUP.  */
-  xfer -> ux_slave_transfer_request_type =  UX_TRANSFER_PHASE_SETUP;
+  xfer -> type =  TransferType::SETUP;
 
   /* Mark this transfer request as pending.  */
-  xfer -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_PENDING;
+  xfer -> status =  UX_TRANSFER_STATUS_PENDING;
 
   /* Ask for 8 bytes of the SETUP packet.  */
-  xfer -> ux_slave_transfer_request_requested_length =    UX_SETUP_SIZE;
-  xfer -> ux_slave_transfer_request_in_transfer_length =  UX_SETUP_SIZE;
+  xfer -> requested_length =    UX_SETUP_SIZE;
+  xfer -> in_transfer_length =  UX_SETUP_SIZE;
 
   /* Reset the number of bytes sent/received.  */
-  xfer -> ux_slave_transfer_request_actual_length =  0;
+  xfer -> actual_length =  0;
 
   /* Check the status change callback.  */
-  if(_ux_system_slave -> ux_system_slave_change_function != UX_NULL)
-  {
-  _ux_system_slave -> ux_system_slave_change_function(UX_DEVICE_ATTACHED);
-  }
+  device->on_attached();
 
   return 0;
 }

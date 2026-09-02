@@ -82,10 +82,8 @@ using namespace USBXX;
 /**************************************************************************/
 UINT  _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *interface_ptr)
 {
-
-USBXX::DCD            *dcd;
-Endpoint       *endpoint;
-Endpoint       *next_endpoint;
+  Endpoint       *endpoint;
+  Endpoint       *next_endpoint;
 
     /* If trace is enabled, register this object.  */
     UX_TRACE_OBJECT_UNREGISTER(interface_ptr);
@@ -109,9 +107,6 @@ Endpoint       *next_endpoint;
         /* Find the next endpoint.  */
         next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
         
-        /* Get the pointer to the DCD.  */
-        dcd = STM32::gDCD;
-
         /* The endpoint must be destroyed.  */
         endpoint->destroy();
 
@@ -127,7 +122,7 @@ Endpoint       *next_endpoint;
 
     /* It's always from first one (to delete).  */
     /* Rebuild the first link.  */
-    device -> ux_slave_device_first_interface =  interface_ptr -> ux_slave_interface_next_interface;
+    device -> first_interface =  interface_ptr -> ux_slave_interface_next_interface;
 
     /* The interface is removed from the link, its memory must be cleaned and returned to the pool.  */
     interface_ptr -> ux_slave_interface_class          =  nullptr;

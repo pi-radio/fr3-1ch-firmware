@@ -5,7 +5,7 @@
 
 using namespace USBXX;
 
-uint32_t DeviceBase::process_control_event(UX_SLAVE_TRANSFER *transfer_request)
+uint32_t DeviceBase::process_control_event(UX_SLAVE_TRANSFER *xfer)
 {
 
 USBXX::DCD                *dcd;
@@ -29,16 +29,16 @@ ULONG                       application_data_length;
 
 
     /* Ensure that the Setup request has been received correctly.  */
-    if (transfer_request -> ux_slave_transfer_request_completion_code == UX_SUCCESS)
+    if (xfer -> completion_code == UX_SUCCESS)
     {
 
         /* Seems so far, the Setup request is valid. Extract all fields of
            the request.  */
-        request_type   =   *transfer_request -> ux_slave_transfer_request_setup;
-        request        =   *(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_REQUEST);
-        request_value  =   usb_get_short(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_VALUE);
-        request_index  =   usb_get_short(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_INDEX);
-        request_length =   usb_get_short(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_LENGTH);
+        request_type   =   *xfer -> setup;
+        request        =   *(xfer -> setup + UX_SETUP_REQUEST);
+        request_value  =   usb_get_short(xfer -> setup + UX_SETUP_VALUE);
+        request_index  =   usb_get_short(xfer -> setup + UX_SETUP_INDEX);
+        request_length =   usb_get_short(xfer -> setup + UX_SETUP_LENGTH);
 
         /* Filter for GET_DESCRIPTOR/SET_DESCRIPTOR commands. If the descriptor to be returned is not a standard descriptor,
            treat the command as a CLASS command.  */
@@ -53,32 +53,25 @@ ULONG                       application_data_length;
         /* Check if there is a vendor registered function at the application layer.  If the request
            is VENDOR and the request match, pass the request to the application.  */
         if ((request_type & UX_REQUEST_TYPE) == UX_REQUEST_TYPE_VENDOR)
-        {
-
-            /* Check the request demanded and compare it to the application registered one.  */
-            if (_ux_system_slave -> ux_system_slave_device_vendor_request_function != nullptr &&
-                request == _ux_system_slave -> ux_system_slave_device_vendor_request)
-            {
-
-                /* This is a Microsoft extended function. It happens before the device is configured.
+        {                /* This is a Microsoft extended function. It happens before the device is configured.
                    The request is passed to the application directly.  */
                 application_data_length = UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH;
-                status = _ux_system_slave -> ux_system_slave_device_vendor_request_function(request, request_value,
+                status = device->on_vendor_request(request, request_value,
                                                                                             request_index, request_length,
-                                                                                            transfer_request -> ux_slave_transfer_request_data_pointer,
+                                                                                            xfer -> data,
                                                                                             &application_data_length);
 
                 /* Check the status from the application.  */
                 if (status == UX_SUCCESS)
                 {
                     /* Get the pointer to the transfer request associated with the control endpoint.  */
-                    auto transfer_request = device->get_control_transfer();
+                    auto xfer2 = device->get_control_transfer();
 
                     /* Set the direction to OUT.  */
-                    transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
+                    xfer2 -> phase =  TransferPhase::DATA_OUT;
 
                     /* Perform the data transfer.  */
-                    _ux_device_stack_transfer_request(transfer_request, application_data_length, request_length);
+                    transfer_request(xfer2, application_data_length, request_length);
 
                     /* We are done here.  */
                     return 0;
@@ -92,7 +85,6 @@ ULONG                       application_data_length;
                     /* We are done here.  */
                     return 0;
                 }
-            }
         }
 
         /* Check the destination of the request. If the request is of type CLASS or VENDOR_SPECIFIC,
@@ -131,7 +123,7 @@ ULONG                       application_data_length;
                     {
 
                         /* Check wIndex high byte.  */
-                        if(*(transfer_request -> ux_slave_transfer_request_setup + UX_SETUP_INDEX + 1) != class_index)
+                        if(*(xfer -> setup + UX_SETUP_INDEX + 1) != class_index)
                             continue;
                     }
                     else
@@ -202,9 +194,12 @@ ULONG                       application_data_length;
             break;
 
         case UX_GET_DESCRIPTOR:
+        {
+          ControlRequest req(xfer->setup);
 
-            status =  _ux_device_stack_descriptor_send(request_value, request_index, request_length);
-            break;
+          status = send_descriptor(req); //request_value, request_index, request_length);
+          break;
+        }
 
         case UX_SET_DESCRIPTOR:
 
@@ -218,7 +213,7 @@ ULONG                       application_data_length;
 
         case UX_SET_CONFIGURATION:
 
-            status =  _ux_device_stack_configuration_set(request_value);
+            status =  device->on_set_configuration(request_value);
             break;
 
         case UX_GET_INTERFACE:

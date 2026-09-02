@@ -35,7 +35,7 @@
 using namespace USBXX;
 
 /**************************************************************************/
-UINT  _ux_device_stack_interface_set(UCHAR * device_framework, ULONG device_framework_length,
+UINT  _ux_device_stack_interface_set(const UCHAR * device_framework, ULONG device_framework_length,
                                                     ULONG alternate_setting_value)
 {
 UX_SLAVE_TRANSFER       *transfer_request;
@@ -56,9 +56,9 @@ ULONG                   max_transfer_length, n_trans;
 
     /* Find a free interface in the pool and hook it to the 
        existing interface.  */
-    interface_ptr = device -> ux_slave_device_interfaces_pool;
+    interface_ptr = device -> interfaces_pool;
 
-    interfaces_pool_number = device -> ux_slave_device_interfaces_pool_number;
+    interfaces_pool_number = device -> interfaces_pool_number;
     while (interfaces_pool_number != 0)
     {
         /* Check if this interface is free.  */
@@ -82,15 +82,15 @@ ULONG                   max_transfer_length, n_trans;
     interface_ptr -> ux_slave_interface_descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
 
     /* Attach this interface to the end of the interface chain.  */
-    if (device -> ux_slave_device_first_interface == nullptr)
+    if (device -> first_interface == nullptr)
     {
 
-        device -> ux_slave_device_first_interface =  interface_ptr;
+        device -> first_interface =  interface_ptr;
     }
     else
     {
         /* Multiple interfaces exist, so find the end of the chain.  */
-        interface_link =  device -> ux_slave_device_first_interface;
+        interface_link =  device -> first_interface;
         while (interface_link -> ux_slave_interface_next_interface != nullptr)
             interface_link =  interface_link -> ux_slave_interface_next_interface;
         interface_link -> ux_slave_interface_next_interface =  interface_ptr;
@@ -148,13 +148,13 @@ ULONG                   max_transfer_length, n_trans;
 
             /* Validate max transfer size and save it.  */
             UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-            transfer_request -> ux_slave_transfer_request_transfer_length = max_transfer_length;
+            transfer_request -> transfer_length = max_transfer_length;
 
             /* We store the endpoint in the transfer request as well.  */
-            transfer_request -> ux_slave_transfer_request_endpoint =  endpoint;
+            transfer_request -> endpoint =  endpoint;
                 
             /* By default the timeout is infinite on request.  */
-            transfer_request -> ux_slave_transfer_request_timeout = UX_WAIT_FOREVER;
+            transfer_request -> timeout = UX_WAIT_FOREVER;
             
             /* Attach the interface to the endpoint.  */
             endpoint -> ux_slave_endpoint_interface =  interface_ptr;

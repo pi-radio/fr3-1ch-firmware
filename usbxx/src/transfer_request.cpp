@@ -34,7 +34,7 @@
 
 using namespace USBXX;
 
-UINT  _ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, 
+uint32_t DeviceBase::transfer_request(UX_SLAVE_TRANSFER *transfer_request,
                                             ULONG slave_length, 
                                             ULONG host_length)
 {
@@ -47,7 +47,7 @@ UINT            status;
     if (status == UX_STATE_LOCK)
         return(UX_BUSY);
     if (status < UX_STATE_NEXT)
-        return(transfer_request -> ux_slave_transfer_request_completion_code);
+        return(transfer_request -> completion_code);
 
     /* Started/done, things will be done in BG  */
     return 0;
@@ -61,7 +61,7 @@ ULONG                   device_state;
 
 
     /* Do we have to skip this transfer?  */
-    if (transfer_request -> ux_slave_transfer_request_status_phase_ignore == UX_TRUE)
+    if (transfer_request -> status_phase_ignore == UX_TRUE)
         return 0;
 
     /* Disable interrupts to prevent the disconnection ISR from preempting us
@@ -69,14 +69,14 @@ ULONG                   device_state;
     UX_DISABLE
 
     /* Get the device state.  */
-    device_state =  _ux_system_slave->device->ux_slave_device_state;
+    device_state =  _ux_system_slave->device->state;
 
     /* We can only transfer when the device is ATTACHED, ADDRESSED OR CONFIGURED.  */
     if ((device_state == UX_DEVICE_ATTACHED) || (device_state == UX_DEVICE_ADDRESSED)
             || (device_state == UX_DEVICE_CONFIGURED))
 
         /* Set the transfer to pending.  */
-        transfer_request -> ux_slave_transfer_request_status =  UX_TRANSFER_STATUS_PENDING; 
+        transfer_request -> status =  UX_TRANSFER_STATUS_PENDING; 
 
     else
     {
@@ -96,7 +96,7 @@ ULONG                   device_state;
     dcd = STM32::gDCD;
 
     /* Get the endpoint associated with this transaction.  */
-    endpoint =  transfer_request -> ux_slave_transfer_request_endpoint;
+    endpoint =  transfer_request -> endpoint;
     
     /* If the endpoint is non Control, check the endpoint direction and set the data phase direction.  */
     if ((endpoint -> ux_slave_endpoint_descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE) != UX_CONTROL_ENDPOINT)
@@ -111,41 +111,41 @@ ULONG                   device_state;
 
         /* Isolate the direction from the endpoint address.  */
         if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) == UX_ENDPOINT_IN)
-            transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_OUT;
+            transfer_request -> phase =  TransferPhase::DATA_OUT;
         else    
-            transfer_request -> ux_slave_transfer_request_phase =  UX_TRANSFER_PHASE_DATA_IN;
+            transfer_request -> phase =  TransferPhase::DATA_IN;
     }    
 
     /* See if we need to force a zero length packet at the end of the transfer. 
        This happens on a DATA IN and when the host requested length is not met
        and the last packet is on a boundary. If slave_length is zero, then it is 
        a explicit ZLP request, no need to force ZLP.  */
-    if ((transfer_request -> ux_slave_transfer_request_phase ==  UX_TRANSFER_PHASE_DATA_OUT) &&
+    if ((transfer_request -> phase ==  TransferPhase::DATA_OUT) &&
         (slave_length != 0) && (host_length != slave_length) && 
         (slave_length % endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize) == 0)
     {
 
         /* If so force Zero Length Packet.  */
-        transfer_request -> ux_slave_transfer_request_force_zlp =  UX_TRUE;
+        transfer_request -> force_zlp =  UX_TRUE;
     }
     else
     {
 
         /* Condition is not met, do not force a Zero Length Packet.  */
-        transfer_request -> ux_slave_transfer_request_force_zlp =  UX_FALSE;
+        transfer_request -> force_zlp =  UX_FALSE;
     }
 
     /* Reset the number of bytes sent/received.  */
-    transfer_request -> ux_slave_transfer_request_actual_length =  0;
+    transfer_request -> actual_length =  0;
 
     /* Determine how many bytes to send in this transaction.  We keep track of the original
         length and have a working length.  */
-    transfer_request -> ux_slave_transfer_request_requested_length =    slave_length;
-    transfer_request -> ux_slave_transfer_request_in_transfer_length =  slave_length;
+    transfer_request -> requested_length =    slave_length;
+    transfer_request -> in_transfer_length =  slave_length;
 
     /* Save the buffer pointer.  */
-    transfer_request -> ux_slave_transfer_request_current_data_pointer =  
-                            transfer_request -> ux_slave_transfer_request_data_pointer;
+    transfer_request -> current_data_pointer =  
+                            transfer_request -> data;
 
     /* Call the DCD driver transfer function.   */
     status =  dcd->transfer_request(transfer_request);

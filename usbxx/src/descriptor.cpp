@@ -304,7 +304,6 @@ void USBXX::Strings::add_string(uint8_t idx, const std::string &s, uint16_t lang
   pos += s.size();
 }
 
-#if 0
 UINT DeviceBase::send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length)
 {
   uint32_t length = host_length;
@@ -324,7 +323,7 @@ UINT DeviceBase::send_device_descriptor(ULONG descriptor_type, ULONG request_ind
       continue;
     }
 
-    ::memcpy(xfer->data.data(), d.buffer, length);
+    ::memcpy(xfer->data, d.buffer, length);
 
     return transfer_request(xfer, length, host_length);
   }
@@ -340,7 +339,7 @@ UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descripto
   uint32_t                        target_descriptor_length = 0;
   uint32_t                        parsed_descriptor_index = 0;
 
-  Descriptor &desc = (descriptor_type == UX_OTHER_SPEED_DESCRIPTOR_ITEM) ? fs_desc : get_current_descriptor();
+  const Descriptor &desc = (descriptor_type == UX_OTHER_SPEED_DESCRIPTOR_ITEM) ? fs_desc : get_current_descriptor();
 
   auto di = desc.begin();
 
@@ -361,22 +360,17 @@ UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descripto
       target_descriptor_length = bos_descriptor.wTotalLength;
       break;
     }
-    else
+
+    if (parsed_descriptor_index == descriptor_index)
     {
-      if (parsed_descriptor_index == descriptor_index)
-      {
-        configuration_descriptor = d.read_in<ConfigurationDescriptor>();
+      configuration_descriptor = d.read_in<ConfigurationDescriptor>();
 
-        target_descriptor_length = configuration_descriptor.wTotalLength;
+      target_descriptor_length = configuration_descriptor.wTotalLength;
 
-        break;
-      }
-      else
-      {
-        /* There may be more configuration descriptors in this framework.  */
-        parsed_descriptor_index++;
-      }
+      break;
     }
+
+    parsed_descriptor_index++;
   }
 
   if (di == desc.end()) {
@@ -385,32 +379,32 @@ UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descripto
 
   auto d = *di;
 
-  uint32_t length = std::max(target_descriptor_length, host_length);
+  uint32_t length = std::min(target_descriptor_length, host_length);
 
   /* Check buffer length, since total descriptors length may exceed buffer...  */
   if (length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
   {
-    stall_control_endpoint();
+    get_control_endpoint()->stall();
     throw std::runtime_error("Control request length too long");
   }
 
   auto xfer = get_control_transfer();
 
   /* Copy the device descriptor into the transfer request memory.  */
-  ::memcpy(xfer->data.data(), d.buffer, length); /* Use case of memcpy is verified. */
+  ::memcpy(xfer->data, d.buffer, length); /* Use case of memcpy is verified. */
 
   /* Now we need to hack the found descriptor because this request expect a requested
       descriptor type instead of the regular descriptor.  */
-  xfer->data[1] = descriptor_index;
+  xfer->data[1] = descriptor_type;
 
   /* We can return the configuration descriptor.  */
   return transfer_request(xfer, length, host_length);
 
 }
 
-UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_type, ULONG request_index, ULONG host_length)
+UINT DeviceBase::send_descriptor(const ControlRequest &req)
 {
-  Transfer               *xfer;
+  UX_SLAVE_TRANSFER               *xfer;
   UINT                            status =  UX_ERROR;
   UCHAR                           *string_memory;
   UCHAR                           *string_framework;
@@ -421,7 +415,7 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
   xfer = get_control_transfer();
 
   /* Set the direction to OUT.  */
-  xfer->phase = UX_TRANSFER_PHASE_DATA_OUT;
+  xfer->phase = TransferPhase::DATA_OUT;
 
   auto descriptor_index = req.value & 0xff;
   auto descriptor_type =  (UCHAR) ((req.value >> 8) & 0xff);
@@ -451,7 +445,7 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
             /* We need to check request buffer size in case it's possible exceed. */
             if (lang_ids.get_buffer_len() + 2 > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
             {
-              stall_control_endpoint();
+              get_control_endpoint()->stall();
               throw std::runtime_error("Invalid language id framework length");
             }
 
@@ -459,7 +453,7 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
             xfer->data[1] =  UX_STRING_DESCRIPTOR_ITEM;
 
             /* Store the language ID into the buffer.  */
-            ::memcpy(xfer->data.data()+2, lang_ids.get_buffer(),
+            ::memcpy(xfer->data+2, lang_ids.get_buffer(),
                 lang_ids.get_buffer_len()); /* Use case of memcpy is verified. */
 
             auto len = std::min((uint32_t)req.length, (uint32_t)xfer->data[0]);
@@ -480,7 +474,7 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
             {
 
                 /* Ensure we have the correct language page.  */
-                if (_ux_utility_short_get(string_framework) == req.index)
+                if (usb_get_short(string_framework) == req.index)
                 {
 
                     /* Check the index.  */
@@ -490,12 +484,12 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
                         /* We need to check request buffer size in case it's possible exceed. */
                         if (((*(string_framework + 3)*2) + 2) > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
                         {
-                            stall_control_endpoint();
+                            get_control_endpoint()->stall();
                             throw std::runtime_error("String request invalid");
                         }
 
                         /* We have a request to send back a string. Use the transfer request buffer.  */
-                        string_memory =  xfer -> data.data();
+                        string_memory =  xfer -> data;
 
                         /* Store the length in the string buffer. The length
                            of the string descriptor is stored in the third byte,
@@ -535,18 +529,17 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)  //ULONG descriptor_
             /* Have we exhausted all the string descriptors?  */
             if (string_framework_length == 0)
             {
-                stall_control_endpoint();
-                throw std::runtime_error("Unable to send string");
+                get_control_endpoint()->stall();
+                return(UX_ERROR);
             }
         }
         break;
 
     default:
-      stall_control_endpoint();
-      throw std::runtime_error("Invalid string descriptor type");
+      get_control_endpoint()->stall();
+      return(UX_ERROR);
     }
 
     /* Return the status to the caller.  */
     return(status);
 }
-#endif
