@@ -26,7 +26,6 @@ extern "C" {
 #endif
 #include "ux_api.h"
 #include "ux_stm32_config.h"
-#include "ux_device_class_cdc_acm.h"
 
 uint8_t *USBD_Get_Device_Framework_Speed(uint8_t Speed, ULONG *Length);
 uint8_t *USBD_Get_String_Framework(ULONG *Length);

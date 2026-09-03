@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdint>
 
+#include <usbxx/ux_api.h>
+
 //#include <usbxx/control.hpp>
 
 #define USBD_MAX_CLASS_ENDPOINTS                       9U
@@ -28,6 +30,43 @@ namespace USBXX
     CLASS_TYPE_CCID     = 9,
     CLASS_TYPE_PRINTER  = 10,
   } ;
+
+  /* Define USBX Device Class container structure.  */
+
+  struct UX_SLAVE_CLASS
+  {
+      std::string  name; /* "+1" for string null-terminator */
+
+      UINT            ux_slave_class_status;
+      UINT            (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND *);
+      VOID            *ux_slave_class_instance;
+      VOID            *ux_slave_class_client;
+      UX_THREAD       ux_slave_class_thread;
+      VOID            *ux_slave_class_thread_stack;
+      VOID            *ux_slave_class_interface_parameter;
+      ULONG           ux_slave_class_interface_number;
+      ULONG           ux_slave_class_configuration_number;
+      Interface       *ux_slave_class_interface;
+
+  };
+
+  struct UX_SLAVE_CLASS_COMMAND
+  {
+
+      UINT            ux_slave_class_command_request;
+      VOID            *ux_slave_class_command_container;
+      VOID            *ux_slave_class_command_interface;
+      UINT            ux_slave_class_command_pid;
+      UINT            ux_slave_class_command_vid;
+      UINT            ux_slave_class_command_class;
+      UINT            ux_slave_class_command_subclass;
+      UINT            ux_slave_class_command_protocol;
+      UX_SLAVE_CLASS
+                      *ux_slave_class_command_class_ptr;
+      VOID            *ux_slave_class_command_parameter;
+      VOID            *ux_slave_class_command_interface_number;
+
+  };
 
 #if 0
 

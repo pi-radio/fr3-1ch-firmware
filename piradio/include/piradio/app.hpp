@@ -9,7 +9,7 @@
 #include <piradio/hardware.hpp>
 #include <piradio/parser.hpp>
 
-class USBSerial : public USBXX::CDCACM
+class USBSerial : public USBXX::CDCACMDevice
 {
 public:
   USBSerial();

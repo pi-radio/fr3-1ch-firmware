@@ -9,6 +9,8 @@
 namespace USBXX
 {
   class DeviceBase;
+  class Interface;
+
   enum class RequestType
   {
     STANDARD,
@@ -105,7 +107,7 @@ namespace USBXX
                     ux_slave_endpoint_descriptor;
     Endpoint
                     *ux_slave_endpoint_next_endpoint;
-    UX_SLAVE_INTERFACE
+    Interface
                     *ux_slave_endpoint_interface;
     USBXX::DeviceBase
                     *ux_slave_endpoint_device;

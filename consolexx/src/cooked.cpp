@@ -10,7 +10,6 @@
 #include <consolexx/termbuf.hpp>
 #include <usart.h>
 
-#include "ux_device_cdc_acm.h"
 #include <main.h>
 
 

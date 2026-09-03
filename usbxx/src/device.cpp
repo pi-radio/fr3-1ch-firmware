@@ -98,7 +98,7 @@ void DeviceBase::setup_device()
   lang_ids.add_language();
 
 
-  UX_SLAVE_INTERFACE              *interfaces_pool;
+  Interface              *interfaces_pool;
   UX_SLAVE_TRANSFER               *xfer;
   UINT                            status;
   ULONG                           interfaces_found;
@@ -333,14 +333,14 @@ void DeviceBase::setup_device()
       device -> endpoints_pool_number  = endpoints_found;
 
       /* We assign a pool for the interfaces.  */
-      interfaces_pool = (UX_SLAVE_INTERFACE*)::malloc(interfaces_found * sizeof(UX_SLAVE_INTERFACE));
+      interfaces_pool = (Interface*)::malloc(interfaces_found * sizeof(Interface));
       if (interfaces_pool == nullptr)
           status = UX_MEMORY_INSUFFICIENT;
       else
           /* Save the interface pool address in the device container.  */
           device -> interfaces_pool =  interfaces_pool;
 
-      ::memset(interfaces_pool, 0, interfaces_found * sizeof(UX_SLAVE_INTERFACE));
+      ::memset(interfaces_pool, 0, interfaces_found * sizeof(Interface));
   }
 
 #if 0
@@ -380,8 +380,8 @@ void DeviceBase::start()
 
 void DeviceBase::disconnect()
 {
-UX_SLAVE_INTERFACE          *interface_ptr;
-UX_SLAVE_INTERFACE          *next_interface;
+Interface          *interface_ptr;
+Interface          *next_interface;
 UX_SLAVE_CLASS              *class_ptr;
 UX_SLAVE_CLASS_COMMAND      class_command;
 
@@ -407,7 +407,7 @@ UX_SLAVE_CLASS_COMMAND      class_command;
             class_command.ux_slave_class_command_interface =  (VOID *) interface_ptr;
 
             /* Get the pointer to the class container of this interface.  */
-            class_ptr =  interface_ptr -> ux_slave_interface_class;
+            class_ptr =  interface_ptr -> usb_class;
 
             /* Store the class container. */
             class_command.ux_slave_class_command_class_ptr =  class_ptr;
@@ -420,7 +420,7 @@ UX_SLAVE_CLASS_COMMAND      class_command;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
             /* Get the next interface.  */
-            next_interface =  interface_ptr -> ux_slave_interface_next_interface;
+            next_interface =  interface_ptr -> next_interface;
 #endif
 
             /* Remove the interface and all endpoints associated with it.  */
@@ -449,7 +449,7 @@ UX_SLAVE_CLASS_COMMAND      class_command;
     device->on_removed();
 }
 
-UINT  _ux_device_stack_class_register(UCHAR *class_name,
+UINT USBXX::_ux_device_stack_class_register(const std::string &class_name,
                         UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
                         ULONG configuration_number,
                         ULONG interface_number,
@@ -459,14 +459,9 @@ UINT  _ux_device_stack_class_register(UCHAR *class_name,
 UX_SLAVE_CLASS              *class_inst;
 UINT                        status;
 UX_SLAVE_CLASS_COMMAND      command;
-UINT                        class_name_length =  0;
 #if UX_MAX_SLAVE_CLASS_DRIVER > 1
 ULONG                       class_index;
 #endif
-
-  if(::strnlen((const char *)class_name, UX_MAX_CLASS_NAME_LENGTH) == UX_MAX_CLASS_NAME_LENGTH) {
-    throw std::runtime_error("Class name too long");
-  }
 
     /* Get first class.  */
     class_inst =  _ux_system_slave -> ux_system_slave_class_array;
@@ -485,7 +480,7 @@ ULONG                       class_index;
             class_inst -> ux_slave_class_name = (const UCHAR *)class_name;
 #else
             /* We have found a free container for the class. Copy the name (with null-terminator).  */
-            ::memcpy(class_inst -> ux_slave_class_name, class_name, class_name_length + 1);
+           class_inst->name = class_name;
 #endif
 
             /* Memorize the entry function of this class.  */

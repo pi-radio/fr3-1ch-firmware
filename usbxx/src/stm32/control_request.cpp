@@ -119,7 +119,7 @@ ULONG                       application_data_length;
                        number is same as interface index inside configuration).
                      */
                     if ((request_type == 0xA1) && (request == 0x00) &&
-                        (class_ptr -> ux_slave_class_interface -> ux_slave_interface_descriptor.bInterfaceClass == 0x07))
+                        (class_ptr -> ux_slave_class_interface -> descriptor.bInterfaceClass == 0x07))
                     {
 
                         /* Check wIndex high byte.  */

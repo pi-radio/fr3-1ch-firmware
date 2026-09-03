@@ -16,6 +16,7 @@
 #include <usbxx/dcd.hpp>
 #include <usbxx/endpoint.hpp>
 #include <usbxx/interface.hpp>
+#include <usbxx/class.hpp>
 
 namespace USBXX
 {
@@ -27,8 +28,8 @@ struct UX_SYSTEM_SLAVE
     USBXX::DeviceBase *device;
     UCHAR           *ux_system_slave_dfu_framework;
     ULONG           ux_system_slave_dfu_framework_length;
-    UX_SLAVE_CLASS  *ux_system_slave_class_array;
-    UX_SLAVE_CLASS  *ux_system_slave_interface_class_array[UX_MAX_SLAVE_INTERFACES];
+    USBXX::UX_SLAVE_CLASS  *ux_system_slave_class_array;
+    USBXX::UX_SLAVE_CLASS  *ux_system_slave_interface_class_array[UX_MAX_SLAVE_INTERFACES];
     ULONG           ux_system_slave_speed;
     ULONG           ux_system_slave_power_state;
     ULONG           ux_system_slave_remote_wakeup_capability;
@@ -68,9 +69,9 @@ namespace USBXX
     ULONG            configuration_selected;
     ConfigurationDescriptor
                     configuration_descriptor;
-    UX_SLAVE_INTERFACE
+    Interface
                     *first_interface;
-    UX_SLAVE_INTERFACE
+    Interface
                     *interfaces_pool;
     ULONG           interfaces_pool_number;
     ULONG           endpoints_pool_number;
@@ -182,6 +183,17 @@ namespace USBXX
 
 
   };
+
+  UINT    ux_device_class_storage_entry(UX_SLAVE_CLASS_COMMAND *command);
+
+  UINT    ux_device_stack_class_unregister(UCHAR *class_name,
+                                      UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
+  UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
+  UINT    _ux_device_stack_class_register(const std::string &class_name,
+                      UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
+                      ULONG configuration_number,
+                      ULONG interface_number,
+                      VOID *parameter);
 
 
   template <size_t system_stack_size, size_t app_stack_size>

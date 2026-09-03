@@ -15,10 +15,10 @@ namespace consolexx
 
   class usb_io : public termio
   {
-    USBXX::CDCACM &acm;
+    USBXX::CDCACMDevice &acm;
 
   public:
-    usb_io(USBXX::CDCACM &_acm) : acm(_acm) {};
+    usb_io(USBXX::CDCACMDevice &_acm) : acm(_acm) {};
 
     virtual void wait_started() { acm.wait_started(); };
 

@@ -39,8 +39,8 @@ UINT  _ux_device_stack_interface_set(const UCHAR * device_framework, ULONG devic
                                                     ULONG alternate_setting_value)
 {
 UX_SLAVE_TRANSFER       *transfer_request;
-UX_SLAVE_INTERFACE      *interface_ptr;
-UX_SLAVE_INTERFACE      *interface_link;
+Interface      *interface_ptr;
+Interface      *interface_link;
 ULONG                   interfaces_pool_number;
 Endpoint       *endpoint;
 Endpoint       *endpoint_link;
@@ -62,7 +62,7 @@ ULONG                   max_transfer_length, n_trans;
     while (interfaces_pool_number != 0)
     {
         /* Check if this interface is free.  */
-        if (interface_ptr -> ux_slave_interface_status == UX_UNUSED)
+        if (interface_ptr -> status == UX_UNUSED)
             break;
     
         /* Try the next interface.  */
@@ -77,9 +77,9 @@ ULONG                   max_transfer_length, n_trans;
       throw std::runtime_error("Unable to allocate interface");
 
     /* Mark this interface as used now.  */
-    interface_ptr -> ux_slave_interface_status = UX_USED;
+    interface_ptr -> status = UX_USED;
 
-    interface_ptr -> ux_slave_interface_descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
+    interface_ptr -> descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
 
     /* Attach this interface to the end of the interface chain.  */
     if (device -> first_interface == nullptr)
@@ -91,9 +91,9 @@ ULONG                   max_transfer_length, n_trans;
     {
         /* Multiple interfaces exist, so find the end of the chain.  */
         interface_link =  device -> first_interface;
-        while (interface_link -> ux_slave_interface_next_interface != nullptr)
-            interface_link =  interface_link -> ux_slave_interface_next_interface;
-        interface_link -> ux_slave_interface_next_interface =  interface_ptr;
+        while (interface_link -> next_interface != nullptr)
+            interface_link =  interface_link -> next_interface;
+        interface_link -> next_interface =  interface_ptr;
     }
 
 

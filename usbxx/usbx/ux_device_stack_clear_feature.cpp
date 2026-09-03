@@ -84,7 +84,7 @@ using namespace USBXX;
 /**************************************************************************/
 UINT  _ux_device_stack_clear_feature(ULONG request_type, ULONG request_value, ULONG request_index)
 {
-UX_SLAVE_INTERFACE      *interface_ptr;
+Interface      *interface_ptr;
 Endpoint       *endpoint;
 Endpoint       *endpoint_target;
                                 
@@ -147,7 +147,7 @@ Endpoint       *endpoint_target;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
             /* Next interface.  */
-            interface_ptr =  interface_ptr -> ux_slave_interface_next_interface;
+            interface_ptr =  interface_ptr -> next_interface;
         }
 #endif
 

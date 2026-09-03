@@ -79,11 +79,7 @@ namespace USBXX {
 
 UINT    _ux_device_stack_alternate_setting_get(ULONG interface_value);
 UINT    _ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value);
-UINT    _ux_device_stack_class_register(UCHAR *class_name,
-                    UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
-                    ULONG configuration_number,
-                    ULONG interface_number,
-                    VOID *parameter);
+
 UINT    _ux_device_stack_clear_feature(ULONG request_type, ULONG request_value, ULONG request_index);
 UINT    _ux_device_stack_configuration_get(VOID);
 UINT    _ux_device_stack_configuration_set(ULONG configuration_value);
@@ -98,16 +94,13 @@ UINT    _ux_device_stack_initialize(UCHAR * device_framework_high_speed, ULONG d
                     UCHAR * string_framework, ULONG string_framework_length,
                     UCHAR * language_id_framework, ULONG language_id_framework_length,
                     UINT (*ux_system_slave_change_function)(ULONG));
-UINT    _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *ux_interface);
 UINT    _ux_device_stack_interface_get(UINT interface_value);
 UINT    _ux_device_stack_interface_set(const UCHAR * device_framework, ULONG device_framework_length,
                     ULONG alternate_setting_value);
-UINT    _ux_device_stack_interface_start(UX_SLAVE_INTERFACE *ux_interface);
 UINT    _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULONG request_index);
 UINT    _ux_device_stack_transfer_all_request_abort(USBXX::Endpoint *endpoint, ULONG completion_code);
 UINT    _ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, ULONG slave_length, ULONG host_length);
 UINT    _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
-UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
 UINT    _ux_device_stack_microsoft_extension_register(ULONG vendor_request, UINT (*vendor_request_function)(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *));
 UINT    _ux_device_stack_uninitialize(VOID);
 

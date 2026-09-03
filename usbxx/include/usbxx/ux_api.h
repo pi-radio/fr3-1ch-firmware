@@ -26,10 +26,7 @@ struct UX_HOST_CLASS;
 
 struct UX_SLAVE_DEVICE;
 struct UX_SLAVE_TRANSFER;
-struct UX_SLAVE_INTERFACE;
 struct UX_SLAVE_ENDPOINT;
-struct UX_SLAVE_CLASS;
-struct UX_SLAVE_CLASS_COMMAND;
 
 
 /* Defined, this value represents the endpoint buffer owner.
@@ -2104,44 +2101,10 @@ struct UX_HCD
 
 /* Define USBX Device Class Command container structure.  */
 
-struct UX_SLAVE_CLASS_COMMAND
-{
-
-    UINT            ux_slave_class_command_request;
-    VOID            *ux_slave_class_command_container;
-    VOID            *ux_slave_class_command_interface;
-    UINT            ux_slave_class_command_pid;
-    UINT            ux_slave_class_command_vid;
-    UINT            ux_slave_class_command_class;
-    UINT            ux_slave_class_command_subclass;
-    UINT            ux_slave_class_command_protocol;
-    UX_SLAVE_CLASS
-                    *ux_slave_class_command_class_ptr;
-    VOID            *ux_slave_class_command_parameter;
-    VOID            *ux_slave_class_command_interface_number;
-
-};
 
 
-/* Define USBX Device Class container structure.  */
 
-struct UX_SLAVE_CLASS
-{
-    UCHAR           ux_slave_class_name[UX_MAX_CLASS_NAME_LENGTH + 1]; /* "+1" for string null-terminator */
 
-    UINT            ux_slave_class_status;
-    UINT            (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND *);
-    VOID            *ux_slave_class_instance;
-    VOID            *ux_slave_class_client;
-    UX_THREAD       ux_slave_class_thread;
-    VOID            *ux_slave_class_thread_stack;
-    VOID            *ux_slave_class_interface_parameter;
-    ULONG           ux_slave_class_interface_number;
-    ULONG           ux_slave_class_configuration_number;
-    UX_SLAVE_INTERFACE
-                    *ux_slave_class_interface;
-
-};
 
 #define UX_UCHAR_POINTER_ADD(a,b)                       (((UCHAR *) (a)) + ((UINT) (b)))
 #define UX_UCHAR_POINTER_SUB(a,b)                       (((UCHAR *) (a)) - ((UINT) (b)))
@@ -2549,17 +2512,9 @@ UINT    ux_dcd_isp1181_initialize(ULONG dcd_io, ULONG dcd_irq, ULONG dcd_vbus_ad
 UINT    ux_dcd_ml6965_initialize(ULONG dcd_io, ULONG dcd_irq, ULONG dcd_vbus_address);
 UINT    ux_dcd_sim_slave_initialize(VOID);
 
-UINT    ux_device_class_storage_entry(UX_SLAVE_CLASS_COMMAND *command);
 VOID    ux_device_class_storage_thread(ULONG);
 UINT    ux_device_stack_alternate_setting_get(ULONG interface_value);
 UINT    ux_device_stack_alternate_setting_set(ULONG interface_value, ULONG alternate_setting_value);
-UINT    ux_device_stack_class_register(UCHAR *class_name,
-                                    UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
-                                    ULONG configuration_number,
-                                    ULONG interface_number,
-                                    VOID *parameter);
-UINT    ux_device_stack_class_unregister(UCHAR *class_name,
-                                    UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
 UINT    ux_device_stack_configuration_get(VOID);
 UINT    ux_device_stack_configuration_set(ULONG configuration_value);
 UINT    ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_index, ULONG host_length);
@@ -2572,11 +2527,9 @@ UINT    ux_device_stack_initialize(UCHAR * device_framework_high_speed, ULONG de
                                     UCHAR * language_id_framework, ULONG language_id_framework_length,
                                     UINT (*ux_system_slave_change_function)(ULONG));
 UINT    ux_device_stack_uninitialize(VOID);
-UINT    ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *ux_interface);
 UINT    ux_device_stack_interface_get(UINT interface_value);
 UINT    ux_device_stack_interface_set(const UCHAR * device_framework, ULONG device_framework_length,
                                     ULONG alternate_setting_value);
-UINT    ux_device_stack_interface_start(UX_SLAVE_INTERFACE *ux_interface);
 UINT    ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, ULONG slave_length, ULONG host_length);
 UINT    ux_device_stack_transfer_request_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
 

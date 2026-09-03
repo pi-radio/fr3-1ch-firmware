@@ -6,18 +6,34 @@
 
 #include <vector>
 
-struct UX_SLAVE_INTERFACE
+namespace USBXX
 {
-    ULONG           ux_slave_interface_status;
-    UX_SLAVE_CLASS
-                    *ux_slave_interface_class;
-    VOID            *ux_slave_interface_class_instance;
+  class DeviceBase;
+  class UX_SLAVE_CLASS;
 
-    USBXX::InterfaceDescriptor
-                    ux_slave_interface_descriptor;
-    UX_SLAVE_INTERFACE
-                    *ux_slave_interface_next_interface;
+  struct Interface
+  {
+    DeviceBase *device;
+    ULONG           status;
+    UX_SLAVE_CLASS  *usb_class;
+    VOID            *class_instance;
+
+    USBXX::InterfaceDescriptor descriptor;
+    Interface       *next_interface;
 
 
     std::vector<USBXX::Endpoint *> endpoints;
-};
+
+    Interface(DeviceBase *_dev) :
+      device(_dev)
+    {
+
+    }
+  };
+
+  UINT    ux_device_stack_interface_delete(Interface *ux_interface);
+  UINT    ux_device_stack_interface_start(Interface *ux_interface);
+  UINT    _ux_device_stack_interface_delete(Interface *ux_interface);
+  UINT    _ux_device_stack_interface_start(Interface *ux_interface);
+
+}

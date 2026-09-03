@@ -32,9 +32,6 @@
 
 #include <usbxx/device.hpp>
 
-UX_COMPILE_TIME_ASSERT(!UX_OVERFLOW_CHECK_MULC_ULONG(sizeof(UX_SLAVE_CLASS), UX_MAX_SLAVE_CLASS_DRIVER), UX_MAX_SLAVE_CLASS_DRIVER_mul_ovf)
-
-/* Define the names of all the USB Classes of USBX.  */
 
 UCHAR _ux_system_slave_class_storage_name[] =                               "ux_slave_class_storage";
 UCHAR _ux_system_slave_class_cdc_acm_name[] =                               "ux_slave_class_cdc_acm";

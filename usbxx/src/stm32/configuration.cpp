@@ -9,7 +9,7 @@ uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
 {
 
 UX_SLAVE_TRANSFER       *xfer;
-UX_SLAVE_INTERFACE      *interface_ptr;
+Interface      *interface_ptr;
 USBXX::Endpoint       *endpoint;
 UINT                    status;
 
@@ -30,7 +30,7 @@ UINT                    status;
         {
 
             /* Check if this is the interface we have an inquiry for.  */
-            if (interface_ptr -> ux_slave_interface_descriptor.bInterfaceNumber == interface_value)
+            if (interface_ptr -> descriptor.bInterfaceNumber == interface_value)
             {
 
                 /* Get the control endpoint of the device.  */
@@ -41,7 +41,7 @@ UINT                    status;
 
                 /* Set the value of the alternate setting in the buffer.  */
                 *xfer -> data =
-                            (UCHAR) interface_ptr -> ux_slave_interface_descriptor.bAlternateSetting;
+                            (UCHAR) interface_ptr -> descriptor.bAlternateSetting;
 
                 /* Setup the length appropriately.  */
                 xfer -> requested_length =  1;
@@ -58,7 +58,7 @@ UINT                    status;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
             /* Get the next interface.  */
-            interface_ptr =  interface_ptr -> ux_slave_interface_next_interface;
+            interface_ptr =  interface_ptr -> next_interface;
 #endif
         }
     }
@@ -69,7 +69,7 @@ UINT                    status;
 
 uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value)
 {
-UX_SLAVE_INTERFACE              *interface_ptr;
+Interface              *interface_ptr;
 #if !defined(UX_DEVICE_ALTERNATE_SETTING_SUPPORT_DISABLE)
 UX_SLAVE_TRANSFER               *xfer;
 const UCHAR                           *device_framework;
@@ -101,10 +101,10 @@ ULONG                           max_transfer_length, n_trans;
     while (interface_ptr != nullptr)
     {
 
-        if (interface_ptr -> ux_slave_interface_descriptor.bInterfaceNumber == interface_value)
+        if (interface_ptr -> descriptor.bInterfaceNumber == interface_value)
             break;
         else
-            interface_ptr =  interface_ptr -> ux_slave_interface_next_interface;
+            interface_ptr =  interface_ptr -> next_interface;
     }
 
     /* We must have found the interface pointer for the interface value
@@ -116,7 +116,7 @@ ULONG                           max_transfer_length, n_trans;
 
     /* If the host is requesting a change of alternate setting to the current one,
        we do not need to do any work.  */
-    if (interface_ptr -> ux_slave_interface_descriptor.bAlternateSetting == alternate_setting_value)
+    if (interface_ptr -> descriptor.bAlternateSetting == alternate_setting_value)
         return 0;
 
 #if defined(UX_DEVICE_ALTERNATE_SETTING_SUPPORT_DISABLE)
@@ -304,10 +304,10 @@ ULONG                           max_transfer_length, n_trans;
                             }
 
                             /* The interface descriptor in the current class must be changed to the new alternate setting.  */
-                            ::memcpy(&interface_ptr -> ux_slave_interface_descriptor, &interface_descriptor, sizeof(UX_INTERFACE_DESCRIPTOR)); /* Use case of memcpy is verified. */
+                            ::memcpy(&interface_ptr -> descriptor, &interface_descriptor, sizeof(UX_INTERFACE_DESCRIPTOR)); /* Use case of memcpy is verified. */
 
                             /* Get the class for the interface.  */
-                            class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[interface_ptr -> ux_slave_interface_descriptor.bInterfaceNumber];
+                            class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[interface_ptr -> descriptor.bInterfaceNumber];
 
                             /* Check if class driver is available. */
                             if (class_ptr == nullptr || class_ptr -> ux_slave_class_status == UX_UNUSED)
@@ -385,9 +385,9 @@ ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor = { 0 };
 InterfaceDescriptor         interface_descriptor;
-UX_SLAVE_INTERFACE              *interface_ptr;
+Interface              *interface_ptr;
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
-UX_SLAVE_INTERFACE              *next_interface;
+Interface              *next_interface;
 #endif
 UX_SLAVE_CLASS                  *class_inst;
 UX_SLAVE_CLASS                  *current_class =  nullptr;
@@ -460,7 +460,7 @@ ULONG                           class_index;
             class_command.ux_slave_class_command_interface =  (VOID *) interface_ptr;
 
             /* Get the pointer to the class container of this interface.  */
-            class_inst =  interface_ptr -> ux_slave_interface_class;
+            class_inst =  interface_ptr -> usb_class;
 
             /* Store the class container. */
             class_command.ux_slave_class_command_class_ptr =  class_inst;
@@ -473,7 +473,7 @@ ULONG                           class_index;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
             /* Get the next interface.  */
-            next_interface =  interface_ptr -> ux_slave_interface_next_interface;
+            next_interface =  interface_ptr -> next_interface;
 #endif
 
             /* Remove the interface and all endpoints associated with it.  */

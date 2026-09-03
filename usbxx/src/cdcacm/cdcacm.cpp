@@ -6,24 +6,22 @@
  */
 
 #include <threadxx/dbgstream.hpp>
-
-#include <usbxx/ux_api.h>
-
 #include <usbxx/cdcacm.hpp>
+#include <usbxx/ux_api.h>
 
 #include <cassert>
 
 using namespace USBXX;
 
-CDCACM *CDCACM::stupid_global = NULL;
+CDCACMDevice *CDCACMDevice::stupid_global = NULL;
 
 
 
-CDCACM::CDCACM() :
+CDCACMDevice::CDCACMDevice() :
     ep_in_mutex("CDCACM EP In Mutex"),
     ep_out_mutex("CDCACM EP Out Mutex"),
     tx_queue("CDC ACM TX Queue"),
-    tx_thread("CDCACM TX Thread", this, &CDCACM::_tx_thread),
+    tx_thread("CDCACM TX Thread", this, &CDCACMDevice::_tx_thread),
     rx_mutex("CDCACM RX Mutex"),
     tx_mutex("CDCACM TX Mutex")
 {
@@ -38,7 +36,7 @@ CDCACM::CDCACM() :
   stupid_global = this;
 }
 
-void CDCACM::wait_started()
+void CDCACMDevice::wait_started()
 {
   ULONG actual;
 
@@ -46,13 +44,13 @@ void CDCACM::wait_started()
 }
 
 
-bool CDCACM::get_dtr()
+bool CDCACMDevice::get_dtr()
 {
   return dtr_state;
 }
 
 
-void CDCACM::set_dtr(bool dtr)
+void CDCACMDevice::set_dtr(bool dtr)
 {
   dtr_state = dtr;
   if (dtr) {
@@ -62,7 +60,7 @@ void CDCACM::set_dtr(bool dtr)
   }
 }
 
-void CDCACM::set_rts(bool rts)
+void CDCACMDevice::set_rts(bool rts)
 {
   rts_state = rts;
   if (rts) {
@@ -73,20 +71,20 @@ void CDCACM::set_rts(bool rts)
 }
 
 
-void CDCACM::class_init()
+void CDCACMDevice::class_init()
 {
   tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
   tx_queue.create();
   tx_thread.create();
 }
 
-void CDCACM::flush()
+void CDCACMDevice::flush()
 {
   putc(FLUSH);
   tx_semaphore_get(&flush_sema, TX_WAIT_FOREVER);
 }
 
-int CDCACM::getc()
+int CDCACMDevice::getc()
 {
   ULONG status;
 
@@ -116,12 +114,12 @@ int CDCACM::getc()
   return rx_buf[rx_cur++];
 }
 
-void CDCACM::putc(int c)
+void CDCACMDevice::putc(int c)
 {
   tx_queue.send(c);
 }
 
-void CDCACM::flush_buffer()
+void CDCACMDevice::flush_buffer()
 {
   TXX::Mutex::guard g(tx_mutex);
   
@@ -147,7 +145,7 @@ void CDCACM::flush_buffer()
   }  
 }
 
-void CDCACM::_tx_thread()
+void CDCACMDevice::_tx_thread()
 {
   ULONG c;
   ULONG wait;
@@ -190,14 +188,14 @@ void CDCACM::_tx_thread()
 #include <usb.h>
 #include <usbxx/ux_device_descriptors.h>
 
-void USBXX::CDCACM::register_class()
+void USBXX::CDCACMDevice::register_class()
 {
   cdc_acm_configuration_number = get_configuration_number(CLASS_TYPE_CDC_ACM, 0);
 
   cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
 
   /* Initialize the device cdc acm class */
-  if (ux_device_stack_class_register(_ux_system_slave_class_cdc_acm_name,
+  if (ux_device_stack_class_register((const char *)_ux_system_slave_class_cdc_acm_name,
                                      _device_entry,
                                      cdc_acm_configuration_number,
                                      cdc_acm_interface_number,
@@ -208,7 +206,7 @@ void USBXX::CDCACM::register_class()
 
 }
 
-UINT USBXX::CDCACM::device_entry(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::device_entry(UX_SLAVE_CLASS_COMMAND *command)
 {
   /* The command request will tell us we need to do here, either a enumeration
      query, an activation or a deactivation.  */
@@ -240,12 +238,12 @@ UINT USBXX::CDCACM::device_entry(UX_SLAVE_CLASS_COMMAND *command)
   }
 }
 
-UINT USBXX::CDCACM::_device_entry(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::_device_entry(UX_SLAVE_CLASS_COMMAND *command)
 {
   return stupid_global->device_entry(command);
 }
 
-UINT USBXX::CDCACM::acm_initialize(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::acm_initialize(UX_SLAVE_CLASS_COMMAND *command)
 {
   UX_SLAVE_CLASS *class_ptr;
 
@@ -261,21 +259,21 @@ UINT USBXX::CDCACM::acm_initialize(UX_SLAVE_CLASS_COMMAND *command)
 
   return 0;
 }
-UINT USBXX::CDCACM::acm_uninitialize(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::acm_uninitialize(UX_SLAVE_CLASS_COMMAND *command)
 {
   return 0;
 }
 
 
-UINT USBXX::CDCACM::activate(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::activate(UX_SLAVE_CLASS_COMMAND *command)
 {
-    UX_SLAVE_INTERFACE *interface_ptr;
+    Interface *interface_ptr;
 
     /* Get the interface that owns this instance.  */
-    interface_ptr =  (UX_SLAVE_INTERFACE  *) command -> ux_slave_class_command_interface;
+    interface_ptr =  (Interface  *) command -> ux_slave_class_command_interface;
 
     /* Store the class instance into the interface.  */
-    interface_ptr -> ux_slave_interface_class_instance =  (VOID *)this;
+    interface_ptr -> class_instance =  (VOID *)this;
 
     /* Now the opposite, store the interface in the class instance.  */
     cdc_acm_interface = interface_ptr;
@@ -295,7 +293,7 @@ UINT USBXX::CDCACM::activate(UX_SLAVE_CLASS_COMMAND *command)
 extern "C" UINT  _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
 extern "C" UINT  _ux_device_stack_transfer_all_request_abort(Endpoint *endpoint, ULONG completion_code);
 
-UINT USBXX::CDCACM::deactivate(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::deactivate(UX_SLAVE_CLASS_COMMAND *command)
 {
   /* Terminate the transactions pending on the endpoints.  */
   _ux_device_stack_transfer_all_request_abort(in_endpoint, UX_TRANSFER_BUS_RESET);
@@ -312,7 +310,7 @@ UINT USBXX::CDCACM::deactivate(UX_SLAVE_CLASS_COMMAND *command)
   return 0;
 }
 
-UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
+UINT USBXX::CDCACMDevice::control_request(UX_SLAVE_CLASS_COMMAND *command)
 {
   //UX_SLAVE_CLASS                          *class_ptr;
   UX_SLAVE_TRANSFER                       *xfer;
@@ -396,7 +394,7 @@ UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
     return 0;
 }
 
-UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
+UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
 {
   Endpoint           *endpoint;
   UX_SLAVE_TRANSFER           *xfer;
@@ -458,12 +456,12 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
 }
 
 
-UINT USBXX::CDCACM::write(UCHAR *buffer,
+UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
                           ULONG requested_length,
                           ULONG *actual_length)
 {
   Endpoint           *endpoint;
-  UX_SLAVE_INTERFACE          *interface_ptr;
+  Interface          *interface_ptr;
   UX_SLAVE_TRANSFER           *xfer;
   ULONG                       local_requested_length;
   ULONG                       local_host_length;
@@ -544,14 +542,14 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
   return status;
 }
 
-UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
+UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
                           VOID *parameter)
 {
   UINT status;
   UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
   UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint *endpoint;
-  UX_SLAVE_INTERFACE *interface_ptr;
+  Interface *interface_ptr;
   UX_SLAVE_TRANSFER *transfer_request;
 
   /* Let's be optimist ! */

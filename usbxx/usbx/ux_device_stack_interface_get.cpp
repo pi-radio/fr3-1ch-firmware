@@ -40,7 +40,7 @@ UINT  _ux_device_stack_interface_get(UINT interface_value)
 
 USBXX::DCD            *dcd;
 UX_SLAVE_TRANSFER       *transfer_request;
-UX_SLAVE_INTERFACE      *interface_ptr;
+Interface      *interface_ptr;
 Endpoint       *endpoint;
 UINT                    status;
 
@@ -71,7 +71,7 @@ UINT                    status;
 #endif
 
             /* Check if this is the interface we have an inquiry for.  */
-            if (interface_ptr -> ux_slave_interface_descriptor.bInterfaceNumber == interface_value)
+            if (interface_ptr -> descriptor.bInterfaceNumber == interface_value)
             {
 
                 /* Get the pointer to the transfer request associated with the endpoint.  */
@@ -79,7 +79,7 @@ UINT                    status;
 
                 /* Set the value of the alternate setting in the buffer.  */
                 *transfer_request -> data =
-                                (UCHAR) interface_ptr -> ux_slave_interface_descriptor.bAlternateSetting;
+                                (UCHAR) interface_ptr -> descriptor.bAlternateSetting;
 
                 /* Setup the length appropriately.  */
                 transfer_request -> requested_length =  1;
@@ -96,7 +96,7 @@ UINT                    status;
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
             /* Get the next interface.  */
-            interface_ptr =  interface_ptr -> ux_slave_interface_next_interface;
+            interface_ptr =  interface_ptr -> next_interface;
         }
 #endif
 
