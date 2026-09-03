@@ -294,8 +294,6 @@ void PiRadioApp::pre_kernel()
 void PiRadioApp::tx_init()
 {
   usb_serial.start();
-  
-  cmd_queue.create();
 
   term.startup();
 

@@ -35,8 +35,6 @@ namespace consolexx
 
     void set_drop(bool);
 
-    void create();
-
     void sendc(int c);
 
     virtual void wait_started();

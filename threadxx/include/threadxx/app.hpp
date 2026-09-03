@@ -31,9 +31,6 @@ namespace TXX
     virtual void app_create_main() = 0;
     virtual void app_main() = 0;
   };
-
-  
-  
   
   template <class cpu_type, size_t stack_size=4096>
   class App : public AppBase

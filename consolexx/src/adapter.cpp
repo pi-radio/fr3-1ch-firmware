@@ -3,12 +3,6 @@
 using namespace consolexx;
 
 
-void queue_io::create()
-{
-  in_mutex.create();
-  in_sema.create();
-}
-
 void queue_io::set_drop(bool _drop)
 {
   drop = _drop;
@@ -96,9 +90,6 @@ void terminal_adapter::on_char(int c)
 void terminal_adapter::startup()
 {
   terminal::startup();
-
-  cooked_io.create();
-  raw_io.create();
 
   cooked.startup();
   raw.startup();

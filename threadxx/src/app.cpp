@@ -1,5 +1,6 @@
 #include <threadxx/app.hpp>
 #include <threadxx/config_data.hpp>
+#include <threadxx/object.hpp>
 
 #
 
@@ -33,6 +34,8 @@ void AppBase::start()
   initialize_hardware();
 
   _tx_initialize_kernel_setup();
+
+  object::on_enter_kernel();
 
 
   pre_kernel();

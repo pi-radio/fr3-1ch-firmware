@@ -30,11 +30,6 @@ namespace TXX
 
     }
 
-    void create() {
-      mutex.create();
-      sema.create();
-    }
-
     T pop() {
       sema.get();
 
