@@ -184,34 +184,17 @@ ULONG                           max_transfer_length, n_trans;
                             /* We have found the right interface and alternate setting. Before
                                we mount all the endpoints for this interface, we need to
                                unmount the endpoints associated with the previous alternate setting.  */
-                            endpoint =  interface_ptr -> ux_slave_interface_first_endpoint;
-                            while (endpoint != nullptr)
-                            {
+                          for(auto endpoint : interface_ptr->endpoints) {
+                            _ux_device_stack_transfer_all_request_abort(endpoint, UX_TRANSFER_BUS_RESET);
 
-                                /* Abort any pending transfer.  */
-                                _ux_device_stack_transfer_all_request_abort(endpoint, UX_TRANSFER_BUS_RESET);
+                            endpoint->destroy();
+                            endpoint->used = false;
+                            endpoint -> ux_slave_endpoint_state =  0;
+                            endpoint -> ux_slave_endpoint_next_endpoint =  nullptr;
+                            endpoint -> ux_slave_endpoint_interface =  nullptr;
+                            endpoint -> ux_slave_endpoint_device =  nullptr;
 
-                                /* The device controller must be called to destroy the endpoint.  */
-                                endpoint->destroy();
-
-                                /* Get the next endpoint.  */
-                                next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
-
-                                /* Free the endpoint.  */
-                                endpoint->used = false;
-
-                                /* Make sure the endpoint instance is now cleaned up.  */
-                                endpoint -> ux_slave_endpoint_state =  0;
-                                endpoint -> ux_slave_endpoint_next_endpoint =  nullptr;
-                                endpoint -> ux_slave_endpoint_interface =  nullptr;
-                                endpoint -> ux_slave_endpoint_device =  nullptr;
-
-                                /* Now we refresh the endpoint pointer.  */
-                                endpoint =  next_endpoint;
-                            }
-
-                            /* Now clear the interface endpoint entry.  */
-                            interface_ptr -> ux_slave_interface_first_endpoint = nullptr;
+                          }
 
                             /* Point beyond the interface descriptor.  */
                             device_framework_length -=  (ULONG) *device_framework;
@@ -292,20 +275,7 @@ ULONG                           max_transfer_length, n_trans;
                                         return(status);
                                     }
 
-                                    /* Attach this endpoint to the end of the endpoint chain.  */
-                                    if (interface_ptr -> ux_slave_interface_first_endpoint == nullptr)
-                                    {
-
-                                        interface_ptr -> ux_slave_interface_first_endpoint =  endpoint;
-                                    }
-                                    else
-                                    {
-                                        /* Multiple endpoints exist, so find the end of the chain.  */
-                                        endpoint_link =  interface_ptr -> ux_slave_interface_first_endpoint;
-                                        while (endpoint_link -> ux_slave_endpoint_next_endpoint != nullptr)
-                                            endpoint_link =  endpoint_link -> ux_slave_endpoint_next_endpoint;
-                                        endpoint_link -> ux_slave_endpoint_next_endpoint =  endpoint;
-                                    }
+                                    interface_ptr->endpoints.push_back(endpoint);
                                 }
                                 break;
 

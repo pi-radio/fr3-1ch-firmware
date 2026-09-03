@@ -36,6 +36,8 @@ namespace USBXX
     UCHAR dtr_state;
     UCHAR rts_state;
 
+    USBXX::Endpoint *in_endpoint;
+    USBXX::Endpoint *out_endpoint;
 
     static constexpr uint32_t FLAG_STARTED = 0x00000001;
     static constexpr uint32_t FLAG_CONNECTED = 0x00000002;

@@ -174,20 +174,7 @@ ULONG                   max_transfer_length, n_trans;
                 return(status);
             }
 
-            /* Attach this endpoint to the end of the endpoint chain.  */
-            if (interface_ptr -> ux_slave_interface_first_endpoint == nullptr)
-            {
-
-                interface_ptr -> ux_slave_interface_first_endpoint =  endpoint;
-            }
-            else
-            {
-                /* Multiple endpoints exist, so find the end of the chain.  */
-                endpoint_link =  interface_ptr -> ux_slave_interface_first_endpoint;
-                while (endpoint_link -> ux_slave_endpoint_next_endpoint != nullptr)
-                    endpoint_link =  endpoint_link -> ux_slave_endpoint_next_endpoint;
-                endpoint_link -> ux_slave_endpoint_next_endpoint =  endpoint;
-            }
+            interface_ptr->endpoints.push_back(endpoint);
         }
         break;
 

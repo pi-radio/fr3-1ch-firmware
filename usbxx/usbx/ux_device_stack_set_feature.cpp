@@ -116,26 +116,13 @@ UINT  _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULON
         {
 #endif
             /* Get the first endpoint for this interface.  */
-            endpoint_target =  interface_ptr -> ux_slave_interface_first_endpoint;
-                
-            /* Parse all the endpoints.  */
-            while (endpoint_target != nullptr)
+          for (auto endpoint_target : interface_ptr->endpoints) {
+            if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress == request_index)
             {
-
-                /* Check the endpoint index.  */
-                if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress == request_index)
-                {
-
-                    /* Stall the endpoint.  */
-                    endpoint_target->stall();
-
-                    /* Return the function status.  */
-                    return 0;
-                }
-
-                /* Next endpoint.  */
-                endpoint_target =  endpoint_target -> ux_slave_endpoint_next_endpoint;
+              endpoint_target->stall();
+              return 0;
             }
+          }
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
             /* Next interface.  */

@@ -94,26 +94,9 @@ UINT  _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *interface_ptr)
     /* Get the pointer to the device.  */
     auto device = _ux_system_slave->device;
 
-    /* Find the first endpoints associated with this interface.  */    
-    next_endpoint =  interface_ptr -> ux_slave_interface_first_endpoint;        
-    
-    /* Parse all the endpoints.  */    
-    while (next_endpoint != nullptr)
-    {
-
-        /* Save this endpoint.  */
-        endpoint =  next_endpoint;
-        
-        /* Find the next endpoint.  */
-        next_endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
-        
-        /* The endpoint must be destroyed.  */
+    for (auto endpoint : interface_ptr->endpoints) {
         endpoint->destroy();
-
-        /* Free the endpoint.  */
         endpoint->used = false;
-
-        /* Make sure the endpoint instance is now cleaned up.  */
         endpoint -> ux_slave_endpoint_state =  0;
         endpoint -> ux_slave_endpoint_next_endpoint =  nullptr;
         endpoint -> ux_slave_endpoint_interface =  nullptr;
@@ -128,7 +111,6 @@ UINT  _ux_device_stack_interface_delete(UX_SLAVE_INTERFACE *interface_ptr)
     interface_ptr -> ux_slave_interface_class          =  nullptr;
     interface_ptr -> ux_slave_interface_class_instance =  nullptr;
     interface_ptr -> ux_slave_interface_next_interface =  nullptr;
-    interface_ptr -> ux_slave_interface_first_endpoint =  nullptr;
     interface_ptr -> ux_slave_interface_status         =  UX_UNUSED;
 
     /* Return successful completion.  */    

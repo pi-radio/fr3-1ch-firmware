@@ -4,6 +4,8 @@
 #include <usbxx/descriptor.hpp>
 /* Define USBX Device Controller Interface structure.  */
 
+#include <vector>
+
 struct UX_SLAVE_INTERFACE
 {
     ULONG           ux_slave_interface_status;
@@ -15,5 +17,7 @@ struct UX_SLAVE_INTERFACE
                     ux_slave_interface_descriptor;
     UX_SLAVE_INTERFACE
                     *ux_slave_interface_next_interface;
-    USBXX::Endpoint        *ux_slave_interface_first_endpoint;
+
+
+    std::vector<USBXX::Endpoint *> endpoints;
 };

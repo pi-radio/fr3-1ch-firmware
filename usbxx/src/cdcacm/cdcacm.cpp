@@ -11,6 +11,8 @@
 
 #include <usbxx/cdcacm.hpp>
 
+#include <cassert>
+
 using namespace USBXX;
 
 CDCACM *CDCACM::stupid_global = NULL;
@@ -52,6 +54,7 @@ bool CDCACM::get_dtr()
 
 void CDCACM::set_dtr(bool dtr)
 {
+  dtr_state = dtr;
   if (dtr) {
     tx_event_flags_set(&flags, ~FLAG_DTR, TX_AND);
   } else {
@@ -61,6 +64,7 @@ void CDCACM::set_dtr(bool dtr)
 
 void CDCACM::set_rts(bool rts)
 {
+  rts_state = rts;
   if (rts) {
     tx_event_flags_set(&flags, ~FLAG_RTS, TX_AND);
   } else {
@@ -276,6 +280,13 @@ UINT USBXX::CDCACM::activate(UX_SLAVE_CLASS_COMMAND *command)
     /* Now the opposite, store the interface in the class instance.  */
     cdc_acm_interface = interface_ptr;
 
+    for (auto endpoint : interface_ptr->endpoints) {
+      if ((endpoint->ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
+        out_endpoint = endpoint;
+      else
+        in_endpoint = endpoint;
+    }
+
     tx_event_flags_set(&flags, FLAG_STARTED, TX_OR);
 
     return 0;
@@ -286,39 +297,17 @@ extern "C" UINT  _ux_device_stack_transfer_all_request_abort(Endpoint *endpoint,
 
 UINT USBXX::CDCACM::deactivate(UX_SLAVE_CLASS_COMMAND *command)
 {
-
-  UX_SLAVE_INTERFACE          *interface_ptr;
-  //UX_SLAVE_CLASS              *class_ptr;
-  Endpoint           *endpoint_in;
-  Endpoint           *endpoint_out;
-
-  interface_ptr =  cdc_acm_interface;
-
-  /* Locate the endpoints.  */
-  endpoint_in = interface_ptr->ux_slave_interface_first_endpoint;
-
-  /* Check the endpoint direction, if IN we have the correct endpoint.  */
-  if ((endpoint_in->ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
-  {
-      endpoint_out =  endpoint_in;
-      endpoint_in =  endpoint_out->ux_slave_endpoint_next_endpoint;
-  }
-  else
-  {
-      endpoint_out =  endpoint_in->ux_slave_endpoint_next_endpoint;
-  }
-
   /* Terminate the transactions pending on the endpoints.  */
-  _ux_device_stack_transfer_all_request_abort(endpoint_in, UX_TRANSFER_BUS_RESET);
-  _ux_device_stack_transfer_all_request_abort(endpoint_out, UX_TRANSFER_BUS_RESET);
+  _ux_device_stack_transfer_all_request_abort(in_endpoint, UX_TRANSFER_BUS_RESET);
+  _ux_device_stack_transfer_all_request_abort(out_endpoint, UX_TRANSFER_BUS_RESET);
 
   /* Terminate transmission and free resources.  */
   ioctl(UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP, UX_NULL);
 
   /* We need to reset the DTR and RTS values so they do not carry over to the
      next connection.  */
-  dtr_state = 0;
-  rts_state = 0;
+  set_dtr(0);
+  set_rts(0);
 
   return 0;
 }
@@ -410,7 +399,6 @@ UINT USBXX::CDCACM::control_request(UX_SLAVE_CLASS_COMMAND *command)
 UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
 {
   Endpoint           *endpoint;
-  UX_SLAVE_INTERFACE          *interface_ptr;
   UX_SLAVE_TRANSFER           *xfer;
   UINT                        status= UX_SUCCESS;
   ULONG                       local_requested_length;
@@ -419,19 +407,10 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
   if (state != UX_DEVICE_CONFIGURED)
     throw std::runtime_error("CDCACM read on unconfigured device");
 
-  /* This is the first time we are activated. We need the interface to the class.  */
-  interface_ptr = cdc_acm_interface;
-
   /* Locate the endpoints.  */
-  endpoint =  interface_ptr->ux_slave_interface_first_endpoint;
+  endpoint = out_endpoint;
 
   /* Check the endpoint direction, if OUT we have the correct endpoint.  */
-  if ((endpoint->ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_OUT)
-  {
-      /* So the next endpoint has to be the OUT endpoint.  */
-      endpoint = endpoint->ux_slave_endpoint_next_endpoint;
-  }
-
   {
     TXX::Mutex::guard guard(ep_in_mutex);
     xfer = &endpoint->ux_slave_endpoint_transfer_request;
@@ -502,14 +481,7 @@ UINT USBXX::CDCACM::write(UCHAR *buffer,
   interface_ptr = cdc_acm_interface;
 
   /* Locate the endpoints.  */
-  endpoint = interface_ptr->ux_slave_interface_first_endpoint;
-
-  /* Check the endpoint direction, if IN we have the correct endpoint.  */
-  if ((endpoint->ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
-  {
-      /* So the next endpoint has to be the IN endpoint.  */
-      endpoint = endpoint->ux_slave_endpoint_next_endpoint;
-  }
+  endpoint = in_endpoint;
 
   {
     TXX::Mutex::guard guard(ep_out_mutex);
@@ -640,38 +612,19 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
     /* Get the interface from the instance.  */
     interface_ptr =  cdc_acm_interface;
 
-    /* Locate the endpoints.  */
-    endpoint =  interface_ptr -> ux_slave_interface_first_endpoint;
-
     /* What direction ?  */
     switch( (ULONG) (ALIGN_TYPE) parameter)
     {
-        case UX_SLAVE_CLASS_CDC_ACM_ENDPOINT_XMIT :
+    case UX_SLAVE_CLASS_CDC_ACM_ENDPOINT_XMIT :
+      endpoint = in_endpoint;
+      break;
 
-        /* Check the endpoint direction, if IN we have the correct endpoint.  */
-        if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
-        {
+    case UX_SLAVE_CLASS_CDC_ACM_ENDPOINT_RCV :
+      endpoint = out_endpoint;
+      break;
 
-            /* So the next endpoint has to be the XMIT endpoint.  */
-            endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
-        }
-        break;
-
-        case UX_SLAVE_CLASS_CDC_ACM_ENDPOINT_RCV :
-
-        /* Check the endpoint direction, if OUT we have the correct endpoint.  */
-        if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_OUT)
-        {
-
-            /* So the next endpoint has to be the RCV endpoint.  */
-            endpoint =  endpoint -> ux_slave_endpoint_next_endpoint;
-        }
-        break;
-
-
-
-        default:
-          throw std::runtime_error("Unknown endpoint handle");
+    default:
+      throw std::runtime_error("Unknown endpoint handle");
     }
 
     /* Get the transfer request associated with the endpoint.  */
@@ -695,12 +648,13 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
       interface_ptr =  cdc_acm_interface;
 
       /* Locate the endpoints.  */
-      endpoint =  interface_ptr -> ux_slave_interface_first_endpoint;
+      for(auto endpoint : interface_ptr->endpoints) {
+        if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) ==
+                  (ULONG)((ioctl_function == UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT) ? UX_ENDPOINT_OUT : UX_ENDPOINT_IN))
+          break;
+      }
 
-      /* If it's reading timeout but endpoint is OUT, it should be the next one.  */
-      if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) !=
-          (ULONG)((ioctl_function == UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT) ? UX_ENDPOINT_OUT : UX_ENDPOINT_IN))
-          endpoint = endpoint -> ux_slave_endpoint_next_endpoint;
+      assert(endpoint != nullptr);
 
       /* Get the transfer request associated with the endpoint.  */
       transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;

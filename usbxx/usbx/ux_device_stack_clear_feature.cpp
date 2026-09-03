@@ -136,24 +136,13 @@ Endpoint       *endpoint_target;
         while (interface_ptr != nullptr)
         {
 #endif
+          for (auto endpoint_target : interface_ptr->endpoints) {
+              if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress != request_index)
+                continue;
 
-            /* Get the first endpoint for this interface.  */
-            endpoint_target =  interface_ptr -> ux_slave_interface_first_endpoint;
-                
-            /* Parse all the endpoints.  */
-            while (endpoint_target != nullptr)
-            {
-
-                /* Check the endpoint index.  */
-                if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress == request_index)
-                {
-                    endpoint_target->reset();
-                    endpoint_target -> ux_slave_endpoint_state = UX_ENDPOINT_RESET;
-                    return 0;
-                }
-
-                /* Next endpoint.  */
-                endpoint_target =  endpoint_target -> ux_slave_endpoint_next_endpoint;
+              endpoint_target->reset();
+              endpoint_target -> ux_slave_endpoint_state = UX_ENDPOINT_RESET;
+              return 0;
             }
 
 #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
