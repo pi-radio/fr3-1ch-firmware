@@ -197,7 +197,7 @@ namespace USBXX
     TX_EVENT_FLAGS_GROUP flags;
     
     // replace cdc_acm soon enough
-    Interface *cdc_acm_interface;
+    std::shared_ptr<Interface> cdc_acm_interface;
     TXX::Mutex ep_in_mutex;
     TXX::Mutex ep_out_mutex;
     ULONG baudrate;

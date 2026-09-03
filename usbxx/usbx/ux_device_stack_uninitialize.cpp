@@ -80,35 +80,7 @@
 /*                                            resulting in version 6.3.0  */
 /*                                                                        */
 /**************************************************************************/
-UINT  _ux_device_stack_uninitialize(VOID)
-{
-UX_SLAVE_TRANSFER               *xfer;
 
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INITIALIZE, 0, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the device. */
-    auto device =  _ux_system_slave->device;
-
-    /* Free class memory. */
-    ::free(_ux_system_slave -> ux_system_slave_class_array);
-
-    /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the 
-       control endpoint. */
-    xfer = device->get_control_transfer();
-
-    /* Free memory for the control endpoint buffer.  */
-    ::free(xfer -> data);
-
-    
-    // TODO -- RELEASE ALL ENDPOINTS
-    
-    /* Free memory for interface pool.  */
-    ::free(device -> interfaces_pool);
-
-    /* Return successful completion.  */
-    return 0;
-}
 
 
 

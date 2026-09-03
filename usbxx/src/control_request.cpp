@@ -173,18 +173,18 @@ ULONG                       application_data_length;
 
         case UX_CLEAR_FEATURE:
 
-            status =  _ux_device_stack_clear_feature(request_type, request_value, request_index);
+            status =  clear_feature(request_type, request_value, request_index);
             break;
 
         case UX_SET_FEATURE:
 
-            status =  _ux_device_stack_set_feature(request_type, request_value, request_index);
+            status =  set_feature(request_type, request_value, request_index);
             break;
 
         case UX_SET_ADDRESS:
 
             /* Memorize the address. Some controllers memorize the address here. Some don't.  */
-            dcd -> ux_slave_dcd_device_address =  request_value;
+
 
             /* Force the new address.  */
             dcd->set_device_address(request_value);

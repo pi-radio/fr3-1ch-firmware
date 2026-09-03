@@ -4,6 +4,7 @@
 #include <usbxx/descriptor.hpp>
 /* Define USBX Device Controller Interface structure.  */
 
+#include <memory>
 #include <vector>
 
 namespace USBXX
@@ -11,7 +12,7 @@ namespace USBXX
   class DeviceBase;
   class UX_SLAVE_CLASS;
 
-  struct Interface
+  struct Interface : public std::enable_shared_from_this<Interface>
   {
     DeviceBase *device;
     ULONG           status;
@@ -29,11 +30,8 @@ namespace USBXX
     {
 
     }
+
+    virtual uint32_t start();
+    virtual uint32_t stop();
   };
-
-  UINT    ux_device_stack_interface_delete(Interface *ux_interface);
-  UINT    ux_device_stack_interface_start(Interface *ux_interface);
-  UINT    _ux_device_stack_interface_delete(Interface *ux_interface);
-  UINT    _ux_device_stack_interface_start(Interface *ux_interface);
-
 }

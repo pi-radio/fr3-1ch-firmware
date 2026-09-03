@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
 
 #include <usbxx/ux_api.h>
 
@@ -46,7 +47,7 @@ namespace USBXX
       VOID            *ux_slave_class_interface_parameter;
       ULONG           ux_slave_class_interface_number;
       ULONG           ux_slave_class_configuration_number;
-      Interface       *ux_slave_class_interface;
+      std::shared_ptr<Interface>       ux_slave_class_interface;
 
   };
 
@@ -55,7 +56,7 @@ namespace USBXX
 
       UINT            ux_slave_class_command_request;
       VOID            *ux_slave_class_command_container;
-      VOID            *ux_slave_class_command_interface;
+      std::shared_ptr<Interface> ux_slave_class_command_interface;
       UINT            ux_slave_class_command_pid;
       UINT            ux_slave_class_command_vid;
       UINT            ux_slave_class_command_class;

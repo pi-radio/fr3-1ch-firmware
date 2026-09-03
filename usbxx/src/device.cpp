@@ -118,24 +118,6 @@ void DeviceBase::setup_device()
   /* Get the pointer to the device. */
   auto device = _ux_system_slave->device;
 
-#if 0
-  /* Store the high speed device framework address and length in the project structure.  */
-  _ux_system_slave -> ux_system_slave_device_framework_high_speed =             device_framework_high_speed;
-  _ux_system_slave -> ux_system_slave_device_framework_length_high_speed =      device_framework_length_high_speed;
-
-  /* Store the string framework address and length in the project structure.  */
-  _ux_system_slave -> ux_system_slave_device_framework_full_speed =             device_framework_full_speed;
-  _ux_system_slave -> ux_system_slave_device_framework_length_full_speed =      device_framework_length_full_speed;
-
-  /* Store the string framework address and length in the project structure.  */
-  _ux_system_slave -> ux_system_slave_string_framework =                         string_framework;
-  _ux_system_slave -> ux_system_slave_string_framework_length =                  string_framework_length;
-
-  /* Store the language ID list in the project structure.  */
-  _ux_system_slave -> ux_system_slave_language_id_framework =                 language_id_framework;
-  _ux_system_slave -> ux_system_slave_language_id_framework_length =          language_id_framework_length;
-#endif
-
   /* Store the max number of slave class drivers in the project structure.  */
   UX_SYSTEM_DEVICE_MAX_CLASS_SET(UX_MAX_SLAVE_CLASS_DRIVER);
 
@@ -168,14 +150,6 @@ void DeviceBase::setup_device()
 
   ::memset(xfer -> data, 0, UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
 
-#if defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE)
-
-  /* No scan, just assign predefined value.  */
-  interfaces_found = UX_MAX_SLAVE_INTERFACES;
-  endpoints_found = UX_MAX_DEVICE_ENDPOINTS;
-#else
-
-  /* Reset all values we are using during the scanning of the framework.  */
   interfaces_found                   =  0;
   endpoints_found                    =  0;
   max_interface_number               =  0;
@@ -322,42 +296,6 @@ void DeviceBase::setup_device()
           status = UX_MEMORY_INSUFFICIENT;
       }
   }
-#endif
-
-  /* Go on to allocate interfaces pool if no error.  */
-  if (status == UX_SUCCESS)
-  {
-
-      /* Memorize both pool sizes.  */
-      device -> interfaces_pool_number = interfaces_found;
-      device -> endpoints_pool_number  = endpoints_found;
-
-      /* We assign a pool for the interfaces.  */
-      interfaces_pool = (Interface*)::malloc(interfaces_found * sizeof(Interface));
-      if (interfaces_pool == nullptr)
-          status = UX_MEMORY_INSUFFICIENT;
-      else
-          /* Save the interface pool address in the device container.  */
-          device -> interfaces_pool =  interfaces_pool;
-
-      ::memset(interfaces_pool, 0, interfaces_found * sizeof(Interface));
-  }
-
-#if 0
-  /* Install the device portion of USBX */
-  if (ux_device_stack_initialize(hs_desc.get_desc(),
-                                 hs_desc.get_desc_len(),
-                                 fs_desc.get_desc(),
-                                 fs_desc.get_desc_len(),
-                                 strings.get_buffer(),
-                                 strings.get_buffer_len(),
-                                 lang_ids.get_buffer(),
-                                 lang_ids.get_buffer_len(),
-                                 _usbxx_change_notification) != UX_SUCCESS)
-  {
-    throw std::runtime_error("Failed to initialize USB device stack\n");
-  }
-#endif
 }
 
 
@@ -380,10 +318,8 @@ void DeviceBase::start()
 
 void DeviceBase::disconnect()
 {
-Interface          *interface_ptr;
-Interface          *next_interface;
-UX_SLAVE_CLASS              *class_ptr;
-UX_SLAVE_CLASS_COMMAND      class_command;
+  UX_SLAVE_CLASS              *class_ptr;
+  UX_SLAVE_CLASS_COMMAND      class_command;
 
     /* Get the pointer to the device.  */
     auto device =  _ux_system_slave->device;
@@ -394,46 +330,25 @@ UX_SLAVE_CLASS_COMMAND      class_command;
     if (device -> state == UX_DEVICE_CONFIGURED)
     {
         /* Get the pointer to the first interface.  */
-        interface_ptr =  device -> first_interface;
+        for (auto iface : interfaces) {
+          class_command.ux_slave_class_command_request =   UX_SLAVE_CLASS_COMMAND_DEACTIVATE;
+          class_command.ux_slave_class_command_interface =  iface;
 
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
-        /* Parse all the interfaces if any.  */
-        while (interface_ptr != nullptr)
-        {
-#endif
+          /* Get the pointer to the class container of this interface.  */
+          class_ptr =  iface -> usb_class;
 
-            /* Build all the fields of the Class Command.  */
-            class_command.ux_slave_class_command_request =   UX_SLAVE_CLASS_COMMAND_DEACTIVATE;
-            class_command.ux_slave_class_command_interface =  (VOID *) interface_ptr;
+          /* Store the class container. */
+          class_command.ux_slave_class_command_class_ptr =  class_ptr;
 
-            /* Get the pointer to the class container of this interface.  */
-            class_ptr =  interface_ptr -> usb_class;
+          /* If there is a class container for this instance, deactivate it.  */
+          if (class_ptr != nullptr)
+              class_ptr -> ux_slave_class_entry_function(&class_command);
 
-            /* Store the class container. */
-            class_command.ux_slave_class_command_class_ptr =  class_ptr;
+          iface->stop();
+      }
 
-            /* If there is a class container for this instance, deactivate it.  */
-            if (class_ptr != nullptr)
-
-                /* Call the class with the DEACTIVATE signal.  */
-                class_ptr -> ux_slave_class_entry_function(&class_command);
-
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
-            /* Get the next interface.  */
-            next_interface =  interface_ptr -> next_interface;
-#endif
-
-            /* Remove the interface and all endpoints associated with it.  */
-            _ux_device_stack_interface_delete(interface_ptr);
-
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
-            /* Now we refresh the interface pointer.  */
-            interface_ptr =  next_interface;
-        }
-#endif
-
-        /* Mark the device as attached now.  */
-        device -> state =  UX_DEVICE_ATTACHED;
+      /* Mark the device as attached now.  */
+      device -> state =  UX_DEVICE_ATTACHED;
     }
 
     /* If the device was attached, we need to destroy the control endpoint.  */
@@ -524,4 +439,391 @@ ULONG                       class_index;
     return(UX_MEMORY_INSUFFICIENT);
 }
 
+uint32_t DeviceBase::get_interface(uint8_t interface_value)
+{
 
+UX_SLAVE_TRANSFER       *transfer_request;
+Interface      *iface;
+Endpoint       *endpoint;
+uint32_t                    retval;
+
+    /* If trace is enabled, insert this event into the trace buffer.  */
+    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_INTERFACE_GET, interface_value, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
+
+
+    /* Get the pointer to the device.  */
+    auto device = _ux_system_slave->device;
+
+    /* Get the control endpoint for the device.  */
+    endpoint = device->get_control_endpoint();
+
+    /* If the device was in the configured state, there may be interfaces
+       attached to the configuration.  */
+    if (device -> state == UX_DEVICE_CONFIGURED)
+    {
+      for (auto iface : interfaces) {
+        if (iface -> descriptor.bInterfaceNumber == interface_value)
+          transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+
+        /* Set the value of the alternate setting in the buffer.  */
+        *transfer_request -> data =
+            (UCHAR) iface -> descriptor.bAlternateSetting;
+
+        /* Setup the length appropriately.  */
+        transfer_request -> requested_length =  1;
+
+        /* Set the phase of the transfer to data out.  */
+        transfer_request -> phase =  TransferPhase::DATA_OUT;
+
+        /* Send the descriptor with the appropriate length to the host.  */
+        retval = dcd->transfer_request(transfer_request);
+
+        /* Return the function status code.  */
+        return(retval);
+      }
+    }
+
+    /* The alternate setting value was not found, so we return a stall error.  */
+    endpoint->stall();
+
+    /* Return the status to the caller.  */
+    return(UX_ERROR);
+}
+
+void DeviceBase::uninitialize(void)
+{
+  UX_SLAVE_TRANSFER               *xfer;
+    /* Get the pointer to the device. */
+    auto device =  _ux_system_slave->device;
+
+    /* Free class memory. */
+    ::free(_ux_system_slave -> ux_system_slave_class_array);
+
+    /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the
+       control endpoint. */
+    xfer = device->get_control_transfer();
+
+    /* Free memory for the control endpoint buffer.  */
+    ::free(xfer -> data);
+
+
+    // TODO -- RELEASE ALL ENDPOINTS
+}
+
+
+uint32_t DeviceBase::set_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index)
+{
+  Interface      *iface;
+  Endpoint       *endpoint;
+  Endpoint       *endpoint_target;
+
+    UX_PARAMETER_NOT_USED(request_value);
+
+    /* If trace is enabled, insert this event into the trace buffer.  */
+    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_SET_FEATURE, request_value, request_index, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
+
+    /* Get the pointer to the device.  */
+    auto device =  _ux_system_slave->device;
+
+    /* Get the control endpoint for the device.  */
+    endpoint = device->get_control_endpoint();
+
+    /* The feature can be for either the device or the endpoint.  */
+    switch (request_type & UX_REQUEST_TARGET)
+    {
+
+    case UX_REQUEST_TARGET_DEVICE:
+
+        /* Check if we have a DEVICE_REMOTE_WAKEUP Feature.  */
+        if (request_value == UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP)
+        {
+
+            /* Check if we have the capability. */
+            if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
+            {
+
+                /* Enable the feature. */
+                _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_TRUE;
+
+                /* OK. */
+                return (UX_SUCCESS);
+            }
+            else
+
+                /* Protocol error. */
+                return (UX_FUNCTION_NOT_SUPPORTED);
+        }
+
+#ifdef UX_OTG_SUPPORT
+        /* Check if we have a A_HNP_SUPPORT Feature. This is set when the Host is HNP capable. */
+        if (request_value == UX_OTG_FEATURE_A_HNP_SUPPORT)
+        {
+
+            /* Store the A_HNP_SUPPORT flag.  */
+            _ux_system_otg -> ux_system_otg_slave_set_feature_flag |= UX_OTG_FEATURE_A_HNP_SUPPORT;
+
+            /* OK.  */
+            return 0;
+        }
+
+        /* Check if the host asks us to perform HNP.  If also we become the host.  */
+        if (request_value == UX_OTG_FEATURE_B_HNP_ENABLE)
+        {
+
+            /* The ISR will pick up the suspend event and check if we need to become IDLE or HOST.  */
+            _ux_system_otg -> ux_system_otg_slave_set_feature_flag |= UX_OTG_FEATURE_B_HNP_ENABLE;
+
+            /* OK.  */
+            return 0;
+        }
+#endif
+
+        /* Request value not supported.  */
+        return(UX_FUNCTION_NOT_SUPPORTED);
+
+    case UX_REQUEST_TARGET_ENDPOINT:
+
+        /* The only set feature for endpoint is ENDPOINT_STALL. This forces
+           the endpoint to the stall situation.
+           We need to find the endpoint through the interface(s). */
+      for (auto iface : interfaces) {
+            /* Get the first endpoint for this interface.  */
+          for (auto endpoint_target : iface->endpoints) {
+            if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress == request_index)
+            {
+              endpoint_target->stall();
+              return 0;
+            }
+          }
+
+        }
+
+        /* We get here when the endpoint is wrong. Should not happen though.  */
+        /* Intentionally fall through into the default case. */
+        /* fall through */
+    default:
+
+        /* We stall the command.  */
+        endpoint->stall();
+
+        /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
+        return 0;
+    }
+}
+
+uint32_t DeviceBase::set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
+    uint32_t alternate_setting_value)
+{
+UX_SLAVE_TRANSFER       *transfer_request;
+Interface      *interface_link;
+ULONG                   interfaces_pool_number;
+Endpoint       *endpoint;
+ULONG                   descriptor_length;
+UCHAR                   descriptor_type;
+UINT                    status;
+ULONG                   max_transfer_length, n_trans;
+
+    /* Get the pointer to the device.  */
+    auto device = _ux_system_slave ->device;
+
+    auto dcd = device->get_dcd();
+
+    /* Find a free interface in the pool and hook it to the
+       existing interface.  */
+
+    interfaces.push_back(std::make_shared<Interface>(this));
+
+    auto iface = interfaces.back();
+
+    /* Mark this interface as used now.  */
+    iface -> status = UX_USED;
+
+    iface -> descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
+
+    /* Point beyond the interface descriptor.  */
+    device_framework_length -=  (ULONG) *device_framework;
+    device_framework +=  (ULONG) *device_framework;
+
+    /* Parse the device framework and locate endpoint descriptor(s).  */
+    while (device_framework_length != 0)
+    {
+
+        /* Get the length of the current descriptor.  */
+        descriptor_length =  (ULONG) *device_framework;
+
+        /* And its type.  */
+        descriptor_type =  *(device_framework + 1);
+
+        /* Check if this is an endpoint descriptor.  */
+        switch(descriptor_type)
+        {
+
+        case UX_ENDPOINT_DESCRIPTOR_ITEM:
+        {
+          EndpointDescriptor desc = USBXX::read_in_descriptor<EndpointDescriptor>(device_framework);
+            /* Find a free endpoint in the pool and hook it to the
+               existing interface after it's created by DCD.  */
+
+          endpoint = dcd->allocate_endpoint(desc);
+
+            /* Now we create a transfer request to accept transfer on this endpoint.  */
+            transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+
+            /* Validate endpoint descriptor wMaxPacketSize.  */
+            UX_ASSERT(endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize != 0);
+
+            /* Calculate endpoint transfer payload max size.  */
+            max_transfer_length =
+                    endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize &
+                                                        UX_MAX_PACKET_SIZE_MASK;
+            if ((_ux_system_slave -> ux_system_slave_speed == UX_HIGH_SPEED_DEVICE) &&
+                (endpoint -> ux_slave_endpoint_descriptor.bmAttributes & 0x1u))
+            {
+                n_trans = endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize &
+                                            UX_MAX_NUMBER_OF_TRANSACTIONS_MASK;
+                if (n_trans)
+                {
+                    n_trans >>= UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT;
+                    n_trans ++;
+                    max_transfer_length *= n_trans;
+                }
+            }
+
+            /* Validate max transfer size and save it.  */
+            UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
+            transfer_request -> transfer_length = max_transfer_length;
+
+            /* We store the endpoint in the transfer request as well.  */
+            transfer_request -> endpoint =  endpoint;
+
+            /* By default the timeout is infinite on request.  */
+            transfer_request -> timeout = UX_WAIT_FOREVER;
+
+            /* Attach the interface to the endpoint.  */
+            endpoint -> ux_slave_endpoint_interface =  iface;
+
+            /* Attach the device to the endpoint.  */
+            endpoint -> ux_slave_endpoint_device =  device;
+
+            /* Create the endpoint at the DCD level.  */
+            status = endpoint->create();
+
+            /* Do a sanity check on endpoint creation.  */
+            if (status != UX_SUCCESS)
+            {
+
+                /* Error was returned, endpoint cannot be created.  */
+                endpoint->used = false;
+                return(status);
+            }
+
+            iface->endpoints.push_back(endpoint);
+        }
+        break;
+
+        case UX_CONFIGURATION_DESCRIPTOR_ITEM:
+        case UX_INTERFACE_DESCRIPTOR_ITEM:
+
+            /* If the descriptor is a configuration or interface,
+               we have parsed and mounted all endpoints.
+               The interface attached to this configuration must be started at the class level.  */
+          iface->start();
+
+            /* Return the status to the caller.  */
+            return(status);
+
+        default:
+            break;
+        }
+
+        /* Adjust what is left of the device framework.  */
+        device_framework_length -=  descriptor_length;
+
+        /* Point to the next descriptor.  */
+        device_framework +=  descriptor_length;
+    }
+
+    /* The interface attached to this configuration must be started at the class
+       level.  */
+    iface->start();
+
+    /* Return the status to the caller.  */
+    return(status);
+}
+
+
+uint32_t  DeviceBase::clear_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index)
+{
+Interface      *iface;
+Endpoint       *endpoint;
+Endpoint       *endpoint_target;
+
+    UX_PARAMETER_NOT_USED(request_value);
+
+    /* If trace is enabled, insert this event into the trace buffer.  */
+    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_CLEAR_FEATURE, request_type, request_value, request_index, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
+
+    /* Get the pointer to the device.  */
+    auto device = _ux_system_slave->device;
+
+    /* Get the control endpoint for the device.  */
+    endpoint = device->get_control_endpoint();
+
+    /* The request can be for either the device or the endpoint.  */
+    switch (request_type & UX_REQUEST_TARGET)
+    {
+
+    case UX_REQUEST_TARGET_DEVICE:
+
+        /* Check if we have a DEVICE_REMOTE_WAKEUP Feature.  */
+        if (request_value == UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP)
+        {
+
+            /* Check if we have the capability. */
+            if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
+            {
+
+                /* Disable the feature. */
+                _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_FALSE;
+            }
+
+            else
+
+                /* Protocol error. */
+                return (UX_FUNCTION_NOT_SUPPORTED);
+        }
+
+        break;
+
+    case UX_REQUEST_TARGET_ENDPOINT:
+
+        /* The only clear feature for endpoint is ENDPOINT_STALL. This clears
+           the endpoint of the stall situation and resets its data toggle.
+           We need to find the endpoint through the interface(s). */
+      for(auto iface : interfaces) {
+          for (auto endpoint_target : iface->endpoints) {
+              if (endpoint_target -> ux_slave_endpoint_descriptor.bEndpointAddress != request_index)
+                continue;
+
+              endpoint_target->reset();
+              endpoint_target -> ux_slave_endpoint_state = UX_ENDPOINT_RESET;
+              return 0;
+            }
+      }
+
+        /* Intentional fallthrough and go into the default case. */
+        /* fall through */
+
+    /* We get here when the endpoint is wrong. Should not happen though.  */
+    default:
+
+        /* We stall the command.  */
+      endpoint->stall();
+
+        /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
+        return 0;
+    }
+
+    /* Return the function status.  */
+    return 0;
+}

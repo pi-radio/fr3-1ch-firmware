@@ -220,6 +220,8 @@ UINT  STM32::DCD::uninitialize()
 
 void STM32::DCD::set_device_address(uint8_t addr)
 {
+  ux_slave_dcd_device_address = addr;
+
   HAL_PCD_SetAddress(pcd_handle, addr);
 }
 

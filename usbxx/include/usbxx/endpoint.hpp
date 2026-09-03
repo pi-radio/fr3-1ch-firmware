@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
+
 #include <usbxx/transfer.hpp>
 #include <usbxx/descriptor.hpp>
 
@@ -107,8 +109,7 @@ namespace USBXX
                     ux_slave_endpoint_descriptor;
     Endpoint
                     *ux_slave_endpoint_next_endpoint;
-    Interface
-                    *ux_slave_endpoint_interface;
+    std::shared_ptr<Interface> ux_slave_endpoint_interface;
     USBXX::DeviceBase
                     *ux_slave_endpoint_device;
     UX_SLAVE_TRANSFER

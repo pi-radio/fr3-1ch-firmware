@@ -267,18 +267,15 @@ UINT USBXX::CDCACMDevice::acm_uninitialize(UX_SLAVE_CLASS_COMMAND *command)
 
 UINT USBXX::CDCACMDevice::activate(UX_SLAVE_CLASS_COMMAND *command)
 {
-    Interface *interface_ptr;
-
-    /* Get the interface that owns this instance.  */
-    interface_ptr =  (Interface  *) command -> ux_slave_class_command_interface;
+    auto iface = command->ux_slave_class_command_interface;
 
     /* Store the class instance into the interface.  */
-    interface_ptr -> class_instance =  (VOID *)this;
+    iface -> class_instance =  (VOID *)this;
 
     /* Now the opposite, store the interface in the class instance.  */
-    cdc_acm_interface = interface_ptr;
+    cdc_acm_interface = iface;
 
-    for (auto endpoint : interface_ptr->endpoints) {
+    for (auto endpoint : iface->endpoints) {
       if ((endpoint->ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
         out_endpoint = endpoint;
       else
@@ -461,7 +458,6 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
                           ULONG *actual_length)
 {
   Endpoint           *endpoint;
-  Interface          *interface_ptr;
   UX_SLAVE_TRANSFER           *xfer;
   ULONG                       local_requested_length;
   ULONG                       local_host_length;
@@ -476,7 +472,7 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
   }
 
   /* We need the interface to the class.  */
-  interface_ptr = cdc_acm_interface;
+  auto iface = cdc_acm_interface;
 
   /* Locate the endpoints.  */
   endpoint = in_endpoint;
@@ -549,7 +545,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
   UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
   UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint *endpoint;
-  Interface *interface_ptr;
+  Interface *iface;
   UX_SLAVE_TRANSFER *transfer_request;
 
   /* Let's be optimist ! */
@@ -606,9 +602,10 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
 
 
   case UX_SLAVE_CLASS_CDC_ACM_IOCTL_ABORT_PIPE:
+  {
 
     /* Get the interface from the instance.  */
-    interface_ptr =  cdc_acm_interface;
+    auto iface =  cdc_acm_interface;
 
     /* What direction ?  */
     switch( (ULONG) (ALIGN_TYPE) parameter)
@@ -638,15 +635,16 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
 
     }
     break;
+  }
 
   case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT:
   case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_WRITE_TIMEOUT:
-
+  {
       /* Get the interface from the instance.  */
-      interface_ptr =  cdc_acm_interface;
+      auto iface =  cdc_acm_interface;
 
       /* Locate the endpoints.  */
-      for(auto endpoint : interface_ptr->endpoints) {
+      for(auto endpoint : iface->endpoints) {
         if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) ==
                   (ULONG)((ioctl_function == UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT) ? UX_ENDPOINT_OUT : UX_ENDPOINT_IN))
           break;
@@ -664,6 +662,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
           transfer_request -> timeout = (ULONG) (ALIGN_TYPE) parameter;
 
       break;
+  }
 
   case UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP:
     break;

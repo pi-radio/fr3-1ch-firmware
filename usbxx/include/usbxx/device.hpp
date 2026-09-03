@@ -18,6 +18,9 @@
 #include <usbxx/interface.hpp>
 #include <usbxx/class.hpp>
 
+#include <memory>
+#include <vector>
+
 namespace USBXX
 {
   class DeviceBase;
@@ -69,12 +72,8 @@ namespace USBXX
     ULONG            configuration_selected;
     ConfigurationDescriptor
                     configuration_descriptor;
-    Interface
-                    *first_interface;
-    Interface
-                    *interfaces_pool;
-    ULONG           interfaces_pool_number;
-    ULONG           endpoints_pool_number;
+
+    std::vector<std::shared_ptr<Interface> > interfaces;
     ULONG           power_state;
 
   protected:
@@ -176,12 +175,27 @@ namespace USBXX
     uint32_t on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value);
     uint32_t on_get_configuration();
     uint32_t on_set_configuration(uint32_t configuration_value);
+    uint32_t clear_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
 
     uint32_t process_control_event(UX_SLAVE_TRANSFER *transfer_request);
+    uint32_t set_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
+    uint32_t set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
+        uint32_t alternate_setting_value);
 
     UINT on_vendor_request(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *) { return 0; };
 
+    uint32_t get_interface(uint8_t interface_value);
 
+    void uninitialize(void);
+
+    std::shared_ptr<Interface> find_interface(uint8_t ifno) {
+      for (auto iface : interfaces) {
+        if (iface->descriptor.bInterfaceNumber == ifno)
+          return iface;
+      }
+
+      return nullptr;
+    }
   };
 
   UINT    ux_device_class_storage_entry(UX_SLAVE_CLASS_COMMAND *command);
