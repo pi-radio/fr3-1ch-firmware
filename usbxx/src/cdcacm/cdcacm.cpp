@@ -442,7 +442,7 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
     {
       /* Check if we have enough in the local buffer.  */
       if (requested_length > endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
-          local_requested_length = endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize;
+          local_requested_length = endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize;
       else
           local_requested_length = requested_length;
 
@@ -454,14 +454,13 @@ UINT USBXX::CDCACM::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_le
       }
 
       /* We need to copy the buffer locally.  */
-      ::memcpy(buffer, xfer -> data,
-                      xfer -> actual_length); /* Use case of memcpy is verified. */
+      ::memcpy(buffer, xfer->data, xfer->actual_length); /* Use case of memcpy is verified. */
 
       /* Next buffer address.  */
-      buffer += xfer -> actual_length;
+      buffer += xfer->actual_length;
 
       /* Set the length actually received. */
-      *actual_length += xfer -> actual_length;
+      *actual_length += xfer->actual_length;
 
       /* Decrement what left has to be done.  */
       requested_length -= xfer -> actual_length;
@@ -713,6 +712,9 @@ UINT USBXX::CDCACM::ioctl(ULONG ioctl_function,
           transfer_request -> timeout = (ULONG) (ALIGN_TYPE) parameter;
 
       break;
+
+  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP:
+    break;
 
   default:
     __asm volatile ("BKPT     %0" : : "i"(0));

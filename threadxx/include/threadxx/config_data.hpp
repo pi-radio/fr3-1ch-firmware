@@ -134,13 +134,15 @@ namespace TXX
       //uint32_t read_pos;
       uint32_t free_space;
 
+      static constexpr uint32_t PAGE_SIZE = flash::HEFlash::SECTOR_DATA_SIZE / 2;
+
       std::set<uint16_t> valid_tags;
 
-      page() : N(0xFFFFFFFF),  serial(0xFFFFFFFF),  version(CUR_VERSION), append_point(0), free_space(flash::HEFlash::SECTOR_SIZE) {}
+      page() : N(0xFFFFFFFF),  serial(0xFFFFFFFF),  version(CUR_VERSION), append_point(0), free_space(flash::HEFlash::SECTOR_DATA_SIZE) {}
 
       uint32_t area_offset(uint32_t off) { return  + off; }
 
-      uint32_t base() const { return N * flash::HEFlash::SECTOR_SIZE / 2; }
+      uint32_t base() const { return N * PAGE_SIZE; }
 
       uint16_t read16(uint32_t off) {
         uint32_t addr = base() + off;
@@ -149,7 +151,10 @@ namespace TXX
 
         return flash::HEFlash::read16(addr);
       }
+
       void write16(uint32_t off, uint16_t v) {
+        assert(off < PAGE_SIZE);
+
         uint32_t addr = base() + off;
 
         //dbg::dbgout << std::format("Writing {:04x} at {:08x}", v, (uint32_t)flash::HEFlash::ptr16(addr)) << std::endl;
@@ -159,7 +164,7 @@ namespace TXX
 
       void append(uint16_t v) { write16(append_point++, v); }
 
-      bool has_room(uint16_t l) { return flash::HEFlash::SECTOR_SIZE - append_point > l; }
+      bool has_room(uint16_t l) { return PAGE_SIZE - append_point > l; }
     };
     
     class _config
@@ -190,6 +195,8 @@ namespace TXX
       void save(const uint16_t *data, uint16_t length);
 
       void erase_page(uint32_t page);
+
+      void do_load();
 
     public:
       template <typename Tv>

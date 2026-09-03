@@ -53,7 +53,7 @@ namespace flash
     
   public:
     static constexpr uint32_t NSECTORS = 16;
-    static constexpr uint32_t SECTOR_SIZE = 0x1800;
+    static constexpr uint32_t SECTOR_DATA_SIZE = 0x1800;
     static constexpr uint32_t BASE_ADDR = 0x09000000;
 
     static volatile uint16_t *ptr16(uint32_t offset);

@@ -38,23 +38,8 @@ uint32_t DeviceBase::transfer_request(UX_SLAVE_TRANSFER *transfer_request,
                                             ULONG slave_length, 
                                             ULONG host_length)
 {
-#if defined(UX_DEVICE_STANDALONE)
-UINT            status;
-
-    /* Start a transfer request without waiting it end.  */
-    UX_SLAVE_TRANSFER_STATE_RESET(transfer_request);
-    status = _ux_device_stack_transfer_run(transfer_request, slave_length, host_length);
-    if (status == UX_STATE_LOCK)
-        return(UX_BUSY);
-    if (status < UX_STATE_NEXT)
-        return(transfer_request -> completion_code);
-
-    /* Started/done, things will be done in BG  */
-    return 0;
-#else
 UX_INTERRUPT_SAVE_AREA
 
-USBXX::DCD            *dcd;
 UINT                    status;
 Endpoint       *endpoint;
 ULONG                   device_state;
@@ -91,9 +76,6 @@ ULONG                   device_state;
                     
     /* If trace is enabled, insert this event into the trace buffer.  */
     UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_TRANSFER_REQUEST, transfer_request, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the DCD.  */
-    dcd = STM32::gDCD;
 
     /* Get the endpoint associated with this transaction.  */
     endpoint =  transfer_request -> endpoint;
@@ -152,7 +134,5 @@ ULONG                   device_state;
 
     /* And return the status.  */
     return(status);
-
-#endif
 }
 

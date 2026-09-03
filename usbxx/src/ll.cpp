@@ -42,6 +42,10 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h5xx_hal.h"
 
+#include <cassert>
+
+#include <usbxx/stm32/pcd.hpp>
+
 /** @addtogroup STM32H5xx_LL_USB_DRIVER
   * @{
   */
@@ -87,6 +91,473 @@ static HAL_StatusTypeDef USB_CoreReset(USB_DRD_TypeDef *USBx)
 
   return HAL_OK;
 }
+
+/* SetENDPOINT */
+#define PCD_SET_ENDPOINT                       USB_DRD_SET_CHEP
+
+/* GetENDPOINT Register value*/
+#define PCD_GET_ENDPOINT                       USB_DRD_GET_CHEP
+
+
+/**
+  * @brief free buffer used from the application realizing it to the line
+  *         toggles bit SW_BUF in the double buffered endpoint register
+  * @param USBx USB device.
+  * @param   bEpNum, bDir
+  * @retval None
+  */
+#define PCD_FREE_USER_BUFFER                   USB_DRD_FREE_USER_BUFFER
+
+/**
+  * @brief  sets the status for tx transfer (bits STAT_TX[1:0]).
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @param  wState new state
+  * @retval None
+  */
+#define PCD_SET_EP_TX_STATUS                   USB_DRD_SET_CHEP_TX_STATUS
+
+/**
+  * @brief  sets the status for rx transfer (bits STAT_TX[1:0])
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @param  wState new state
+  * @retval None
+  */
+#define PCD_SET_EP_RX_STATUS                   USB_DRD_SET_CHEP_RX_STATUS
+
+/**
+  * @brief  Sets/clears directly EP_KIND bit in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @retval None
+  */
+#define PCD_SET_EP_KIND                        USB_DRD_SET_CHEP_KIND
+#define PCD_CLEAR_EP_KIND                      USB_DRD_CLEAR_CHEP_KIND
+#define PCD_SET_BULK_EP_DBUF                   PCD_SET_EP_KIND
+#define PCD_CLEAR_BULK_EP_DBUF                 PCD_CLEAR_EP_KIND
+
+/**
+  * @brief  Sets/clears directly STATUS_OUT bit in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @retval None
+  */
+#define PCD_SET_OUT_STATUS                     USB_DRD_SET_CHEP_KIND
+#define PCD_CLEAR_OUT_STATUS                   USB_DRD_CLEAR_CHEP_KIND
+
+/**
+  * @brief  Clears bit CTR_RX / CTR_TX in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @retval None
+  */
+#define PCD_CLEAR_RX_EP_CTR                    USB_DRD_CLEAR_RX_CHEP_CTR
+#define PCD_CLEAR_TX_EP_CTR                    USB_DRD_CLEAR_TX_CHEP_CTR
+/**
+  * @brief  Toggles DTOG_RX / DTOG_TX bit in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @retval None
+  */
+#define PCD_RX_DTOG                            USB_DRD_RX_DTOG
+#define PCD_TX_DTOG                            USB_DRD_TX_DTOG
+/**
+  * @brief  Clears DTOG_RX / DTOG_TX bit in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @retval None
+  */
+#define PCD_CLEAR_RX_DTOG                      USB_DRD_CLEAR_RX_DTOG
+#define PCD_CLEAR_TX_DTOG                      USB_DRD_CLEAR_TX_DTOG
+
+/**
+  * @brief  Sets address in an endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @param  bAddr Address.
+  * @retval None
+  */
+#define PCD_SET_EP_ADDRESS                     USB_DRD_SET_CHEP_ADDRESS
+
+/**
+  * @brief  sets address of the tx/rx buffer.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @param  wAddr address to be set (must be word aligned).
+  * @retval None
+  */
+#define PCD_SET_EP_TX_ADDRESS                  USB_DRD_SET_CHEP_TX_ADDRESS
+#define PCD_SET_EP_RX_ADDRESS                  USB_DRD_SET_CHEP_RX_ADDRESS
+
+/**
+  * @brief  sets counter for the tx/rx buffer.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpNum Endpoint Number.
+  * @param  wCount Counter value.
+  * @retval None
+  */
+#define PCD_SET_EP_TX_CNT                      USB_DRD_SET_CHEP_TX_CNT
+#define PCD_SET_EP_RX_CNT                      USB_DRD_SET_CHEP_RX_CNT
+
+/**
+  * @brief Set the Setup bit in the corresponding channel, when a Setup
+     transaction is needed.
+  * @param USBx USB device.
+  * @param   bEpChNum
+  * @retval None
+  */
+#define USB_DRD_CHEP_TX_SETUP(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) ; \
+    \
+    /* Set Setup bit */ \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_SETUP)); \
+  } while(0)
+
+
+/**
+  * @brief  Clears bit ERR_RX in the Channel register
+  * @param  USBx USB peripheral instance register address.
+  * @param  bChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_CLEAR_CHEP_RX_ERR(USBx, bChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bChNum)); \
+    _wRegVal = (_wRegVal & USB_CHEP_REG_MASK & (~USB_CHEP_ERRRX) & (~USB_CHEP_VTRX)) | \
+               (USB_CHEP_VTTX | USB_CHEP_ERRTX); \
+    \
+    USB_DRD_SET_CHEP((USBx), (bChNum), _wRegVal); \
+  } while(0) /* USB_DRD_CLEAR_CHEP_RX_ERR */
+
+
+/**
+  * @brief  Clears bit ERR_TX in the Channel register
+  * @param  USBx USB peripheral instance register address.
+  * @param  bChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_CLEAR_CHEP_TX_ERR(USBx, bChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bChNum)); \
+    _wRegVal = (_wRegVal & USB_CHEP_REG_MASK & (~USB_CHEP_ERRTX) & (~USB_CHEP_VTTX)) | \
+               (USB_CHEP_VTRX|USB_CHEP_ERRRX); \
+    \
+    USB_DRD_SET_CHEP((USBx), (bChNum), _wRegVal); \
+  } while(0) /* USB_DRD_CLEAR_CHEP_TX_ERR */
+
+
+/**
+  * @brief  sets the status for tx transfer (bits STAT_TX[1:0]).
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  wState new state
+  * @retval None
+  */
+#define USB_DRD_SET_CHEP_TX_STATUS(USBx, bEpChNum, wState) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_CHEP_TX_DTOGMASK; \
+    /* toggle first bit ? */ \
+    if ((USB_CHEP_TX_DTOG1 & (wState)) != 0U) \
+    { \
+      _wRegVal ^= USB_CHEP_TX_DTOG1; \
+    } \
+    /* toggle second bit ?  */ \
+    if ((USB_CHEP_TX_DTOG2 & (wState)) != 0U) \
+    { \
+      _wRegVal ^= USB_CHEP_TX_DTOG2; \
+    } \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTRX| USB_CHEP_VTTX)); \
+  } while(0) /* USB_DRD_SET_CHEP_TX_STATUS */
+
+
+/**
+  * @brief  sets the status for rx transfer (bits STAT_TX[1:0])
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  wState new state
+  * @retval None
+  */
+#define USB_DRD_SET_CHEP_RX_STATUS(USBx, bEpChNum, wState) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_CHEP_RX_DTOGMASK; \
+    /* toggle first bit ? */ \
+    if ((USB_CHEP_RX_DTOG1 & (wState)) != 0U) \
+    { \
+      _wRegVal ^= USB_CHEP_RX_DTOG1; \
+    } \
+    /* toggle second bit ? */ \
+    if ((USB_CHEP_RX_DTOG2 & (wState)) != 0U) \
+    { \
+      _wRegVal ^= USB_CHEP_RX_DTOG2; \
+    } \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTRX | USB_CHEP_VTTX)); \
+  } while(0) /* USB_DRD_SET_CHEP_RX_STATUS */
+
+
+/**
+  * @brief  gets the status for tx/rx transfer (bits STAT_TX[1:0]
+  *         /STAT_RX[1:0])
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval status
+  */
+#define USB_DRD_GET_CHEP_TX_STATUS(USBx, bEpChNum) \
+  ((uint16_t)USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_DRD_CHEP_TX_STTX)
+
+#define USB_DRD_GET_CHEP_RX_STATUS(USBx, bEpChNum) \
+  ((uint16_t)USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_DRD_CHEP_RX_STRX)
+
+
+/**
+  * @brief  set  EP_KIND bit.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_SET_CHEP_KIND(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_CHEP_REG_MASK; \
+    \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTRX | USB_CHEP_VTTX | USB_CHEP_KIND)); \
+  } while(0) /* USB_DRD_SET_CHEP_KIND */
+
+
+/**
+  * @brief  clear EP_KIND bit.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_CLEAR_CHEP_KIND(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_EP_KIND_MASK; \
+    \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTRX | USB_CHEP_VTTX)); \
+  } while(0) /* USB_DRD_CLEAR_CHEP_KIND */
+
+
+/**
+  * @brief  Clears bit CTR_RX / CTR_TX in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_CLEAR_RX_CHEP_CTR(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & (0xFFFF7FFFU & USB_CHEP_REG_MASK); \
+    \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTTX)); \
+  } while(0) /* USB_CLEAR_RX_CHEP_CTR */
+
+#define USB_DRD_CLEAR_TX_CHEP_CTR(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & (0xFFFFFF7FU & USB_CHEP_REG_MASK); \
+    \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTRX)); \
+  } while(0) /* USB_CLEAR_TX_CHEP_CTR */
+
+
+/**
+  * @brief  Toggles DTOG_RX / DTOG_TX bit in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_RX_DTOG(USBx, bEpChNum) \
+  do { \
+    uint32_t _wEPVal; \
+    \
+    _wEPVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_CHEP_REG_MASK; \
+    \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wEPVal | USB_CHEP_VTRX | USB_CHEP_VTTX | USB_CHEP_DTOG_RX)); \
+  } while(0) /* USB_DRD_RX_DTOG */
+
+#define USB_DRD_TX_DTOG(USBx, bEpChNum) \
+  do { \
+    uint32_t _wEPVal; \
+    \
+    _wEPVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_CHEP_REG_MASK; \
+    \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wEPVal | USB_CHEP_VTRX | USB_CHEP_VTTX | USB_CHEP_DTOG_TX)); \
+  } while(0) /* USB_TX_DTOG */
+
+
+/**
+  * @brief  Clears DTOG_RX / DTOG_TX bit in the endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval None
+  */
+#define USB_DRD_CLEAR_RX_DTOG(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)); \
+    \
+    if ((_wRegVal & USB_CHEP_DTOG_RX) != 0U) \
+    { \
+      USB_DRD_RX_DTOG((USBx), (bEpChNum)); \
+    } \
+  } while(0) /* USB_DRD_CLEAR_RX_DTOG */
+
+#define USB_DRD_CLEAR_TX_DTOG(USBx, bEpChNum) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    _wRegVal = USB_DRD_GET_CHEP((USBx), (bEpChNum)); \
+    \
+    if ((_wRegVal & USB_CHEP_DTOG_TX) != 0U) \
+    { \
+      USB_DRD_TX_DTOG((USBx), (bEpChNum)); \
+    } \
+  } while(0) /* USB_DRD_CLEAR_TX_DTOG */
+
+
+/**
+  * @brief  Sets address in an endpoint register.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  bAddr Address.
+  * @retval None
+  */
+#define USB_DRD_SET_CHEP_ADDRESS(USBx, bEpChNum, bAddr) \
+  do { \
+    uint32_t _wRegVal; \
+    \
+    /*Read the USB->CHEPx into _wRegVal, Reset(DTOGRX/STRX/DTOGTX/STTX) and set the EpAddress*/ \
+    _wRegVal = (USB_DRD_GET_CHEP((USBx), (bEpChNum)) & USB_CHEP_REG_MASK) | (bAddr); \
+    \
+    /*Set _wRegVal in USB->CHEPx and set Transmit/Receive Valid Transfer  (x=bEpChNum)*/ \
+    USB_DRD_SET_CHEP((USBx), (bEpChNum), (_wRegVal | USB_CHEP_VTRX | USB_CHEP_VTTX)); \
+  } while(0) /* USB_DRD_SET_CHEP_ADDRESS */
+
+
+/**
+  * @brief  sets counter for the tx/rx buffer.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  wCount Counter value.
+  * @retval None
+  */
+
+#define USB_DRD_SET_CHEP_RX_DBUF0_CNT(USBx, bEpChNum, wCount) \
+  USB_DRD_SET_CHEP_CNT_RX_REG(((USB_DRD_PMA_BUFF + (bEpChNum))->TXBD), (wCount))
+
+#define USB_DRD_SET_CHEP_RX_CNT(USBx, bEpChNum, wCount) \
+  USB_DRD_SET_CHEP_CNT_RX_REG(((USB_DRD_PMA_BUFF + (bEpChNum))->RXBD), (wCount))
+
+/**
+  * @brief  gets counter of the tx buffer.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @retval Counter value
+  */
+#define USB_DRD_GET_CHEP_TX_CNT(USBx, bEpChNum)           (((USB_DRD_PMA_BUFF + (bEpChNum))->TXBD & 0x03FF0000U) >> 16U)
+#define USB_DRD_GET_CHEP_RX_CNT(USBx, bEpChNum)           (((USB_DRD_PMA_BUFF + (bEpChNum))->RXBD & 0x03FF0000U) >> 16U)
+
+#define USB_DRD_GET_EP_TX_CNT                             USB_GET_CHEP_TX_CNT
+#define USB_DRD_GET_CH_TX_CNT                             USB_GET_CHEP_TX_CNT
+
+#define USB_DRD_GET_EP_RX_CNT                             USB_DRD_GET_CHEP_RX_CNT
+#define USB_DRD_GET_CH_RX_CNT                             USB_DRD_GET_CHEP_RX_CNT
+/**
+  * @brief  Sets buffer 0/1 address in a double buffer endpoint.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  wBuf0Addr buffer 0 address.
+  * @retval Counter value
+  */
+#define USB_DRD_SET_CHEP_DBUF0_ADDR(USBx, bEpChNum, wBuf0Addr) \
+    pcd_set_tx_address((bEpChNum), (wBuf0Addr))
+
+#define USB_DRD_SET_CHEP_DBUF1_ADDR(USBx, bEpChNum, wBuf1Addr) \
+    pcd_set_rx_address((bEpChNum), (wBuf1Addr))
+
+
+/**
+  * @brief  Sets addresses in a double buffer endpoint.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  wBuf0Addr: buffer 0 address.
+  * @param  wBuf1Addr = buffer 1 address.
+  * @retval None
+  */
+#define USB_DRD_SET_CHEP_DBUF_ADDR(USBx, bEpChNum, wBuf0Addr, wBuf1Addr) \
+  do { \
+    USB_DRD_SET_CHEP_DBUF0_ADDR((USBx), (bEpChNum), (wBuf0Addr)); \
+    USB_DRD_SET_CHEP_DBUF1_ADDR((USBx), (bEpChNum), (wBuf1Addr)); \
+  } while(0) /* USB_DRD_SET_CHEP_DBUF_ADDR */
+
+
+/**
+  * @brief  Gets buffer 0/1 address of a double buffer endpoint.
+  * @param  USBx USB peripheral instance register address.
+  * @param  bEpChNum Endpoint Number.
+  * @param  bDir endpoint dir  EP_DBUF_OUT = OUT
+  *         EP_DBUF_IN  = IN
+  * @param  wCount: Counter value
+  * @retval None
+  */
+#define USB_DRD_SET_CHEP_DBUF0_CNT(USBx, bEpChNum, bDir, wCount) \
+  do { \
+    if ((bDir) == 0U) \
+    { \
+      /* OUT endpoint */ \
+      USB_DRD_SET_CHEP_RX_DBUF0_CNT((USBx), (bEpChNum), (wCount)); \
+    } \
+    else \
+    { \
+      if ((bDir) == 1U) \
+      { \
+        /* IN endpoint */ \
+        pcd_set_tx_cnt((bEpChNum), (wCount)); \
+      } \
+    } \
+  } while(0) /* USB_DRD_SET_CHEP_DBUF0_CNT */
+
+#define USB_DRD_SET_CHEP_DBUF1_CNT(USBx, bEpChNum, bDir, wCount) \
+  do { \
+    if ((bDir) == 0U) \
+    { \
+      /* OUT endpoint */ \
+      USB_DRD_SET_CHEP_RX_CNT((USBx), (bEpChNum), (wCount)); \
+    } \
+    else \
+    { \
+      if ((bDir) == 1U) \
+      { \
+        /* IN endpoint */ \
+        (USB_DRD_PMA_BUFF + (bEpChNum))->RXBD &= USB_PMA_TXBD_COUNTMSK; \
+        (USB_DRD_PMA_BUFF + (bEpChNum))->RXBD |= (uint32_t)((uint32_t)(wCount) << 16U); \
+      } \
+    } \
+  } while(0) /* USB_DRD_SET_CHEP_DBUF1_CNT */
+
+#define USB_DRD_SET_CHEP_DBUF_CNT(USBx, bEpChNum, bDir, wCount) \
+  do { \
+    USB_DRD_SET_CHEP_DBUF0_CNT((USBx), (bEpChNum), (bDir), (wCount)); \
+    USB_DRD_SET_CHEP_DBUF1_CNT((USBx), (bEpChNum), (bDir), (wCount)); \
+  } while(0)
 
 /**
   * @brief  Initializes the USB Core
@@ -302,10 +773,12 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef 
 
   if (ep->doublebuffer == 0U)
   {
+    assert(ep->pmaadress != 0);
+
     if (ep->is_in != 0U)
     {
       /*Set the endpoint Transmit buffer address */
-      PCD_SET_EP_TX_ADDRESS(USBx, ep->num, ep->pmaadress);
+      pcd_set_tx_address(ep->num, ep->pmaadress);
       PCD_CLEAR_TX_DTOG(USBx, ep->num);
 
       if (ep->type != EP_TYPE_ISOC)
@@ -322,10 +795,10 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef 
     else
     {
       /* Set the endpoint Receive buffer address */
-      PCD_SET_EP_RX_ADDRESS(USBx, ep->num, ep->pmaadress);
+      pcd_set_rx_address(ep->num, ep->pmaadress);
 
       /* Set the endpoint Receive buffer counter */
-      PCD_SET_EP_RX_CNT(USBx, ep->num, ep->maxpacket);
+      pcd_set_rx_cnt(ep->num, ep->maxpacket);
       PCD_CLEAR_RX_DTOG(USBx, ep->num);
 
       if (ep->num == 0U)
@@ -340,8 +813,6 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef 
       }
     }
   }
-#if (USE_USB_DOUBLE_BUFFER == 1U)
-  /* Double Buffer */
   else
   {
     if (ep->type == EP_TYPE_BULK)
@@ -391,7 +862,6 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef 
       PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
     }
   }
-#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
 
   return ret;
 }
@@ -422,8 +892,6 @@ HAL_StatusTypeDef USB_DeactivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDe
       PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
     }
   }
-#if (USE_USB_DOUBLE_BUFFER == 1U)
-  /* Double Buffer */
   else
   {
     if (ep->is_in == 0U)
@@ -450,10 +918,11 @@ HAL_StatusTypeDef USB_DeactivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDe
       PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
     }
   }
-#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
 
   return HAL_OK;
 }
+
+#include "cachel1_armv7.h"
 
 /**
   * @brief  USB_EPStartXfer setup and starts a transfer over an EP
@@ -482,11 +951,17 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep)
       len = ep->xfer_len;
     }
 
+    if (ep->num) {
+      int a = 0;
+    }
+
     /* configure and validate Tx endpoint */
     if (ep->doublebuffer == 0U)
     {
       USB_WritePMA(USBx, ep->xfer_buff, ep->pmaadress, (uint16_t)len);
-      PCD_SET_EP_TX_CNT(USBx, ep->num, len);
+
+      (USB_DRD_PMA_BUFF + (ep->num))->TXBD &= 0xFFFF;
+      (USB_DRD_PMA_BUFF + (ep->num))->TXBD |= (uint32_t)((uint32_t)(len) << 16U);
     }
 #if (USE_USB_DOUBLE_BUFFER == 1U)
     else
@@ -567,7 +1042,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep)
           PCD_CLEAR_BULK_EP_DBUF(USBx, ep->num);
 
           /* Set Tx count with nbre of byte to be transmitted */
-          PCD_SET_EP_TX_CNT(USBx, ep->num, len);
+          pcd_set_tx_cnt(ep->num, len);
           pmabuffer = ep->pmaaddr0;
 
           /* Write the user buffer to USB PMA */
@@ -883,6 +1358,8 @@ void USB_WritePMA(USB_DRD_TypeDef const *USBx, uint8_t *pbUsrBuf, uint16_t wPMAB
   uint16_t remaining_bytes = wNBytes % 4U;
   uint8_t *pBuf = pbUsrBuf;
 
+  assert(wPMABufAddr != 0);
+
   /* Check if there is a remaining byte */
   if (remaining_bytes != 0U)
   {
@@ -919,6 +1396,8 @@ void USB_WritePMA(USB_DRD_TypeDef const *USBx, uint8_t *pbUsrBuf, uint16_t wPMAB
 
     *pdwVal = WrVal;
   }
+
+  //SCB_CleanDCache_by_Addr((__IO uint32_t *)(USB_DRD_PMAADDR + (uint32_t)wPMABufAddr), wNBytes);
 }
 
 /**
@@ -939,6 +1418,8 @@ void USB_ReadPMA(USB_DRD_TypeDef const *USBx, uint8_t *pbUsrBuf, uint16_t wPMABu
   /*Due to the PMA access 32bit only so the last non word data should be processed alone */
   uint16_t remaining_bytes = wNBytes % 4U;
   uint8_t *pBuf = pbUsrBuf;
+
+  assert(wPMABufAddr != 0);
 
   /* Get the PMA Buffer pointer */
   pdwVal = (__IO uint32_t *)(USB_DRD_PMAADDR + (uint32_t)wPMABufAddr);
@@ -1270,7 +1751,7 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_DRD_TypeDef *USBx, USB_DRD_HCTypeDef *hc)
     if (hc->doublebuffer == 0U)
     {
       USB_WritePMA(USBx, hc->xfer_buff, hc->pmaadress, (uint16_t)len);
-      USB_DRD_SET_CHEP_TX_CNT(USBx, phy_ch_num, (uint16_t)len);
+      pcd_set_tx_cnt(phy_ch_num, len);
 
       /* SET PID SETUP  */
       if ((hc->data_pid) == HC_PID_SETUP)
@@ -1409,7 +1890,7 @@ static HAL_StatusTypeDef USB_HC_BULK_DB_StartXfer(USB_DRD_TypeDef *USBx,
     /* Disable bulk double buffer mode */
     (void)USB_HC_DoubleBuffer(USBx, (uint8_t)phy_ch_num, USB_DRD_BULK_DBUFF_DISABLE);
     USB_WritePMA(USBx, hc->xfer_buff, hc->pmaaddr0, (uint16_t)*len);
-    USB_DRD_SET_CHEP_TX_CNT(USBx, phy_ch_num, (uint16_t)*len);
+    pcd_set_tx_cnt(phy_ch_num, (uint16_t)*len);
   }
 
   return HAL_OK;

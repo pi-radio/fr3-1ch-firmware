@@ -48,7 +48,7 @@ void _config::scan_headers() {
     } catch(UncorrectibleECCError e) {
       if (e.data != 0xFFFF)
         dbg::dbgout << std::format("Uncorrectible ECC: offset: {:08x} info: {:08x} addr: {:04x} data: {:04x}",
-            i * HEFlash::SECTOR_SIZE / 2, e.error_info, e.addr, e.data) << std::endl;
+            i * page::PAGE_SIZE, e.error_info, e.addr, e.data) << std::endl;
 
       free_pages.push_back(i);
       continue;
@@ -77,7 +77,7 @@ void _config::scan_headers() {
   }
 };
 
-void _config::load() {
+void _config::do_load() {
   scan_headers();
 
   config_header hdr(0);
@@ -142,7 +142,27 @@ void _config::load() {
 
     }
   }
+}
 
+void _config::load() {
+  try {
+    do_load();
+    return;
+  } catch(...) {
+  }
+
+  for (uint32_t i = 0; i < HEFlash::NSECTORS; i++)
+  {
+    HEFlash::erase_sector(i);
+
+    page &p = pages[i];
+
+    p.append_point = 0;
+    p.free_space = 0;
+    p.serial = 0xFFFFFFFF;
+  }
+
+  do_load();
 }
 
 uint32_t _config::allocate_page()

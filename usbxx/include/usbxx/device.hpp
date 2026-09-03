@@ -25,23 +25,8 @@ namespace USBXX
 struct UX_SYSTEM_SLAVE
 {
     USBXX::DeviceBase *device;
-#if 0
-    UCHAR           *ux_system_slave_device_framework;
-    ULONG           ux_system_slave_device_framework_length;
-    UCHAR           *ux_system_slave_device_framework_full_speed;
-    ULONG           ux_system_slave_device_framework_length_full_speed;
-    UCHAR           *ux_system_slave_device_framework_high_speed;
-    ULONG           ux_system_slave_device_framework_length_high_speed;
-    UCHAR           *ux_system_slave_string_framework;
-    ULONG           ux_system_slave_string_framework_length;
-    UCHAR           *ux_system_slave_language_id_framework;
-    ULONG           ux_system_slave_language_id_framework_length;
-#endif
     UCHAR           *ux_system_slave_dfu_framework;
     ULONG           ux_system_slave_dfu_framework_length;
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-    UINT            ux_system_slave_max_class;
-#endif
     UX_SLAVE_CLASS  *ux_system_slave_class_array;
     UX_SLAVE_CLASS  *ux_system_slave_interface_class_array[UX_MAX_SLAVE_INTERFACES];
     ULONG           ux_system_slave_speed;

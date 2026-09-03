@@ -987,11 +987,6 @@ typedef USB_HCTypeDef       USB_DRD_HCTypeDef;
   * @param  wBuf0Addr buffer 0 address.
   * @retval Counter value
   */
-#define USB_DRD_SET_CHEP_DBUF0_ADDR(USBx, bEpChNum, wBuf0Addr) \
-  USB_DRD_SET_CHEP_TX_ADDRESS((USBx), (bEpChNum), (wBuf0Addr))
-
-#define USB_DRD_SET_CHEP_DBUF1_ADDR(USBx, bEpChNum, wBuf1Addr) \
-  USB_DRD_SET_CHEP_RX_ADDRESS((USBx), (bEpChNum), (wBuf1Addr))
 
 
 /**

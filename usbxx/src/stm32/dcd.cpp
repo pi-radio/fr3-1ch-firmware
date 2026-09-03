@@ -13,6 +13,9 @@
 
 #include <usbxx/device.hpp>
 
+#include <usbxx/stm32/pcd.hpp>
+
+
 using namespace USBXX;
 
 USBXX::STM32::DCD *USBXX::STM32::gDCD;
@@ -42,6 +45,11 @@ uint32_t STM32::DCD::initialize()
   hpcd.Init.vbus_sensing_enable = DISABLE;
   hpcd.Init.bulk_doublebuffer_enable = DISABLE;
   hpcd.Init.iso_singlebuffer_enable = DISABLE;
+
+  for (int i = 0; i < 8; i++) {
+    (USB_DRD_PMA_BUFF + i)->TXBD = 0;
+    (USB_DRD_PMA_BUFF + i)->RXBD = 0;
+  }
 
   if (HAL_PCD_Init(&hpcd) != HAL_OK)
   {
@@ -80,11 +88,11 @@ uint32_t STM32::DCD::initialize()
   ep_in[0].used = true;
   ep_out[0].used = true;
 
-  HAL_PCDEx_PMAConfig(&hpcd, 0x00 , PCD_SNG_BUF, 0x40);
-  HAL_PCDEx_PMAConfig(&hpcd, 0x80 , PCD_SNG_BUF, 0x80);
-  HAL_PCDEx_PMAConfig(&hpcd, 0x01, PCD_SNG_BUF, 0xC0);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x00, PCD_SNG_BUF, 0x40);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x80, PCD_SNG_BUF, 0x80);
   HAL_PCDEx_PMAConfig(&hpcd, 0x81, PCD_SNG_BUF, 0x100);
   HAL_PCDEx_PMAConfig(&hpcd, 0x82, PCD_SNG_BUF, 0x140);
+  HAL_PCDEx_PMAConfig(&hpcd, 0x03, PCD_SNG_BUF, 0xC0);
 
   ux_slave_dcd_status =  UX_DCD_STATUS_OPERATIONAL;
 
@@ -136,47 +144,7 @@ UINT  STM32::DCD::complete_initialization()
 {
   UX_SLAVE_TRANSFER       *xfer;
 
-#if 0
-  /* Are we in DFU mode ? If so, check if we are in a Reset mode.  */
-  if (_ux_system_slave->ux_system_slave_device_dfu_state_machine == UX_SYSTEM_DFU_STATE_APP_DETACH)
-  {
-    /* The device is now in DFU reset mode. Switch to the DFU device framework.  */
-    _ux_system_slave->ux_system_slave_device_framework =  _ux_system_slave -> ux_system_slave_dfu_framework;
-    _ux_system_slave->ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_dfu_framework_length;
-  }
-  else
-  {
-
-  /* Set State to App Idle. */
-    _ux_system_slave -> ux_system_slave_device_dfu_state_machine = UX_SYSTEM_DFU_STATE_APP_IDLE;
-
-    /* Check the speed and set the correct descriptor.  */
-    if (_ux_system_slave -> ux_system_slave_speed ==  UX_FULL_SPEED_DEVICE)
-    {
-
-      /* The device is operating at full speed.  */
-      _ux_system_slave -> ux_system_slave_device_framework =  _ux_system_slave -> ux_system_slave_device_framework_full_speed;
-      _ux_system_slave -> ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_device_framework_length_full_speed;
-    }
-    else
-    {
-
-      /* The device is operating at high speed.  */
-      _ux_system_slave -> ux_system_slave_device_framework =  _ux_system_slave -> ux_system_slave_device_framework_high_speed;
-      _ux_system_slave -> ux_system_slave_device_framework_length =  _ux_system_slave -> ux_system_slave_device_framework_length_high_speed;
-    }
-  }
-#endif
-
-
   device->descriptor = read_in_descriptor<DeviceDescriptor>(device->get_current_descriptor().get_desc());
-#if 0
-  /* And create the decompressed device descriptor structure.  */
-  _ux_utility_descriptor_parse(device_framework,
-                          _ux_system_device_descriptor_structure,
-                          UX_DEVICE_DESCRIPTOR_ENTRIES,
-                          (UCHAR *) &device -> descriptor);
-#endif
 
   /* Now we create a transfer request to accept the first SETUP packet
   and get the ball running. First get the address of the endpoint
@@ -358,8 +326,8 @@ HAL_StatusTypeDef STM32::DCD::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
     /* Transfer is completed */
     if (ep->xfer_len == 0U)
     {
-      PCD_SET_EP_DBUF0_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
-      PCD_SET_EP_DBUF1_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
+      USB_DRD_SET_CHEP_DBUF0_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
+      pcd_set_dbuf1_cnt(ep->num, ep->is_in, 0U);
 
       if (ep->type == EP_TYPE_BULK)
       {
@@ -637,7 +605,6 @@ void STM32::DCD::endpoint_IRQ()
           USB_ReadPMA(hpcd.Instance, ep->xfer_buff, ep->pmaadress, count);
         }
       }
-#if (USE_USB_DOUBLE_BUFFER == 1U)
       else
       {
         /* manage double buffer bulk out */
@@ -672,7 +639,6 @@ void STM32::DCD::endpoint_IRQ()
           }
         }
       }
-#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
 
       /* multi-packet on the NON control OUT endpoint */
       ep->xfer_count += count;

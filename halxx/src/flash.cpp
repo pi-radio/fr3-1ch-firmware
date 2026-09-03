@@ -149,8 +149,10 @@ uint16_t HEFlash::read16(uint32_t offset)
 {
   uint16_t retval;
   
+  volatile uint16_t *p = ptr16(offset);
+
   /* Program a halfword word (16 bits) */
-  retval = *ptr16(offset);
+  retval = *p; // ptr16(offset);
 
   if (read_fail) {
     read_fail = false;
