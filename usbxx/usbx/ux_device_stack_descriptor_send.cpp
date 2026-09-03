@@ -51,7 +51,7 @@ UINT  _ux_device_stack_descriptor_send(ULONG descriptor_type, ULONG request_inde
 {
   ULONG                           descriptor_index;
   ULONG                           parsed_descriptor_index;
-  UX_SLAVE_TRANSFER               *transfer_request;
+  Transfer               *transfer_request;
   ConfigurationDescriptor     configuration_descriptor;
   BOSDescriptor               bos_descriptor;
   Endpoint               *endpoint;

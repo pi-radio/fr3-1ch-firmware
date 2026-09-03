@@ -1149,10 +1149,7 @@ VOID    _ux_trace_event_update(TX_TRACE_BUFFER_ENTRY *event, ULONG timestamp, UL
 
 /* Define USBX transfer request status constants.  */
 
-#define UX_TRANSFER_STATUS_NOT_PENDING                                  0
-#define UX_TRANSFER_STATUS_PENDING                                      1
-#define UX_TRANSFER_STATUS_COMPLETED                                    2
-#define UX_TRANSFER_STATUS_ABORT                                        4
+
 
 /* Define USBX device power constants.  */
 

@@ -144,7 +144,7 @@ namespace USBXX
     virtual uint32_t on_sof() { return 0; }
 
     void start();
-    uint32_t transfer_request(UX_SLAVE_TRANSFER *transfer_request,
+    uint32_t transfer_request(Transfer *transfer_request,
                                                 ULONG slave_length,
                                                 ULONG host_length);
 
@@ -156,7 +156,7 @@ namespace USBXX
       return 1;
     }
 
-    UX_SLAVE_TRANSFER *get_control_transfer() { return dcd->get_control_transfer(); };
+    Transfer *get_control_transfer() { return dcd->get_control_transfer(); };
     Endpoint *get_control_endpoint() { return dcd->get_control_endpoint(); }
 
     void set_state(uint32_t state) { state = state; }
@@ -177,7 +177,7 @@ namespace USBXX
     uint32_t on_set_configuration(uint32_t configuration_value);
     uint32_t clear_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
 
-    uint32_t process_control_event(UX_SLAVE_TRANSFER *transfer_request);
+    uint32_t process_control_event(Transfer *transfer_request);
     uint32_t set_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
     uint32_t set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
         uint32_t alternate_setting_value);

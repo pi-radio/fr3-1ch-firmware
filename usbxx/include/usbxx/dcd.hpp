@@ -27,12 +27,11 @@ namespace USBXX
 
     virtual Endpoint *get_endpoint(uint8_t) = 0;
     virtual Endpoint *get_control_endpoint() = 0;
-    virtual UX_SLAVE_TRANSFER *get_control_transfer() = 0;
+    virtual Transfer *get_control_transfer() = 0;
 
-    virtual Endpoint *allocate_endpoint(const EndpointDescriptor &) = 0;
+    virtual Endpoint *allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) = 0;
     virtual uint32_t get_frame_number() = 0;
-    virtual UINT abort_transfer(UX_SLAVE_TRANSFER *xfer) = 0;
-    virtual UINT transfer_request(UX_SLAVE_TRANSFER *xfer) = 0;
+    virtual UINT transfer_request(Transfer *xfer) = 0;
     virtual UINT complete_initialization() = 0;
 
     void set_device(DeviceBase *_dev) { device = _dev; }

@@ -404,7 +404,7 @@ UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descripto
 
 UINT DeviceBase::send_descriptor(const ControlRequest &req)
 {
-  UX_SLAVE_TRANSFER               *xfer;
+  Transfer               *xfer;
   UINT                            status =  UX_ERROR;
   UCHAR                           *string_memory;
   UCHAR                           *string_framework;

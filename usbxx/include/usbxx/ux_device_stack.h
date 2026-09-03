@@ -98,9 +98,7 @@ UINT    _ux_device_stack_interface_get(UINT interface_value);
 UINT    _ux_device_stack_interface_set(const UCHAR * device_framework, ULONG device_framework_length,
                     ULONG alternate_setting_value);
 UINT    _ux_device_stack_set_feature(ULONG request_type, ULONG request_value, ULONG request_index);
-UINT    _ux_device_stack_transfer_all_request_abort(USBXX::Endpoint *endpoint, ULONG completion_code);
 UINT    _ux_device_stack_transfer_request(UX_SLAVE_TRANSFER *transfer_request, ULONG slave_length, ULONG host_length);
-UINT    _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
 UINT    _ux_device_stack_microsoft_extension_register(ULONG vendor_request, UINT (*vendor_request_function)(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *));
 UINT    _ux_device_stack_uninitialize(VOID);
 

@@ -36,17 +36,17 @@
 
 using namespace USBXX;
 
-static inline void _ux_dcd_stm32_setup_in(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request)
+static inline void _ux_dcd_stm32_setup_in(STM32::Endpoint * ed, Transfer *transfer_request)
 {
     ed -> direction = UX_ENDPOINT_IN;
     ed -> state = STM32::EndpointState::DATA_TX;
     ed->ux_slave_endpoint_device->process_control_event(transfer_request);
 }
 
-static inline void _ux_dcd_stm32_setup_out(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
+static inline void _ux_dcd_stm32_setup_out(STM32::Endpoint * ed, Transfer *transfer_request,
                                            PCD_HandleTypeDef *hpcd)
 {
-  transfer_request -> completion_code =  UX_SUCCESS;
+  transfer_request->complete(UX_SUCCESS);
   ed -> direction = UX_ENDPOINT_IN;
   if (ed->ux_slave_endpoint_device->process_control_event(transfer_request) == UX_SUCCESS)
   {
@@ -55,7 +55,7 @@ static inline void _ux_dcd_stm32_setup_out(STM32::Endpoint * ed, UX_SLAVE_TRANSF
   }
 }
 
-static inline void _ux_dcd_stm32_setup_status(STM32::Endpoint * ed, UX_SLAVE_TRANSFER *transfer_request,
+static inline void _ux_dcd_stm32_setup_status(STM32::Endpoint * ed, Transfer *transfer_request,
                                               PCD_HandleTypeDef *hpcd)
 {
   ed -> direction = UX_ENDPOINT_IN;
@@ -71,25 +71,23 @@ static inline void _ux_dcd_stm32_setup_status(STM32::Endpoint * ed, UX_SLAVE_TRA
 
 void STM32::DCD::setup()
 {
-  UX_SLAVE_TRANSFER *transfer_request;
-  STM32::Endpoint     *endpoint;
-
-  endpoint = (STM32::Endpoint *)get_control_endpoint();
+  auto endpoint = get_control_endpoint();
+  Transfer *transfer_request;
 
   /* Get the pointer to the transfer request.  */
-  transfer_request =  &endpoint->ux_slave_endpoint_transfer_request;
+  transfer_request = get_control_transfer();
 
   /* Copy setup data to transfer request.  */
   ::memcpy(transfer_request->setup, hpcd.Setup, UX_SETUP_SIZE);
 
   /* Clear the length of the data received.  */
-  transfer_request -> actual_length =  0;
+  transfer_request->actual_length =  0;
 
   /* Mark the phase as SETUP.  */
-  transfer_request -> type =  TransferType::SETUP;
+  transfer_request->type =  TransferType::SETUP;
 
   /* Mark the transfer as successful.  */
-  transfer_request -> completion_code =  UX_SUCCESS;
+  transfer_request->complete(UX_SUCCESS);
 
   endpoint->in_transfer = false;
   endpoint->stalled = false;
@@ -159,12 +157,12 @@ void STM32::DCD::setup()
 
 void STM32::DCD::on_control_in()
 {
-  UX_SLAVE_TRANSFER *transfer_request;
+  Transfer *transfer_request;
   ULONG             transfer_length;
   STM32::Endpoint     *endpoint;
 
   endpoint = (STM32::Endpoint *)get_endpoint(0);
-  transfer_request =  &(endpoint->ux_slave_endpoint_transfer_request);
+  transfer_request =  endpoint->get_transfer();
 
   /* Check if we need to send data again on control endpoint. */
   if (endpoint->state == EndpointState::DATA_TX)
@@ -195,7 +193,7 @@ void STM32::DCD::on_control_in()
             transfer_request -> completion_code =  UX_SUCCESS;
 
             /* The transfer is completed.  */
-            transfer_request -> status =  UX_TRANSFER_STATUS_COMPLETED;
+            transfer_request -> status =  TransferStatus::COMPLETED;
             transfer_request -> actual_length =
                 transfer_request -> requested_length;
 
@@ -250,13 +248,13 @@ void STM32::DCD::on_data_in(uint8_t epnum)
     return;
   }
 
-  UX_SLAVE_TRANSFER *xfer;
+  Transfer *xfer;
   STM32::Endpoint     *endpoint;
 
   endpoint = (STM32::Endpoint *)get_endpoint(epnum | 0x80);
 
     /* Get the pointer to the transfer request.  */
-  xfer = &(endpoint->ux_slave_endpoint_transfer_request);
+  xfer = endpoint->get_transfer();
 
   /* Check if a ZLP should be armed.  */
   if (xfer->force_zlp &&
@@ -270,16 +268,11 @@ void STM32::DCD::on_data_in(uint8_t epnum)
   }
   else
   {
-    /* Set the completion code to no error.  */
-    xfer -> completion_code =  UX_SUCCESS;
-
-    /* The transfer is completed.  */
-    xfer -> status =  UX_TRANSFER_STATUS_COMPLETED;
     xfer -> actual_length =
         xfer -> requested_length;
 
   /* Non control endpoint operation, use semaphore.  */
-    _ux_utility_semaphore_put(&xfer -> semaphore);
+    xfer->complete(UX_SUCCESS);
   }
 }
 
@@ -287,7 +280,7 @@ void STM32::DCD::on_data_out(uint8_t epnum)
 {
 
 STM32::Endpoint         *ed;
-UX_SLAVE_TRANSFER       *xfer;
+Transfer       *xfer;
 ULONG                   transfer_length;
 Endpoint       *endpoint;
 
@@ -296,7 +289,7 @@ Endpoint       *endpoint;
     ed = &ep_out[epnum & 0xF];
 
     /* Get the pointer to the transfer request.  */
-    xfer = &(ed->ux_slave_endpoint_transfer_request);
+    xfer = ed->get_transfer();
 
     /* Endpoint 0 is different.  */
     if (epnum == 0U)
@@ -366,19 +359,7 @@ Endpoint       *endpoint;
         /* Update the length of the data sent in previous transaction.  */
         xfer -> actual_length =  HAL_PCD_EP_GetRxCount(&hpcd, epnum);
 
-        /* Set the completion code to no error.  */
-        xfer -> completion_code =  UX_SUCCESS;
-
-        /* The transfer is completed.  */
-        xfer -> status =  UX_TRANSFER_STATUS_COMPLETED;
-
-#if defined(UX_DEVICE_STANDALONE)
-        ed -> status |= STM32::Endpoint_STATUS_DONE;
-#else
-
-        /* Non control endpoint operation, use semaphore.  */
-        _ux_utility_semaphore_put(&xfer -> semaphore);
-#endif
+        xfer->complete(UX_SUCCESS);
     }
 
 }

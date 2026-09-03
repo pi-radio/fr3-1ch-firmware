@@ -38,7 +38,7 @@ UINT  _ux_device_stack_get_status(ULONG request_type, ULONG request_index, ULONG
 {
 
 USBXX::DCD            *dcd;
-UX_SLAVE_TRANSFER       *xfer;
+Transfer       *xfer;
 UINT                    status;
 ULONG                   data_length;
 

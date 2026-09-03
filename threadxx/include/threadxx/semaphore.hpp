@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 #include <tx_api.h>
@@ -18,8 +19,10 @@ namespace TXX
   public:
     Semaphore(const std::string &_name) : object(_name) {}
 
+    uint32_t get_suspended_count() { return sema.tx_semaphore_suspended_count; }
 
-    void get() { tx_semaphore_get(&sema, TX_WAIT_FOREVER); }
+    uint32_t get() { return tx_semaphore_get(&sema, TX_WAIT_FOREVER); }
+    uint32_t get(uint32_t timeout) { return tx_semaphore_get(&sema, timeout); }
     void put() { tx_semaphore_put(&sema); }
   };
 }

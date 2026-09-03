@@ -112,8 +112,6 @@ namespace USBXX
     std::shared_ptr<Interface> ux_slave_endpoint_interface;
     USBXX::DeviceBase
                     *ux_slave_endpoint_device;
-    UX_SLAVE_TRANSFER
-                    ux_slave_endpoint_transfer_request;
 
     Endpoint() : used(false)
     {
@@ -125,10 +123,20 @@ namespace USBXX
       used = false;
     }
 
+    virtual void abort_all_transfers()
+    {
+
+    }
+
+    bool is_control() { return (ux_slave_endpoint_descriptor.bEndpointAddress & 0x7F) == 0; }
+
+    virtual Transfer *get_transfer() = 0;
+
     virtual UINT create() = 0;
     virtual UINT destroy() = 0;
     virtual bool is_stalled() = 0;
     virtual UINT reset() = 0;
     virtual void stall() = 0;
+    virtual void abort_all_transfers(uint32_t) = 0;
   };
 }

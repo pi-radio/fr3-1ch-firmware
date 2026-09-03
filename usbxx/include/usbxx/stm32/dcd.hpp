@@ -99,17 +99,16 @@ namespace USBXX
 
       Endpoint *get_endpoint(uint8_t epaddr) { return __get_endpoint(epaddr); }
       Endpoint *get_control_endpoint() override { return &ep_out[0]; };
-      UX_SLAVE_TRANSFER *get_control_transfer() override { return &ep_out[0].ux_slave_endpoint_transfer_request; };
+      Transfer *get_control_transfer() override { return ep_out[0].get_transfer(); };
 
-      USBXX::Endpoint *allocate_endpoint(const EndpointDescriptor &) override;
+      USBXX::Endpoint *allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) override;
       uint32_t get_frame_number() override;
       UINT complete_initialization() override;
-      UINT abort_transfer(UX_SLAVE_TRANSFER *transfer_request) override;
-      UINT transfer_request(UX_SLAVE_TRANSFER *transfer_request) override;
+      UINT transfer_request(USBXX::Transfer *transfer_request) override;
       UINT uninitialize() override;
 
-      UINT transfer_out(UX_SLAVE_TRANSFER *xfer);
-      UINT transfer_in(UX_SLAVE_TRANSFER *xfer);
+      UINT transfer_out(Transfer *xfer);
+      UINT transfer_in(Transfer *xfer);
 
       void on_control_in();
 

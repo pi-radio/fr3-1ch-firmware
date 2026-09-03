@@ -287,14 +287,11 @@ UINT USBXX::CDCACMDevice::activate(UX_SLAVE_CLASS_COMMAND *command)
     return 0;
 }
 
-extern "C" UINT  _ux_device_stack_transfer_abort(UX_SLAVE_TRANSFER *transfer_request, ULONG completion_code);
-extern "C" UINT  _ux_device_stack_transfer_all_request_abort(Endpoint *endpoint, ULONG completion_code);
-
 UINT USBXX::CDCACMDevice::deactivate(UX_SLAVE_CLASS_COMMAND *command)
 {
   /* Terminate the transactions pending on the endpoints.  */
-  _ux_device_stack_transfer_all_request_abort(in_endpoint, UX_TRANSFER_BUS_RESET);
-  _ux_device_stack_transfer_all_request_abort(out_endpoint, UX_TRANSFER_BUS_RESET);
+  in_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
+  out_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
 
   /* Terminate transmission and free resources.  */
   ioctl(UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP, UX_NULL);
@@ -310,7 +307,7 @@ UINT USBXX::CDCACMDevice::deactivate(UX_SLAVE_CLASS_COMMAND *command)
 UINT USBXX::CDCACMDevice::control_request(UX_SLAVE_CLASS_COMMAND *command)
 {
   //UX_SLAVE_CLASS                          *class_ptr;
-  UX_SLAVE_TRANSFER                       *xfer;
+  Transfer                       *xfer;
   ULONG                                   request;
   ULONG                                   value;
   ULONG                                   request_length;
@@ -394,7 +391,7 @@ UINT USBXX::CDCACMDevice::control_request(UX_SLAVE_CLASS_COMMAND *command)
 UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
 {
   Endpoint           *endpoint;
-  UX_SLAVE_TRANSFER           *xfer;
+  Transfer           *xfer;
   UINT                        status= UX_SUCCESS;
   ULONG                       local_requested_length;
 
@@ -408,7 +405,7 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
   /* Check the endpoint direction, if OUT we have the correct endpoint.  */
   {
     TXX::Mutex::guard guard(ep_in_mutex);
-    xfer = &endpoint->ux_slave_endpoint_transfer_request;
+    xfer = endpoint->get_transfer();
 
     *actual_length =  0;
 
@@ -458,7 +455,7 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
                           ULONG *actual_length)
 {
   Endpoint           *endpoint;
-  UX_SLAVE_TRANSFER           *xfer;
+  Transfer           *xfer;
   ULONG                       local_requested_length;
   ULONG                       local_host_length;
   UINT                        status = 0;
@@ -481,7 +478,7 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
     TXX::Mutex::guard guard(ep_out_mutex);
 
     /* We are writing to the IN endpoint.  */
-    xfer =  &endpoint -> ux_slave_endpoint_transfer_request;
+    xfer = endpoint->get_transfer();
 
     /* Reset the actual length.  */
     *actual_length =  0;
@@ -546,7 +543,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
   UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint *endpoint;
   Interface *iface;
-  UX_SLAVE_TRANSFER *transfer_request;
+  Transfer *xfer;
 
   /* Let's be optimist ! */
   status = UX_SUCCESS;
@@ -623,15 +620,13 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
     }
 
     /* Get the transfer request associated with the endpoint.  */
-    transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+    xfer =  endpoint->get_transfer();
 
 
     /* Check the status of the transfer. */
-    if (transfer_request -> status ==  UX_TRANSFER_STATUS_PENDING)
+    if (xfer->is_pending())
     {
-
-        /* Abort the transfer.  */
-    _ux_device_stack_transfer_abort(transfer_request, UX_ABORTED);
+      xfer->abort(UX_ABORTED);
 
     }
     break;
@@ -653,13 +648,13 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
       assert(endpoint != nullptr);
 
       /* Get the transfer request associated with the endpoint.  */
-      transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+      xfer = endpoint->get_transfer();
 
       /* Check the status of the transfer.  */
-      if (transfer_request -> status ==  UX_TRANSFER_STATUS_PENDING)
+      if (xfer->is_pending())
           status = UX_ERROR;
       else
-          transfer_request -> timeout = (ULONG) (ALIGN_TYPE) parameter;
+          xfer -> timeout = (ULONG) (ALIGN_TYPE) parameter;
 
       break;
   }

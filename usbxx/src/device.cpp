@@ -99,7 +99,7 @@ void DeviceBase::setup_device()
 
 
   Interface              *interfaces_pool;
-  UX_SLAVE_TRANSFER               *xfer;
+  Transfer               *xfer;
   UINT                            status;
   ULONG                           interfaces_found;
   ULONG                           endpoints_found;
@@ -442,7 +442,7 @@ ULONG                       class_index;
 uint32_t DeviceBase::get_interface(uint8_t interface_value)
 {
 
-UX_SLAVE_TRANSFER       *transfer_request;
+Transfer       *xfer;
 Interface      *iface;
 Endpoint       *endpoint;
 uint32_t                    retval;
@@ -463,20 +463,20 @@ uint32_t                    retval;
     {
       for (auto iface : interfaces) {
         if (iface -> descriptor.bInterfaceNumber == interface_value)
-          transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
+          xfer = get_control_transfer();
 
         /* Set the value of the alternate setting in the buffer.  */
-        *transfer_request -> data =
+        *xfer -> data =
             (UCHAR) iface -> descriptor.bAlternateSetting;
 
         /* Setup the length appropriately.  */
-        transfer_request -> requested_length =  1;
+        xfer -> requested_length =  1;
 
         /* Set the phase of the transfer to data out.  */
-        transfer_request -> phase =  TransferPhase::DATA_OUT;
+        xfer -> phase =  TransferPhase::DATA_OUT;
 
         /* Send the descriptor with the appropriate length to the host.  */
-        retval = dcd->transfer_request(transfer_request);
+        retval = dcd->transfer_request(xfer);
 
         /* Return the function status code.  */
         return(retval);
@@ -492,7 +492,7 @@ uint32_t                    retval;
 
 void DeviceBase::uninitialize(void)
 {
-  UX_SLAVE_TRANSFER               *xfer;
+  Transfer               *xfer;
     /* Get the pointer to the device. */
     auto device =  _ux_system_slave->device;
 
@@ -614,7 +614,7 @@ uint32_t DeviceBase::set_feature(uint32_t request_type, uint32_t request_value, 
 uint32_t DeviceBase::set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
     uint32_t alternate_setting_value)
 {
-UX_SLAVE_TRANSFER       *transfer_request;
+Transfer       *transfer_request;
 Interface      *interface_link;
 ULONG                   interfaces_pool_number;
 Endpoint       *endpoint;
@@ -664,49 +664,10 @@ ULONG                   max_transfer_length, n_trans;
             /* Find a free endpoint in the pool and hook it to the
                existing interface after it's created by DCD.  */
 
-          endpoint = dcd->allocate_endpoint(desc);
+          endpoint = dcd->allocate_endpoint(iface, desc);
 
-            /* Now we create a transfer request to accept transfer on this endpoint.  */
-            transfer_request =  &endpoint -> ux_slave_endpoint_transfer_request;
-
-            /* Validate endpoint descriptor wMaxPacketSize.  */
-            UX_ASSERT(endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize != 0);
-
-            /* Calculate endpoint transfer payload max size.  */
-            max_transfer_length =
-                    endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize &
-                                                        UX_MAX_PACKET_SIZE_MASK;
-            if ((_ux_system_slave -> ux_system_slave_speed == UX_HIGH_SPEED_DEVICE) &&
-                (endpoint -> ux_slave_endpoint_descriptor.bmAttributes & 0x1u))
-            {
-                n_trans = endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize &
-                                            UX_MAX_NUMBER_OF_TRANSACTIONS_MASK;
-                if (n_trans)
-                {
-                    n_trans >>= UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT;
-                    n_trans ++;
-                    max_transfer_length *= n_trans;
-                }
-            }
-
-            /* Validate max transfer size and save it.  */
-            UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-            transfer_request -> transfer_length = max_transfer_length;
-
-            /* We store the endpoint in the transfer request as well.  */
-            transfer_request -> endpoint =  endpoint;
-
-            /* By default the timeout is infinite on request.  */
-            transfer_request -> timeout = UX_WAIT_FOREVER;
-
-            /* Attach the interface to the endpoint.  */
-            endpoint -> ux_slave_endpoint_interface =  iface;
-
-            /* Attach the device to the endpoint.  */
-            endpoint -> ux_slave_endpoint_device =  device;
-
-            /* Create the endpoint at the DCD level.  */
-            status = endpoint->create();
+          /* Create the endpoint at the DCD level.  */
+          status = endpoint->create();
 
             /* Do a sanity check on endpoint creation.  */
             if (status != UX_SUCCESS)

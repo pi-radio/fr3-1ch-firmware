@@ -1,6 +1,7 @@
 #pragma once
 
 #include <usbxx/endpoint.hpp>
+#include <usbxx/stm32/transfer.hpp>
 
 #include <usbxx/ux_stm32_config.h>
 
@@ -19,8 +20,9 @@ namespace USBXX
       STATUS_RX
     };
 
-    struct Endpoint : public USBXX::Endpoint
+    class Endpoint : public USBXX::Endpoint
     {
+    public:
       bool in_transfer;
       bool stalled;
       bool done;
@@ -29,6 +31,7 @@ namespace USBXX
       bool setup_out;
       bool setup;
       bool task_pending;
+      STM32::Transfer transfer;
 
       EndpointState           state;
       UCHAR           index;
@@ -58,11 +61,16 @@ namespace USBXX
         task_pending = false;
       }
 
+      Transfer *get_transfer() override { return &transfer; };
+
+      void abort_transfer();
+
       UINT create() override;
       UINT destroy() override;
       bool is_stalled() override;
       UINT reset() override;
       void stall() override;
+      void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
     };
   }
 }

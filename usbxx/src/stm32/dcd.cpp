@@ -64,25 +64,6 @@ uint32_t STM32::DCD::initialize()
 
     ep_in[i].ux_slave_endpoint_device = device;
     ep_out[i].ux_slave_endpoint_device = device;
-
-    /* Create the semaphore for the endpoint.  */
-    if (_ux_device_semaphore_create(&ep_in[i].ux_slave_endpoint_transfer_request.semaphore,
-                                        (char *)"ux_transfer_request_semaphore", 0) != 0) {
-      throw std::runtime_error("Failed to create semaphore for in endpoint");
-    }
-
-    ep_in[i].ux_slave_endpoint_transfer_request.data =
-                    (UCHAR *)::malloc(UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-
-
-    if(_ux_device_semaphore_create(&ep_out[i].ux_slave_endpoint_transfer_request.semaphore,
-        (char *)"ux_transfer_request_semaphore", 0) != 0) {
-      throw std::runtime_error("Failed to create semaphore for in endpoint");
-    }
-
-    ep_out[i].ux_slave_endpoint_transfer_request.data =
-                    (UCHAR *)::malloc(UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-
   }
 
   ep_in[0].used = true;
@@ -107,7 +88,7 @@ uint32_t STM32::DCD::initialize()
   return 0;
 }
 
-USBXX::Endpoint *STM32::DCD::allocate_endpoint(const EndpointDescriptor &desc)
+USBXX::Endpoint *STM32::DCD::allocate_endpoint(std::shared_ptr<Interface> iface, const EndpointDescriptor &desc)
 {
   Endpoint *retval;
 
@@ -134,22 +115,25 @@ USBXX::Endpoint *STM32::DCD::allocate_endpoint(const EndpointDescriptor &desc)
   if ((desc.bEndpointAddress & 0x7F) != 0) {
     int a = 0;
   }
+
   retval->ux_slave_endpoint_descriptor = desc;
   retval->used = true;
+  retval-> ux_slave_endpoint_device = device;
+  retval->ux_slave_endpoint_interface = iface;
 
   return retval;
 }
 
 UINT  STM32::DCD::complete_initialization()
 {
-  UX_SLAVE_TRANSFER       *xfer;
+  Transfer       *xfer;
 
   device->descriptor = read_in_descriptor<DeviceDescriptor>(device->get_current_descriptor().get_desc());
 
   /* Now we create a transfer request to accept the first SETUP packet
   and get the ball running. First get the address of the endpoint
   transfer request container.  */
-  xfer = device->get_control_transfer();
+  xfer = (Transfer *)device->get_control_transfer();
 
   /* Set the timeout to be for Control Endpoint.  */
   xfer->timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
@@ -193,7 +177,7 @@ UINT  STM32::DCD::complete_initialization()
   xfer -> type =  TransferType::SETUP;
 
   /* Mark this transfer request as pending.  */
-  xfer -> status =  UX_TRANSFER_STATUS_PENDING;
+  xfer->set_pending();
 
   /* Ask for 8 bytes of the SETUP packet.  */
   xfer -> requested_length =    UX_SETUP_SIZE;

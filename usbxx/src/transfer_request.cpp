@@ -34,9 +34,9 @@
 
 using namespace USBXX;
 
-uint32_t DeviceBase::transfer_request(UX_SLAVE_TRANSFER *transfer_request,
-                                            ULONG slave_length, 
-                                            ULONG host_length)
+uint32_t DeviceBase::transfer_request(Transfer *xfer,
+    ULONG slave_length,
+    ULONG host_length)
 {
 UX_INTERRUPT_SAVE_AREA
 
@@ -46,7 +46,7 @@ ULONG                   device_state;
 
 
     /* Do we have to skip this transfer?  */
-    if (transfer_request -> status_phase_ignore == UX_TRUE)
+    if (xfer -> status_phase_ignore == UX_TRUE)
         return 0;
 
     /* Disable interrupts to prevent the disconnection ISR from preempting us
@@ -61,7 +61,7 @@ ULONG                   device_state;
             || (device_state == UX_DEVICE_CONFIGURED))
 
         /* Set the transfer to pending.  */
-        transfer_request -> status =  UX_TRANSFER_STATUS_PENDING; 
+        xfer->set_pending();
 
     else
     {
@@ -75,10 +75,10 @@ ULONG                   device_state;
     UX_RESTORE
                     
     /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_TRANSFER_REQUEST, transfer_request, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
+    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_xfer, xfer, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Get the endpoint associated with this transaction.  */
-    endpoint =  transfer_request -> endpoint;
+    endpoint =  xfer -> endpoint;
     
     /* If the endpoint is non Control, check the endpoint direction and set the data phase direction.  */
     if ((endpoint -> ux_slave_endpoint_descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE) != UX_CONTROL_ENDPOINT)
@@ -93,44 +93,44 @@ ULONG                   device_state;
 
         /* Isolate the direction from the endpoint address.  */
         if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) == UX_ENDPOINT_IN)
-            transfer_request -> phase =  TransferPhase::DATA_OUT;
+            xfer -> phase =  TransferPhase::DATA_OUT;
         else    
-            transfer_request -> phase =  TransferPhase::DATA_IN;
+            xfer -> phase =  TransferPhase::DATA_IN;
     }    
 
     /* See if we need to force a zero length packet at the end of the transfer. 
        This happens on a DATA IN and when the host requested length is not met
        and the last packet is on a boundary. If slave_length is zero, then it is 
        a explicit ZLP request, no need to force ZLP.  */
-    if ((transfer_request -> phase ==  TransferPhase::DATA_OUT) &&
+    if ((xfer -> phase ==  TransferPhase::DATA_OUT) &&
         (slave_length != 0) && (host_length != slave_length) && 
         (slave_length % endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize) == 0)
     {
 
         /* If so force Zero Length Packet.  */
-        transfer_request -> force_zlp =  UX_TRUE;
+        xfer -> force_zlp =  UX_TRUE;
     }
     else
     {
 
         /* Condition is not met, do not force a Zero Length Packet.  */
-        transfer_request -> force_zlp =  UX_FALSE;
+        xfer -> force_zlp =  UX_FALSE;
     }
 
     /* Reset the number of bytes sent/received.  */
-    transfer_request -> actual_length =  0;
+    xfer -> actual_length =  0;
 
     /* Determine how many bytes to send in this transaction.  We keep track of the original
         length and have a working length.  */
-    transfer_request -> requested_length =    slave_length;
-    transfer_request -> in_transfer_length =  slave_length;
+    xfer -> requested_length =    slave_length;
+    xfer -> in_transfer_length =  slave_length;
 
     /* Save the buffer pointer.  */
-    transfer_request -> current_data_pointer =  
-                            transfer_request -> data;
+    xfer -> current_data_pointer =
+                            xfer -> data;
 
     /* Call the DCD driver transfer function.   */
-    status =  dcd->transfer_request(transfer_request);
+    status =  dcd->transfer_request(xfer);
 
     /* And return the status.  */
     return(status);

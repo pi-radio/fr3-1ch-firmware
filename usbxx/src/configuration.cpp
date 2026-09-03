@@ -7,8 +7,7 @@ using namespace USBXX;
 
 uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
 {
-  UX_SLAVE_TRANSFER       *xfer;
-  Endpoint       *endpoint;
+  Transfer       *xfer;
   UINT                    status;
 
     /* If the device was in the configured state, there may be interfaces
@@ -24,9 +23,7 @@ uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
       return UX_ERROR;
     }
 
-    endpoint = get_control_endpoint();
-
-    xfer =  &endpoint -> ux_slave_endpoint_transfer_request;
+    xfer =  get_control_transfer();
     *xfer -> data =
                 (UCHAR) iface -> descriptor.bAlternateSetting;
 
@@ -40,8 +37,6 @@ uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
 
 uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value)
 {
-#if !defined(UX_DEVICE_ALTERNATE_SETTING_SUPPORT_DISABLE)
-UX_SLAVE_TRANSFER               *xfer;
 const UCHAR                           *device_framework;
 ULONG                           device_framework_length;
 ULONG                           descriptor_length;
@@ -49,16 +44,9 @@ UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor;
 InterfaceDescriptor         interface_descriptor;
 Endpoint               *endpoint;
-Endpoint               *next_endpoint;
-Endpoint               *endpoint_link;
 UX_SLAVE_CLASS_COMMAND          class_command;
 UX_SLAVE_CLASS                  *class_ptr;
 UINT                            status;
-ULONG                           max_transfer_length, n_trans;
-#endif
-
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_ALTERNATE_SETTING_SET, interface_value, alternate_setting_value, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
 
     /* Protocol error must be reported when it's unconfigured */
     if (state != UX_DEVICE_CONFIGURED)
@@ -132,7 +120,7 @@ ULONG                           max_transfer_length, n_trans;
                                we mount all the endpoints for this interface, we need to
                                unmount the endpoints associated with the previous alternate setting.  */
                           for(auto endpoint : iface->endpoints) {
-                            _ux_device_stack_transfer_all_request_abort(endpoint, UX_TRANSFER_BUS_RESET);
+                            endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
 
                             endpoint->destroy();
                             endpoint->used = false;
@@ -169,46 +157,8 @@ ULONG                           max_transfer_length, n_trans;
 
                                     /* Find a free endpoint in the pool and hook it to the
                                        existing interface after it's created by DCD.  */
-                                    endpoint = dcd->allocate_endpoint(desc.bEndpointAddress);
+                                    endpoint = dcd->allocate_endpoint(iface, desc.bEndpointAddress);
 
-                                    /* Now we create a transfer request to accept transfer on this endpoint.  */
-                                    xfer =  &endpoint -> ux_slave_endpoint_transfer_request;
-
-                                    /* Validate descriptor wMaxPacketSize.  */
-                                    UX_ASSERT(endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize != 0);
-
-                                    /* Calculate endpoint transfer payload max size.  */
-                                    max_transfer_length =
-                                            endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize &
-                                                                                UX_MAX_PACKET_SIZE_MASK;
-                                    if ((_ux_system_slave -> ux_system_slave_speed == UX_HIGH_SPEED_DEVICE) &&
-                                        (endpoint -> ux_slave_endpoint_descriptor.bmAttributes & 0x1u))
-                                    {
-                                        n_trans = endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize &
-                                                                    UX_MAX_NUMBER_OF_TRANSACTIONS_MASK;
-                                        if (n_trans)
-                                        {
-                                            n_trans >>= UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT;
-                                            n_trans ++;
-                                            max_transfer_length *= n_trans;
-                                        }
-                                    }
-
-                                    /* Validate max transfer size and save it.  */
-                                    UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
-                                    xfer -> transfer_length = max_transfer_length;
-
-                                    /* We store the endpoint in the transfer request as well.  */
-                                    xfer -> endpoint =  endpoint;
-
-                                    /* By default the timeout is infinite on request.  */
-                                    xfer -> timeout = UX_WAIT_FOREVER;
-
-                                    /* Attach the interface to the endpoint.  */
-                                    endpoint -> ux_slave_endpoint_interface =  iface;
-
-                                    /* Attach the device to the endpoint.  */
-                                    endpoint -> ux_slave_endpoint_device =  this;
 
                                     /* Create the endpoint at the DCD level.  */
                                     status = endpoint->create();
@@ -307,7 +257,7 @@ ULONG                           max_transfer_length, n_trans;
 
 uint32_t DeviceBase::on_get_configuration()
 {
-  UX_SLAVE_TRANSFER       *xfer;
+  Transfer       *xfer;
 
   /* Get the pointer to the device.  */
   /* Get the pointer to the transfer request associated with the endpoint.  */
@@ -331,10 +281,6 @@ ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor = { 0 };
 InterfaceDescriptor         interface_descriptor;
-Interface              *iface;
-#if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE) || UX_MAX_DEVICE_INTERFACES > 1
-Interface              *next_interface;
-#endif
 UX_SLAVE_CLASS                  *class_inst;
 UX_SLAVE_CLASS                  *current_class =  nullptr;
 UX_SLAVE_CLASS_COMMAND          class_command;

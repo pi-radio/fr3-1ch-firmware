@@ -5,7 +5,7 @@
 
 using namespace USBXX;
 
-uint32_t DeviceBase::process_control_event(UX_SLAVE_TRANSFER *xfer)
+uint32_t DeviceBase::process_control_event(Transfer *xfer)
 {
 
 USBXX::DCD                *dcd;
@@ -29,7 +29,7 @@ ULONG                       application_data_length;
 
 
     /* Ensure that the Setup request has been received correctly.  */
-    if (xfer -> completion_code == UX_SUCCESS)
+    if (xfer->is_valid())
     {
 
         /* Seems so far, the Setup request is valid. Extract all fields of
