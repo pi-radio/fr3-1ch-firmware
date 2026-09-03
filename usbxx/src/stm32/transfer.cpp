@@ -115,6 +115,7 @@ UINT  STM32::DCD::transfer_in(Transfer *xfer)
 
 UINT  STM32::DCD::transfer_out(Transfer *xfer)
 {
+  UINT retval = 0;
   /* Get the pointer to the logical endpoint from the transfer request.  */
   auto endpoint =  xfer -> endpoint;
 
@@ -133,13 +134,13 @@ UINT  STM32::DCD::transfer_out(Transfer *xfer)
   if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & (UINT)~UX_ENDPOINT_DIRECTION) != 0)
   {
     /* We should wait for the semaphore to wake us up.  */
-    auto status = xfer->wait();
+    retval = xfer->wait();
 
     xfer -> actual_length = xfer->requested_length;
   }
 
   /* Return to caller with success.  */
-  return 0;
+  return retval;
 }
 
 UINT  STM32::DCD::transfer_request(USBXX::Transfer *_xfer)

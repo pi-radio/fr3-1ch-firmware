@@ -89,7 +89,17 @@ ULONG                   device_state;
         while (endpoint -> ux_slave_endpoint_state == UX_ENDPOINT_HALTED)
 
             /* Wait for 100ms for endpoint to be reset by a CLEAR_FEATURE command.  */
-            _ux_utility_delay_ms(100);
+        {
+          auto ms_wait = 100;
+          /* translate ms into ticks. */
+          auto ticks = (ULONG)(ms_wait * UX_PERIODIC_RATE) / 1000;
+
+          /* For safety add 1 to ticks.  */
+          ticks++;
+
+          /* Call ThreadX sleep function.  */
+          tx_thread_sleep(ticks);
+        }
 
         /* Isolate the direction from the endpoint address.  */
         if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) == UX_ENDPOINT_IN)

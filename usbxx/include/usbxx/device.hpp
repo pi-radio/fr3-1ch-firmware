@@ -181,6 +181,7 @@ namespace USBXX
     uint32_t set_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
     uint32_t set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
         uint32_t alternate_setting_value);
+    uint32_t get_entity_status(uint32_t request_type, uint32_t request_index, uint32_t request_length);
 
     UINT on_vendor_request(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *) { return 0; };
 

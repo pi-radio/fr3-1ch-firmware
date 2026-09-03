@@ -195,7 +195,7 @@ void USBXX::CDCACMDevice::register_class()
   cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
 
   /* Initialize the device cdc acm class */
-  if (ux_device_stack_class_register((const char *)_ux_system_slave_class_cdc_acm_name,
+  if (ux_device_stack_class_register("cdc_acm",
                                      _device_entry,
                                      cdc_acm_configuration_number,
                                      cdc_acm_interface_number,
@@ -542,7 +542,6 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
   UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
   UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint *endpoint;
-  Interface *iface;
   Transfer *xfer;
 
   /* Let's be optimist ! */
@@ -633,31 +632,28 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
   }
 
   case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT:
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_WRITE_TIMEOUT:
-  {
-      /* Get the interface from the instance.  */
-      auto iface =  cdc_acm_interface;
+    if (out_endpoint)
+    {
+      auto xfer = out_endpoint->get_transfer();
 
-      /* Locate the endpoints.  */
-      for(auto endpoint : iface->endpoints) {
-        if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) ==
-                  (ULONG)((ioctl_function == UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT) ? UX_ENDPOINT_OUT : UX_ENDPOINT_IN))
-          break;
-      }
-
-      assert(endpoint != nullptr);
-
-      /* Get the transfer request associated with the endpoint.  */
-      xfer = endpoint->get_transfer();
-
-      /* Check the status of the transfer.  */
       if (xfer->is_pending())
-          status = UX_ERROR;
-      else
-          xfer -> timeout = (ULONG) (ALIGN_TYPE) parameter;
+        return UX_ERROR;
 
-      break;
-  }
+      xfer->timeout = (ULONG) (ALIGN_TYPE) parameter;
+    }
+    break;
+
+  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_WRITE_TIMEOUT:
+    if (in_endpoint)
+    {
+      auto xfer = in_endpoint->get_transfer();
+
+      if (xfer->is_pending())
+        return UX_ERROR;
+
+      xfer->timeout = (ULONG) (ALIGN_TYPE) parameter;
+    }
+    break;
 
   case UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP:
     break;

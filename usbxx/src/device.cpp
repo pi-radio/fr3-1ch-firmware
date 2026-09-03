@@ -49,42 +49,9 @@ DeviceBase::DeviceBase() : fs_desc(USBD_FULL_SPEED), hs_desc(USBD_HIGH_SPEED)
   _ux_system_slave->device = this;
 }
 
-UINT DeviceBase::_usbxx_change_notification(ULONG new_state)
-{
-  return _devbase->on_change(new_state);
-}
-
 #include <threadxx/ring_buffer.hpp>
 
 TXX::ring_buffer_base<int, 32> event_ring;
-
-uint32_t DeviceBase::on_change(uint32_t new_state)
-{
-  if (new_state != UX_DCD_STM32_SOF_RECEIVED)
-    event_ring.push(new_state);
-
-  switch (new_state)
-  {
-    case UX_DEVICE_ATTACHED:
-      return on_attached();
-    case UX_DEVICE_REMOVED:
-      return on_removed();
-    case UX_DCD_STM32_DEVICE_CONNECTED:
-      return on_connected();
-    case UX_DCD_STM32_DEVICE_DISCONNECTED:
-      return on_disconnected();
-    case UX_DCD_STM32_DEVICE_SUSPENDED:
-      return on_suspended();
-    case UX_DCD_STM32_DEVICE_RESUMED:
-      return on_resumed();
-    case UX_DCD_STM32_SOF_RECEIVED:
-      return on_sof();
-    default:
-      dbg::dbgout << "Unknown state: " << new_state << std::endl;
-      return 0;
-  }
-
-}
 
 void DeviceBase::setup_device()
 {
@@ -97,22 +64,17 @@ void DeviceBase::setup_device()
 
   lang_ids.add_language();
 
-
-  Interface              *interfaces_pool;
   Transfer               *xfer;
-  UINT                            status;
   ULONG                           interfaces_found;
   ULONG                           endpoints_found;
-  #if !defined(UX_DEVICE_INITIALIZE_FRAMEWORK_SCAN_DISABLE)
   ULONG                           max_interface_number;
   ULONG                           local_interfaces_found;
   ULONG                           local_endpoints_found;
   ULONG                           endpoints_in_interface_found;
-  const UCHAR                           *device_framework;
+  const UCHAR                     *device_framework;
   ULONG                           device_framework_length;
   UCHAR                           descriptor_type;
   ULONG                           descriptor_length;
-  #endif
   UCHAR                           *memory;
 
   /* Get the pointer to the device. */
@@ -138,163 +100,127 @@ void DeviceBase::setup_device()
      control endpoint. */
   xfer = device->get_control_transfer();
 
-  /* Acquire a buffer for the size of the endpoint.  */
-  xfer -> data =
-        (UCHAR *)::malloc(UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
-
-  /* Ensure we have enough memory.  */
-  if (xfer -> data == nullptr)
-      status = UX_MEMORY_INSUFFICIENT;
-  else
-      status = UX_SUCCESS;
-
   ::memset(xfer -> data, 0, UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH);
 
   interfaces_found                   =  0;
   endpoints_found                    =  0;
   max_interface_number               =  0;
 
-  /* Go on to scan interfaces if no error.  */
-  if (status == UX_SUCCESS)
+ /* We need to determine the maximum number of interfaces and endpoints declared in the device framework.
+  This mechanism requires that both framework behave the same way regarding the number of interfaces
+  and endpoints.  */
+  device_framework        = fs_desc.get_desc();
+  device_framework_length = fs_desc.get_desc_len();
+
+  /* Reset all values we are using during the scanning of the framework.  */
+  local_interfaces_found             =  0;
+  local_endpoints_found              =  0;
+  endpoints_in_interface_found       =  0;
+
+  /* Parse the device framework and locate interfaces and endpoint descriptor(s).  */
+  while (device_framework_length != 0)
   {
 
-      /* We need to determine the maximum number of interfaces and endpoints declared in the device framework.
-      This mechanism requires that both framework behave the same way regarding the number of interfaces
-      and endpoints.  */
-      device_framework        = fs_desc.get_desc();
-      device_framework_length = fs_desc.get_desc_len();
+      /* Get the length of this descriptor.  */
+      descriptor_length =  (ULONG) *device_framework;
 
-      /* Reset all values we are using during the scanning of the framework.  */
-      local_interfaces_found             =  0;
-      local_endpoints_found              =  0;
-      endpoints_in_interface_found       =  0;
+      /* And its type.  */
+      descriptor_type =  *(device_framework + 1);
 
-      /* Parse the device framework and locate interfaces and endpoint descriptor(s).  */
-      while (device_framework_length != 0)
+      /* Check if this is an endpoint descriptor.  */
+      switch(descriptor_type)
       {
 
-          /* Get the length of this descriptor.  */
-          descriptor_length =  (ULONG) *device_framework;
+      case UX_INTERFACE_DESCRIPTOR_ITEM:
 
-          /* And its type.  */
-          descriptor_type =  *(device_framework + 1);
-
-          /* Check if this is an endpoint descriptor.  */
-          switch(descriptor_type)
+          /* Check if this is alternate setting 0. If not, do not add another interface found.
+          If this is alternate setting 0, reset the endpoints count for this interface.  */
+          if (*(device_framework + 3) == 0)
           {
-
-          case UX_INTERFACE_DESCRIPTOR_ITEM:
-
-              /* Check if this is alternate setting 0. If not, do not add another interface found.
-              If this is alternate setting 0, reset the endpoints count for this interface.  */
-              if (*(device_framework + 3) == 0)
-              {
-
-                  /* Add the cumulated number of endpoints in the previous interface.  */
-                  local_endpoints_found += endpoints_in_interface_found;
-
-                  /* Read the number of endpoints for this alternate setting.  */
-                  endpoints_in_interface_found = (ULONG) *(device_framework + 4);
-
-                  /* Increment the number of interfaces found in the current configuration.  */
-                  local_interfaces_found++;
-              }
-              else
-              {
-
-                  /* Compare the number of endpoints found in this non 0 alternate setting.  */
-                  if (endpoints_in_interface_found < (ULONG) *(device_framework + 4))
-
-                      /* Adjust the number of maximum endpoints in this interface.  */
-                      endpoints_in_interface_found = (ULONG) *(device_framework + 4);
-              }
-
-              /* Check and update max interface number.  */
-              if (*(device_framework + 2) > max_interface_number)
-                  max_interface_number = *(device_framework + 2);
-
-              break;
-
-          case UX_CONFIGURATION_DESCRIPTOR_ITEM:
-
-              /* Check if the number of interfaces found in this configuration is the maximum so far. */
-              if (local_interfaces_found > interfaces_found)
-
-                  /* We need to adjust the number of maximum interfaces.  */
-                  interfaces_found =  local_interfaces_found;
-
-              /* We have a new configuration. We need to reset the number of local interfaces. */
-              local_interfaces_found =  0;
 
               /* Add the cumulated number of endpoints in the previous interface.  */
               local_endpoints_found += endpoints_in_interface_found;
 
-              /* Check if the number of endpoints found in the previous configuration is the maximum so far. */
-              if (local_endpoints_found > endpoints_found)
+              /* Read the number of endpoints for this alternate setting.  */
+              endpoints_in_interface_found = (ULONG) *(device_framework + 4);
 
-                  /* We need to adjust the number of maximum endpoints.  */
-                  endpoints_found =  local_endpoints_found;
+              /* Increment the number of interfaces found in the current configuration.  */
+              local_interfaces_found++;
+          }
+          else
+          {
 
-              /* We have a new configuration. We need to reset the number of local endpoints. */
-              local_endpoints_found         =  0;
-              endpoints_in_interface_found  =  0;
+              /* Compare the number of endpoints found in this non 0 alternate setting.  */
+              if (endpoints_in_interface_found < (ULONG) *(device_framework + 4))
 
-              break;
-
-          default:
-              break;
+                  /* Adjust the number of maximum endpoints in this interface.  */
+                  endpoints_in_interface_found = (ULONG) *(device_framework + 4);
           }
 
-          /* Adjust what is left of the device framework.  */
-          device_framework_length -=  descriptor_length;
+          /* Check and update max interface number.  */
+          if (*(device_framework + 2) > max_interface_number)
+              max_interface_number = *(device_framework + 2);
 
-          /* Point to the next descriptor.  */
-          device_framework +=  descriptor_length;
+          break;
+
+      case UX_CONFIGURATION_DESCRIPTOR_ITEM:
+
+          /* Check if the number of interfaces found in this configuration is the maximum so far. */
+          if (local_interfaces_found > interfaces_found)
+
+              /* We need to adjust the number of maximum interfaces.  */
+              interfaces_found =  local_interfaces_found;
+
+          /* We have a new configuration. We need to reset the number of local interfaces. */
+          local_interfaces_found =  0;
+
+          /* Add the cumulated number of endpoints in the previous interface.  */
+          local_endpoints_found += endpoints_in_interface_found;
+
+          /* Check if the number of endpoints found in the previous configuration is the maximum so far. */
+          if (local_endpoints_found > endpoints_found)
+
+              /* We need to adjust the number of maximum endpoints.  */
+              endpoints_found =  local_endpoints_found;
+
+          /* We have a new configuration. We need to reset the number of local endpoints. */
+          local_endpoints_found         =  0;
+          endpoints_in_interface_found  =  0;
+
+          break;
+
+      default:
+          break;
       }
 
-      /* Add the cumulated number of endpoints in the previous interface.  */
-      local_endpoints_found += endpoints_in_interface_found;
+      /* Adjust what is left of the device framework.  */
+      device_framework_length -=  descriptor_length;
 
-      /* Check if the number of endpoints found in the previous interface is the maximum so far. */
-      if (local_endpoints_found > endpoints_found)
+      /* Point to the next descriptor.  */
+      device_framework +=  descriptor_length;
+  }
 
-          /* We need to adjust the number of maximum endpoints.  */
-          endpoints_found =  local_endpoints_found;
+  /* Add the cumulated number of endpoints in the previous interface.  */
+  local_endpoints_found += endpoints_in_interface_found;
+
+  /* Check if the number of endpoints found in the previous interface is the maximum so far. */
+  if (local_endpoints_found > endpoints_found)
+
+      /* We need to adjust the number of maximum endpoints.  */
+      endpoints_found =  local_endpoints_found;
 
 
-      /* Check if the number of interfaces found in this configuration is the maximum so far. */
-      if (local_interfaces_found > interfaces_found)
+  /* Check if the number of interfaces found in this configuration is the maximum so far. */
+  if (local_interfaces_found > interfaces_found)
 
-          /* We need to adjust the number of maximum interfaces.  */
-          interfaces_found =  local_interfaces_found;
+      /* We need to adjust the number of maximum interfaces.  */
+      interfaces_found =  local_interfaces_found;
 
-      /* We do a sanity check on the finding. At least there must be one interface but endpoints are
-      not necessary.  */
-      if (interfaces_found == 0)
-      {
-
-          /* Error trap. */
-          _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_INIT, UX_DESCRIPTOR_CORRUPTED);
-
-          /* If trace is enabled, insert this event into the trace buffer.  */
-          UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_DESCRIPTOR_CORRUPTED, device_framework, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-          status = UX_DESCRIPTOR_CORRUPTED;
-      }
-
-      /* We do a sanity check on the finding. Max interface number should not exceed limit.  */
-      if (status == UX_SUCCESS &&
-          max_interface_number >= UX_MAX_SLAVE_INTERFACES)
-      {
-
-          /* Error trap. */
-          _ux_system_error_handler(UX_SYSTEM_LEVEL_THREAD, UX_SYSTEM_CONTEXT_INIT, UX_MEMORY_INSUFFICIENT);
-
-          /* If trace is enabled, insert this event into the trace buffer.  */
-          UX_TRACE_IN_LINE_INSERT(UX_TRACE_ERROR, UX_MEMORY_INSUFFICIENT, device_framework, 0, 0, UX_TRACE_ERRORS, 0, 0)
-
-          status = UX_MEMORY_INSUFFICIENT;
-      }
+  /* We do a sanity check on the finding. At least there must be one interface but endpoints are
+  not necessary.  */
+  if (interfaces_found == 0)
+  {
+    throw std::runtime_error("Corrupted descriptor");
   }
 }
 
@@ -443,7 +369,6 @@ uint32_t DeviceBase::get_interface(uint8_t interface_value)
 {
 
 Transfer       *xfer;
-Interface      *iface;
 Endpoint       *endpoint;
 uint32_t                    retval;
 
@@ -513,20 +438,10 @@ void DeviceBase::uninitialize(void)
 
 uint32_t DeviceBase::set_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index)
 {
-  Interface      *iface;
   Endpoint       *endpoint;
-  Endpoint       *endpoint_target;
-
-    UX_PARAMETER_NOT_USED(request_value);
-
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_SET_FEATURE, request_value, request_index, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the device.  */
-    auto device =  _ux_system_slave->device;
 
     /* Get the control endpoint for the device.  */
-    endpoint = device->get_control_endpoint();
+    endpoint = get_control_endpoint();
 
     /* The feature can be for either the device or the endpoint.  */
     switch (request_type & UX_REQUEST_TARGET)
@@ -614,14 +529,10 @@ uint32_t DeviceBase::set_feature(uint32_t request_type, uint32_t request_value, 
 uint32_t DeviceBase::set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
     uint32_t alternate_setting_value)
 {
-Transfer       *transfer_request;
-Interface      *interface_link;
-ULONG                   interfaces_pool_number;
 Endpoint       *endpoint;
 ULONG                   descriptor_length;
 UCHAR                   descriptor_type;
 UINT                    status;
-ULONG                   max_transfer_length, n_trans;
 
     /* Get the pointer to the device.  */
     auto device = _ux_system_slave ->device;
@@ -715,9 +626,7 @@ ULONG                   max_transfer_length, n_trans;
 
 uint32_t  DeviceBase::clear_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index)
 {
-Interface      *iface;
-Endpoint       *endpoint;
-Endpoint       *endpoint_target;
+  Endpoint       *endpoint;
 
     UX_PARAMETER_NOT_USED(request_value);
 

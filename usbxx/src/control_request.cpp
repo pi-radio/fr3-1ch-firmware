@@ -5,6 +5,22 @@
 
 using namespace USBXX;
 
+#if 0
+UCHAR _ux_system_slave_class_storage_name[] =                               "ux_slave_class_storage";
+UCHAR _ux_system_slave_class_dpump_name[] =                                 "ux_slave_class_dpump";
+UCHAR _ux_system_slave_class_pima_name[] =                                  "ux_slave_class_pima";
+UCHAR _ux_system_slave_class_hid_name[] =                                   "ux_slave_class_hid";
+UCHAR _ux_system_slave_class_rndis_name[] =                                 "ux_slave_class_rndis";
+UCHAR _ux_system_slave_class_cdc_ecm_name[] =                               "ux_slave_class_cdc_ecm";
+UCHAR _ux_system_slave_class_dfu_name[] =                                   "ux_slave_class_dfu";
+UCHAR _ux_system_slave_class_audio_name[] =                                 "ux_slave_class_audio";
+
+UCHAR _ux_system_device_class_printer_name[] =                              "ux_device_class_printer";
+UCHAR _ux_system_device_class_ccid_name[] =                                 "ux_device_class_ccid";
+UCHAR _ux_system_device_class_video_name[] =                                "ux_device_class_video";
+#endif
+
+
 uint32_t DeviceBase::process_control_event(Transfer *xfer)
 {
 
@@ -168,7 +184,7 @@ ULONG                       application_data_length;
 
         case UX_GET_STATUS:
 
-            status =  _ux_device_stack_get_status(request_type, request_index, request_length);
+            status = get_entity_status(request_type, request_index, request_length);
             break;
 
         case UX_CLEAR_FEATURE:
@@ -248,3 +264,82 @@ ULONG                       application_data_length;
     return(status);
 }
 
+uint32_t DeviceBase::get_entity_status(uint32_t request_type, uint32_t request_index, uint32_t request_length)
+{
+Transfer       *xfer;
+UINT                    status;
+ULONG                   data_length;
+
+    /* Get the pointer to the device.  */
+    auto device = _ux_system_slave->device;
+
+    /* Get the control endpoint for the device.  */
+    auto endpoint =  device -> get_control_endpoint();
+
+    /* Get the pointer to the transfer request associated with the endpoint.  */
+    xfer = device->get_control_transfer();
+
+    /* Reset the status buffer.  */
+    *xfer -> data =  0;
+    *(xfer -> data + 1) =  0;
+
+    /* The default length for GET_STATUS is 2, except for OTG get Status.  */
+    data_length = 2;
+
+    /* The status can be for either the device or the endpoint.  */
+    switch (request_type & UX_REQUEST_TARGET)
+    {
+
+    case UX_REQUEST_TARGET_DEVICE:
+
+        /* When the device is probed, it is either for the power/remote capabilities or OTG role swap.
+           We differentiate with the Windex, 0 or OTG status Selector.  */
+        if (request_index == UX_OTG_STATUS_SELECTOR)
+        {
+
+            /* Set the data length to 1.  */
+            data_length = 1;
+
+        }
+        else
+        {
+
+            /* Store the current power state in the status buffer. */
+            if (_ux_system_slave -> ux_system_slave_power_state == UX_DEVICE_SELF_POWERED)
+                *xfer -> data =  1;
+
+            /* Store the remote wakeup capability state in the status buffer.  */
+
+            if (_ux_system_slave -> ux_system_slave_remote_wakeup_enabled)
+                *xfer -> data |=  2;
+        }
+
+        break;
+
+    case UX_REQUEST_TARGET_ENDPOINT:
+    {
+      auto tgt = device->dcd->get_endpoint(request_index);
+
+      if (tgt->is_stalled()) {
+        *xfer -> data = 1;
+      }
+
+      break;
+    }
+
+    default:
+        endpoint->stall();
+
+        /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
+        return 0;
+    }
+
+    /* Set the phase of the transfer to data out.  */
+    xfer -> phase =  TransferPhase::DATA_OUT;
+
+    /* Send the descriptor with the appropriate length to the host.  */
+    status = device->transfer_request(xfer, data_length, data_length);
+
+    /* Return the function status.  */
+    return(status);
+}
