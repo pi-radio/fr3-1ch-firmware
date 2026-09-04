@@ -129,7 +129,6 @@ namespace USBXX
     virtual void start_system() {}
     virtual void setup_device();
     virtual void class_init() {}
-    virtual void register_class() {}
     virtual void start_app() {}
 
     virtual uint32_t on_attached() { return 0; }
@@ -187,6 +186,12 @@ namespace USBXX
 
     uint32_t get_interface(uint8_t interface_value);
 
+    uint32_t register_class(const std::string &class_name,
+                            uint32_t (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
+                            uint32_t configuration_number,
+                            uint32_t interface_number,
+                            void *parameter);
+
     void uninitialize(void);
 
     std::shared_ptr<Interface> find_interface(uint8_t ifno) {
@@ -199,16 +204,14 @@ namespace USBXX
     }
   };
 
+
+
   UINT    ux_device_class_storage_entry(UX_SLAVE_CLASS_COMMAND *command);
 
   UINT    ux_device_stack_class_unregister(UCHAR *class_name,
                                       UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
   UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
-  UINT    _ux_device_stack_class_register(const std::string &class_name,
-                      UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
-                      ULONG configuration_number,
-                      ULONG interface_number,
-                      VOID *parameter);
+
 
 
   template <size_t system_stack_size, size_t app_stack_size>

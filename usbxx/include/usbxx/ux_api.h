@@ -2417,7 +2417,6 @@ typedef struct UX_HOST_CLASS_DPUMP_STRUCT
 
 #else
 
-#define ux_device_stack_class_register                          _ux_device_stack_class_register
 #define ux_device_stack_class_unregister                        _ux_device_stack_class_unregister
 #define ux_device_stack_initialize                              _ux_device_stack_initialize
 

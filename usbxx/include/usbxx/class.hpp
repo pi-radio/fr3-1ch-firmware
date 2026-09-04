@@ -39,7 +39,7 @@ namespace USBXX
       std::string  name; /* "+1" for string null-terminator */
 
       UINT            ux_slave_class_status;
-      UINT            (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND *);
+      uint32_t        (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND *);
       VOID            *ux_slave_class_instance;
       VOID            *ux_slave_class_client;
       UX_THREAD       ux_slave_class_thread;

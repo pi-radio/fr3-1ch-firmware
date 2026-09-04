@@ -218,9 +218,7 @@ namespace USBXX
     
     static CDCACMDevice *stupid_global;
 
-    void register_class() override;
-
-    UINT device_entry(UX_SLAVE_CLASS_COMMAND *);
+    uint32_t device_entry(UX_SLAVE_CLASS_COMMAND *);
     UINT acm_initialize(UX_SLAVE_CLASS_COMMAND *);
     UINT acm_uninitialize(UX_SLAVE_CLASS_COMMAND *);
     UINT activate(UX_SLAVE_CLASS_COMMAND *);
@@ -232,7 +230,7 @@ namespace USBXX
     UINT read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length);
     UINT write(UCHAR *buffer, ULONG requested_length, ULONG *actual_length);
 
-    static UINT _device_entry(UX_SLAVE_CLASS_COMMAND *);
+    static uint32_t _device_entry(UX_SLAVE_CLASS_COMMAND *);
 
     static constexpr int RX_QUEUE_LEN = 64;
     static constexpr int TX_QUEUE_LEN = 64;

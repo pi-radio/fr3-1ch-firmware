@@ -230,7 +230,6 @@ void DeviceBase::start()
   try {
     start_system();
     setup_device();
-    register_class();
     class_init();
     start_app();
   } catch(std::runtime_error &e) {
@@ -290,11 +289,11 @@ void DeviceBase::disconnect()
     device->on_removed();
 }
 
-UINT USBXX::_ux_device_stack_class_register(const std::string &class_name,
-                        UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
-                        ULONG configuration_number,
-                        ULONG interface_number,
-                        VOID *parameter)
+uint32_t DeviceBase::register_class(const std::string &class_name,
+                        uint32_t (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
+                        uint32_t configuration_number,
+                        uint32_t interface_number,
+                        void *parameter)
 {
 
 UX_SLAVE_CLASS              *class_inst;

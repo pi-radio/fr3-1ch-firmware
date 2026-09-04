@@ -73,6 +73,20 @@ void CDCACMDevice::set_rts(bool rts)
 
 void CDCACMDevice::class_init()
 {
+  cdc_acm_configuration_number = get_configuration_number(CLASS_TYPE_CDC_ACM, 0);
+
+  cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
+
+  /* Initialize the device cdc acm class */
+  if (register_class("cdc_acm",
+                     _device_entry,
+                     cdc_acm_configuration_number,
+                     cdc_acm_interface_number,
+                     NULL) != UX_SUCCESS)
+  {
+    throw std::runtime_error("Failed to register CDC ACM class");
+  }
+
   tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
   tx_queue.create();
   tx_thread.create();
@@ -188,25 +202,7 @@ void CDCACMDevice::_tx_thread()
 #include <usb.h>
 #include <usbxx/ux_device_descriptors.h>
 
-void USBXX::CDCACMDevice::register_class()
-{
-  cdc_acm_configuration_number = get_configuration_number(CLASS_TYPE_CDC_ACM, 0);
-
-  cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
-
-  /* Initialize the device cdc acm class */
-  if (ux_device_stack_class_register("cdc_acm",
-                                     _device_entry,
-                                     cdc_acm_configuration_number,
-                                     cdc_acm_interface_number,
-                                     NULL) != UX_SUCCESS)
-  {
-    throw std::runtime_error("Failed to register CDC ACM class");
-  }
-
-}
-
-UINT USBXX::CDCACMDevice::device_entry(UX_SLAVE_CLASS_COMMAND *command)
+uint32_t USBXX::CDCACMDevice::device_entry(UX_SLAVE_CLASS_COMMAND *command)
 {
   /* The command request will tell us we need to do here, either a enumeration
      query, an activation or a deactivation.  */
@@ -238,7 +234,7 @@ UINT USBXX::CDCACMDevice::device_entry(UX_SLAVE_CLASS_COMMAND *command)
   }
 }
 
-UINT USBXX::CDCACMDevice::_device_entry(UX_SLAVE_CLASS_COMMAND *command)
+uint32_t USBXX::CDCACMDevice::_device_entry(UX_SLAVE_CLASS_COMMAND *command)
 {
   return stupid_global->device_entry(command);
 }
