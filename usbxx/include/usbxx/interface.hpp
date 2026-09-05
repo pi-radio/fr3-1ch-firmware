@@ -10,17 +10,18 @@
 namespace USBXX
 {
   class DeviceBase;
-  class UX_SLAVE_CLASS;
+  class USBClass;
 
   struct Interface : public std::enable_shared_from_this<Interface>
   {
+    using ptr = std::shared_ptr<Interface>;
+
     DeviceBase *device;
     ULONG           status;
-    UX_SLAVE_CLASS  *usb_class;
+    USBClass  *usb_class;
     VOID            *class_instance;
 
     USBXX::InterfaceDescriptor descriptor;
-    Interface       *next_interface;
 
 
     std::vector<USBXX::Endpoint *> endpoints;

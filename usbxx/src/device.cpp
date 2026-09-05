@@ -84,14 +84,14 @@ void DeviceBase::setup_device()
   UX_SYSTEM_DEVICE_MAX_CLASS_SET(UX_MAX_SLAVE_CLASS_DRIVER);
 
   /* Allocate memory for the classes.
-   * sizeof(UX_SLAVE_CLASS) * UX_MAX_SLAVE_CLASS_DRIVER) overflow is checked
+   * sizeof(USBClass) * UX_MAX_SLAVE_CLASS_DRIVER) overflow is checked
    * outside of the function.
    */
-  memory = (uint8_t *)::malloc(sizeof(UX_SLAVE_CLASS) * UX_MAX_SLAVE_CLASS_DRIVER);
+  memory = (uint8_t *)::malloc(sizeof(USBClass) * UX_MAX_SLAVE_CLASS_DRIVER);
   if (memory == nullptr)
     throw std::runtime_error("Unable to allocate room for class entries");
 
-  ::memset(classes, 0, sizeof(UX_SLAVE_CLASS) * UX_MAX_SLAVE_CLASS_DRIVER);
+  ::memset(classes, 0, sizeof(USBClass) * UX_MAX_SLAVE_CLASS_DRIVER);
 
   /* Save this memory allocation in the USBX project.  */
   _ux_system_slave -> ux_system_slave_class_array = classes;
@@ -243,8 +243,7 @@ void DeviceBase::start()
 
 void DeviceBase::disconnect()
 {
-  UX_SLAVE_CLASS              *class_ptr;
-  UX_SLAVE_CLASS_COMMAND      class_command;
+  USBClass              *class_ptr;
 
     /* Get the pointer to the device.  */
     auto device =  _ux_system_slave->device;
@@ -256,18 +255,10 @@ void DeviceBase::disconnect()
     {
         /* Get the pointer to the first interface.  */
         for (auto iface : interfaces) {
-          class_command.ux_slave_class_command_request =   UX_SLAVE_CLASS_COMMAND_DEACTIVATE;
-          class_command.ux_slave_class_command_interface =  iface;
-
-          /* Get the pointer to the class container of this interface.  */
           class_ptr =  iface -> usb_class;
 
-          /* Store the class container. */
-          class_command.ux_slave_class_command_class_ptr =  class_ptr;
-
-          /* If there is a class container for this instance, deactivate it.  */
           if (class_ptr != nullptr)
-              class_ptr -> ux_slave_class_entry_function(&class_command);
+              /*class_ptr ->*/ class_deactivate();
 
           iface->stop();
       }
@@ -290,21 +281,14 @@ void DeviceBase::disconnect()
 }
 
 uint32_t DeviceBase::register_class(const std::string &class_name,
-                        uint32_t (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
                         uint32_t configuration_number,
                         uint32_t interface_number,
                         void *parameter)
 {
+  USBClass *class_inst;
+  UINT     status;
 
-UX_SLAVE_CLASS              *class_inst;
-UINT                        status;
-UX_SLAVE_CLASS_COMMAND      command;
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-ULONG                       class_index;
-#endif
-
-    /* Get first class.  */
-    class_inst =  _ux_system_slave -> ux_system_slave_class_array;
+  class_inst =  _ux_system_slave -> ux_system_slave_class_array;
 
 #if UX_MAX_SLAVE_CLASS_DRIVER > 1
     /* We need to parse the class table to find an empty spot.  */
@@ -313,42 +297,22 @@ ULONG                       class_index;
 #endif
 
         /* Check if this class is already used.  */
-        if (class_inst -> ux_slave_class_status == UX_UNUSED)
+        if (class_inst -> status == UX_UNUSED)
         {
-
-#if defined(UX_NAME_REFERENCED_BY_POINTER)
-            class_inst -> ux_slave_class_name = (const UCHAR *)class_name;
-#else
-            /* We have found a free container for the class. Copy the name (with null-terminator).  */
            class_inst->name = class_name;
-#endif
-
-            /* Memorize the entry function of this class.  */
-            class_inst -> ux_slave_class_entry_function =  class_entry_function;
-
-            /* Memorize the pointer to the application parameter.  */
-            class_inst -> ux_slave_class_interface_parameter =  parameter;
-
-            /* Memorize the configuration number on which this instance will be called.  */
-            class_inst -> ux_slave_class_configuration_number =  configuration_number;
-
-            /* Memorize the interface number on which this instance will be called.  */
-            class_inst -> ux_slave_class_interface_number =  interface_number;
-
-            /* Build all the fields of the Class Command to initialize the class.  */
-            command.ux_slave_class_command_request    =  UX_SLAVE_CLASS_COMMAND_INITIALIZE;
-            command.ux_slave_class_command_parameter  =  parameter;
-            command.ux_slave_class_command_class_ptr  =  class_inst;
+            class_inst -> interface_parameter =  parameter;
+            class_inst -> configuration_number =  configuration_number;
+            class_inst -> interface_number =  interface_number;
 
             /* Call the class initialization routine.  */
-            status = class_entry_function(&command);
+            status = /* class_inst-> */ class_initialize();
 
             /* Check the status.  */
             if (status != UX_SUCCESS)
                 return(status);
 
             /* Make this class used now.  */
-            class_inst -> ux_slave_class_status = UX_USED;
+            class_inst -> status = UX_USED;
 
             /* Return successful completion.  */
             return 0;

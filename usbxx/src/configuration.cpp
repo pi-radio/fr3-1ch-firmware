@@ -44,8 +44,7 @@ UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor;
 InterfaceDescriptor         interface_descriptor;
 Endpoint               *endpoint;
-UX_SLAVE_CLASS_COMMAND          class_command;
-UX_SLAVE_CLASS                  *class_ptr;
+USBClass                  *class_ptr;
 UINT                            status;
 
     /* Protocol error must be reported when it's unconfigured */
@@ -207,25 +206,16 @@ UINT                            status;
                             class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[iface -> descriptor.bInterfaceNumber];
 
                             /* Check if class driver is available. */
-                            if (class_ptr == nullptr || class_ptr -> ux_slave_class_status == UX_UNUSED)
+                            if (class_ptr == nullptr || class_ptr -> status == UX_UNUSED)
                             {
 
                                 return (UX_NO_CLASS_MATCH);
                             }
-
-                            /* The interface attached to this configuration must be changed at the class
-                               level.  */
-                            class_command.ux_slave_class_command_request   = UX_SLAVE_CLASS_COMMAND_CHANGE;
-                            class_command.ux_slave_class_command_interface = iface;
-
-                            /* And store it.  */
-                            class_command.ux_slave_class_command_class_ptr =  class_ptr;
-
                             /* We can now memorize the interface pointer associated with this class.  */
-                            class_ptr -> ux_slave_class_interface = iface;
+                            class_ptr -> interface = iface;
 
                             /* We have found a potential candidate. Call this registered class entry function to change the alternate setting.  */
-                            status = class_ptr -> ux_slave_class_entry_function(&class_command);
+                            status = /* class_ptr -> */ class_on_change();
 
                             /* We are done here.  */
                             return(status);
@@ -281,9 +271,8 @@ ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor = { 0 };
 InterfaceDescriptor         interface_descriptor;
-UX_SLAVE_CLASS                  *class_inst;
-UX_SLAVE_CLASS                  *current_class =  nullptr;
-UX_SLAVE_CLASS_COMMAND          class_command;
+USBClass                  *class_inst;
+USBClass                  *current_class =  nullptr;
 ULONG                           iad_flag;
 ULONG                           iad_first_interface =  0;
 ULONG                           iad_number_interfaces =  0;
@@ -339,23 +328,11 @@ ULONG                           class_index;
     if (configuration_selected)
     {
       for (auto iface : interfaces) {
-          /* Build all the fields of the Class Command.  */
-          class_command.ux_slave_class_command_request =   UX_SLAVE_CLASS_COMMAND_DEACTIVATE;
-          class_command.ux_slave_class_command_interface = iface;
-
-          /* Get the pointer to the class container of this interface.  */
           class_inst =  iface -> usb_class;
 
-          /* Store the class container. */
-          class_command.ux_slave_class_command_class_ptr =  class_inst;
-
-          /* If there is a class container for this instance, deactivate it.  */
           if (class_inst != nullptr)
+              /*class_inst -> */ class_deactivate();
 
-              /* Call the class with the DEACTIVATE signal.  */
-              class_inst -> ux_slave_class_entry_function(&class_command);
-
-          /* Remove the interface and all endpoints associated with it.  */
           iface->stop();
       }
 
@@ -444,12 +421,12 @@ ULONG                           class_index;
 #endif
 
                             /* Check if this class driver is used.  */
-                            if (class_inst -> ux_slave_class_status == UX_USED)
+                            if (class_inst -> status == UX_USED)
                             {
 
                                 /* Check if this is the same interface for the same configuration. */
-                                if ((interface_descriptor.bInterfaceNumber == class_inst -> ux_slave_class_interface_number) &&
-                                    (configuration_value == class_inst -> ux_slave_class_configuration_number))
+                                if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
+                                    (configuration_value == class_inst -> configuration_number))
                                 {
 
                                     /* Memorize the class in the class/interface array.  */
@@ -499,12 +476,12 @@ ULONG                           class_index;
 #endif
 
                         /* Check if this class driver is used.  */
-                        if (class_inst -> ux_slave_class_status == UX_USED)
+                        if (class_inst -> status == UX_USED)
                         {
 
                             /* Check if this is the same interface for the same configuration. */
-                            if ((interface_descriptor.bInterfaceNumber == class_inst -> ux_slave_class_interface_number) &&
-                                    (configuration_value == class_inst -> ux_slave_class_configuration_number))
+                            if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
+                                    (configuration_value == class_inst -> configuration_number))
                             {
 
                                 /* Memorize the class in the class/interface array.  */

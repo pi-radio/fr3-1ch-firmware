@@ -34,38 +34,19 @@ namespace USBXX
 
   /* Define USBX Device Class container structure.  */
 
-  struct UX_SLAVE_CLASS
+  struct USBClass
   {
       std::string  name; /* "+1" for string null-terminator */
 
-      UINT            ux_slave_class_status;
-      uint32_t        (*ux_slave_class_entry_function) (struct UX_SLAVE_CLASS_COMMAND *);
-      VOID            *ux_slave_class_instance;
-      VOID            *ux_slave_class_client;
-      UX_THREAD       ux_slave_class_thread;
-      VOID            *ux_slave_class_thread_stack;
-      VOID            *ux_slave_class_interface_parameter;
-      ULONG           ux_slave_class_interface_number;
-      ULONG           ux_slave_class_configuration_number;
-      std::shared_ptr<Interface>       ux_slave_class_interface;
-
-  };
-
-  struct UX_SLAVE_CLASS_COMMAND
-  {
-
-      UINT            ux_slave_class_command_request;
-      VOID            *ux_slave_class_command_container;
-      std::shared_ptr<Interface> ux_slave_class_command_interface;
-      UINT            ux_slave_class_command_pid;
-      UINT            ux_slave_class_command_vid;
-      UINT            ux_slave_class_command_class;
-      UINT            ux_slave_class_command_subclass;
-      UINT            ux_slave_class_command_protocol;
-      UX_SLAVE_CLASS
-                      *ux_slave_class_command_class_ptr;
-      VOID            *ux_slave_class_command_parameter;
-      VOID            *ux_slave_class_command_interface_number;
+      UINT            status;
+      VOID            *instance;
+      VOID            *client;
+      UX_THREAD       thread;
+      VOID            *thread_stack;
+      VOID            *interface_parameter;
+      ULONG           interface_number;
+      ULONG           configuration_number;
+      std::shared_ptr<Interface>       interface;
 
   };
 
@@ -103,11 +84,11 @@ namespace USBXX
     std::string name;
     CompositeClass clsno;
 
-    //void *ux_slave_class_client;
-    //UX_THREAD          ux_slave_class_thread;
-    //VOID               *ux_slave_class_thread_stack;
-    //ULONG              ux_slave_class_interface_number;
-    //ULONG              ux_slave_class_configuration_number;
+    //void *client;
+    //UX_THREAD          thread;
+    //VOID               *thread_stack;
+    //ULONG              interface_number;
+    //ULONG              configuration_number;
     Interface *interface;
 
     DeviceClass(DeviceBase &_device,

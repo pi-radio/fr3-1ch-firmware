@@ -31,8 +31,8 @@ struct UX_SYSTEM_SLAVE
     USBXX::DeviceBase *device;
     UCHAR           *ux_system_slave_dfu_framework;
     ULONG           ux_system_slave_dfu_framework_length;
-    USBXX::UX_SLAVE_CLASS  *ux_system_slave_class_array;
-    USBXX::UX_SLAVE_CLASS  *ux_system_slave_interface_class_array[UX_MAX_SLAVE_INTERFACES];
+    USBXX::USBClass  *ux_system_slave_class_array;
+    USBXX::USBClass  *ux_system_slave_interface_class_array[UX_MAX_SLAVE_INTERFACES];
     ULONG           ux_system_slave_speed;
     ULONG           ux_system_slave_power_state;
     ULONG           ux_system_slave_remote_wakeup_capability;
@@ -56,7 +56,7 @@ namespace USBXX
 
     uint32_t on_change(uint32_t);
 
-    UX_SLAVE_CLASS classes[UX_MAX_SLAVE_CLASS_DRIVER];
+    USBClass classes[UX_MAX_SLAVE_CLASS_DRIVER];
 
     Descriptor  fs_desc;
     Descriptor  hs_desc;
@@ -187,7 +187,6 @@ namespace USBXX
     uint32_t get_interface(uint8_t interface_value);
 
     uint32_t register_class(const std::string &class_name,
-                            uint32_t (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *),
                             uint32_t configuration_number,
                             uint32_t interface_number,
                             void *parameter);
@@ -202,16 +201,27 @@ namespace USBXX
 
       return nullptr;
     }
+
+
+    // MOVE THESE HORRIBLE FUNCTIONS
+    virtual uint32_t class_initialize() = 0;
+    virtual uint32_t class_uninitialize() = 0;
+    virtual uint32_t class_activate(Interface::ptr) = 0;
+    virtual uint32_t class_deactivate() = 0;
+    virtual bool class_query(Interface::ptr) = 0;
+    virtual uint32_t class_command_request() = 0;
+    virtual uint32_t class_on_change() { return 0; }
   };
 
 
 
-  UINT    ux_device_class_storage_entry(UX_SLAVE_CLASS_COMMAND *command);
+  //UINT    ux_device_class_storage_entry(USBClass_COMMAND *command);
 
+  /*
   UINT    ux_device_stack_class_unregister(UCHAR *class_name,
-                                      UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
-  UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(UX_SLAVE_CLASS_COMMAND *));
-
+                                      UINT (*class_entry_function)(USBClass_COMMAND *));
+  UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(USBClass_COMMAND *));
+  */
 
 
   template <size_t system_stack_size, size_t app_stack_size>

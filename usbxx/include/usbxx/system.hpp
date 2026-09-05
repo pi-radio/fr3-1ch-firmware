@@ -46,8 +46,8 @@ namespace USBXX {
   #if UX_MAX_SLAVE_CLASS_DRIVER > 1
     UINT            max_class;
   #endif
-    UX_SLAVE_CLASS  *class_array;
-    UX_SLAVE_CLASS  *interface_class_array[UX_MAX_SLAVE_INTERFACES];
+    USBClass  *class_array;
+    USBClass  *interface_class_array[UX_MAX_SLAVE_INTERFACES];
     ULONG           speed;
     ULONG           power_state;
     ULONG           remote_wakeup_capability;

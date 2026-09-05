@@ -79,7 +79,6 @@ void CDCACMDevice::class_init()
 
   /* Initialize the device cdc acm class */
   if (register_class("cdc_acm",
-                     _device_entry,
                      cdc_acm_configuration_number,
                      cdc_acm_interface_number,
                      NULL) != UX_SUCCESS)
@@ -90,6 +89,11 @@ void CDCACMDevice::class_init()
   tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
   tx_queue.create();
   tx_thread.create();
+}
+
+bool CDCACMDevice::class_query(Interface::ptr iface)
+{
+  return iface->descriptor.bInterfaceClass == 10; // TODO -- Make a constant
 }
 
 void CDCACMDevice::flush()
@@ -202,73 +206,31 @@ void CDCACMDevice::_tx_thread()
 #include <usb.h>
 #include <usbxx/ux_device_descriptors.h>
 
-uint32_t USBXX::CDCACMDevice::device_entry(UX_SLAVE_CLASS_COMMAND *command)
+
+uint32_t USBXX::CDCACMDevice::class_initialize()
 {
-  /* The command request will tell us we need to do here, either a enumeration
-     query, an activation or a deactivation.  */
-  switch (command->ux_slave_class_command_request)
-  {
-  case UX_SLAVE_CLASS_COMMAND_INITIALIZE:
-    return acm_initialize(command);
-
-  case UX_SLAVE_CLASS_COMMAND_UNINITIALIZE:
-    return acm_uninitialize(command);
-
-  case UX_SLAVE_CLASS_COMMAND_QUERY:
-    if (command -> ux_slave_class_command_class == UX_SLAVE_CLASS_CDC_ACM_CLASS)
-        return 0;
-    else
-        return(UX_NO_CLASS_MATCH);
-
-  case UX_SLAVE_CLASS_COMMAND_ACTIVATE:
-    return activate(command);
-
-  case UX_SLAVE_CLASS_COMMAND_DEACTIVATE:
-    return deactivate(command);
-
-  case UX_SLAVE_CLASS_COMMAND_REQUEST:
-    return control_request(command);
-
-  default:
-    return(UX_FUNCTION_NOT_SUPPORTED);
-  }
-}
-
-uint32_t USBXX::CDCACMDevice::_device_entry(UX_SLAVE_CLASS_COMMAND *command)
-{
-  return stupid_global->device_entry(command);
-}
-
-UINT USBXX::CDCACMDevice::acm_initialize(UX_SLAVE_CLASS_COMMAND *command)
-{
-  UX_SLAVE_CLASS *class_ptr;
-
-  class_ptr = command->ux_slave_class_command_class_ptr;
-
-  class_ptr->ux_slave_class_instance = this;
-
   /* Update the line coding fields with default values.  */
-  baudrate  =  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE;
-  stop_bit  =  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT;
-  parity    =  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY;
-  data_bit  =  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT;
+  baudrate  =  USBClass_CDC_ACM_LINE_CODING_BAUDRATE;
+  stop_bit  =  USBClass_CDC_ACM_LINE_CODING_STOP_BIT;
+  parity    =  USBClass_CDC_ACM_LINE_CODING_PARITY;
+  data_bit  =  USBClass_CDC_ACM_LINE_CODING_DATA_BIT;
 
   return 0;
 }
-UINT USBXX::CDCACMDevice::acm_uninitialize(UX_SLAVE_CLASS_COMMAND *command)
+
+uint32_t USBXX::CDCACMDevice::class_uninitialize()
 {
   return 0;
 }
 
 
-UINT USBXX::CDCACMDevice::activate(UX_SLAVE_CLASS_COMMAND *command)
+uint32_t USBXX::CDCACMDevice::class_activate(std::shared_ptr<Interface> iface)
 {
-    auto iface = command->ux_slave_class_command_interface;
+  if (iface->descriptor.bNumEndpoints != 2)
+    return 0;
 
-    /* Store the class instance into the interface.  */
     iface -> class_instance =  (VOID *)this;
 
-    /* Now the opposite, store the interface in the class instance.  */
     cdc_acm_interface = iface;
 
     for (auto endpoint : iface->endpoints) {
@@ -283,14 +245,14 @@ UINT USBXX::CDCACMDevice::activate(UX_SLAVE_CLASS_COMMAND *command)
     return 0;
 }
 
-UINT USBXX::CDCACMDevice::deactivate(UX_SLAVE_CLASS_COMMAND *command)
+uint32_t USBXX::CDCACMDevice::class_deactivate()
 {
   /* Terminate the transactions pending on the endpoints.  */
   in_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
   out_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
 
   /* Terminate transmission and free resources.  */
-  ioctl(UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP, UX_NULL);
+  ioctl(USBClass_CDC_ACM_IOCTL_TRANSMISSION_STOP, UX_NULL);
 
   /* We need to reset the DTR and RTS values so they do not carry over to the
      next connection.  */
@@ -300,9 +262,9 @@ UINT USBXX::CDCACMDevice::deactivate(UX_SLAVE_CLASS_COMMAND *command)
   return 0;
 }
 
-UINT USBXX::CDCACMDevice::control_request(UX_SLAVE_CLASS_COMMAND *command)
+uint32_t USBXX::CDCACMDevice::class_command_request()
 {
-  //UX_SLAVE_CLASS                          *class_ptr;
+  //USBClass                          *class_ptr;
   Transfer                       *xfer;
   ULONG                                   request;
   ULONG                                   value;
@@ -327,32 +289,32 @@ UINT USBXX::CDCACMDevice::control_request(UX_SLAVE_CLASS_COMMAND *command)
     switch (request)
     {
 
-        case UX_SLAVE_CLASS_CDC_ACM_SET_CONTROL_LINE_STATE:
+        case USBClass_CDC_ACM_SET_CONTROL_LINE_STATE:
             dtr_state = 0;
             rts_state = 0;
 
             /* Get the line state parameters from the host.  DTR signal. */
-            if (value & UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_DTR)
+            if (value & USBClass_CDC_ACM_LINE_STATE_DTR)
                 dtr_state = UX_TRUE;
 
             /* Get the line state parameters from the host.  RTS signal. */
-            if (value & UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_RTS)
+            if (value & USBClass_CDC_ACM_LINE_STATE_RTS)
                 rts_state = UX_TRUE;
 
             break ;
 
-        case UX_SLAVE_CLASS_CDC_ACM_GET_LINE_CODING:
+        case USBClass_CDC_ACM_GET_LINE_CODING:
 
             /* Setup the length appropriately.  */
-            if (request_length >  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
-                transmit_length = UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
+            if (request_length >  USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
+                transmit_length = USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
 
             /* Send the line coding default parameters back to the host.  */
-            usb_put_long(xfer->data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
+            usb_put_long(xfer->data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
                                  baudrate);
-            *(xfer->data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
-            *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
-            *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
+            *(xfer->data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
+            *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
+            *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
 
             /* Set the phase of the transfer to data out.  */
             xfer -> phase =  TransferPhase::DATA_OUT;
@@ -361,13 +323,13 @@ UINT USBXX::CDCACMDevice::control_request(UX_SLAVE_CLASS_COMMAND *command)
             transfer_request(xfer, transmit_length, request_length);
             break;
 
-        case UX_SLAVE_CLASS_CDC_ACM_SET_LINE_CODING:
+        case USBClass_CDC_ACM_SET_LINE_CODING:
 
             /* Get the line coding parameters from the host.  */
-            baudrate  = usb_get_long(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
-            stop_bit  = *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
-            parity    = *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARITY_STRUCT);
-            data_bit  = *(xfer -> data + UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
+            baudrate  = usb_get_long(xfer -> data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
+            stop_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
+            parity    = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT);
+            data_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
 
             break ;
 
@@ -535,8 +497,8 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
                           VOID *parameter)
 {
   UINT status;
-  UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
-  UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *line_state;
+  USBClass_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
+  USBClass_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint *endpoint;
   Transfer *xfer;
 
@@ -546,54 +508,54 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
   /* The command request will tell us what we need to do here.  */
   switch (ioctl_function)
   {
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_LINE_CODING:
-    line_coding = (UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *) parameter;
+  case USBClass_CDC_ACM_IOCTL_SET_LINE_CODING:
+    line_coding = (USBClass_CDC_ACM_LINE_CODING_PARAMETER *) parameter;
 
-    baudrate  =  line_coding -> ux_slave_class_cdc_acm_parameter_baudrate;
-    stop_bit  =  line_coding -> ux_slave_class_cdc_acm_parameter_stop_bit;
-    parity    =  line_coding -> ux_slave_class_cdc_acm_parameter_parity;
-    data_bit  =  line_coding -> ux_slave_class_cdc_acm_parameter_data_bit;
+    baudrate  =  line_coding -> cdc_acm_parameter_baudrate;
+    stop_bit  =  line_coding -> cdc_acm_parameter_stop_bit;
+    parity    =  line_coding -> cdc_acm_parameter_parity;
+    data_bit  =  line_coding -> cdc_acm_parameter_data_bit;
 
     break;
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_GET_LINE_CODING:
+  case USBClass_CDC_ACM_IOCTL_GET_LINE_CODING:
 
     /* Properly cast the parameter pointer.  */
-    line_coding = (UX_SLAVE_CLASS_CDC_ACM_LINE_CODING_PARAMETER *) parameter;
+    line_coding = (USBClass_CDC_ACM_LINE_CODING_PARAMETER *) parameter;
 
     /* Save the parameters in the cdc_acm function.  */
-    line_coding->ux_slave_class_cdc_acm_parameter_baudrate = baudrate;
-    line_coding->ux_slave_class_cdc_acm_parameter_stop_bit = stop_bit;
-    line_coding->ux_slave_class_cdc_acm_parameter_parity   = parity;
-    line_coding->ux_slave_class_cdc_acm_parameter_data_bit = data_bit;
+    line_coding->cdc_acm_parameter_baudrate = baudrate;
+    line_coding->cdc_acm_parameter_stop_bit = stop_bit;
+    line_coding->cdc_acm_parameter_parity   = parity;
+    line_coding->cdc_acm_parameter_data_bit = data_bit;
 
     break;
 
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_GET_LINE_STATE:
+  case USBClass_CDC_ACM_IOCTL_GET_LINE_STATE:
 
             /* Properly cast the parameter pointer.  */
-    line_state = (UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *) parameter;
+    line_state = (USBClass_CDC_ACM_LINE_STATE_PARAMETER *) parameter;
 
     /* Return the DTR/RTS signals.  */
-    line_state -> ux_slave_class_cdc_acm_parameter_rts = rts_state;
-    line_state -> ux_slave_class_cdc_acm_parameter_dtr = dtr_state;
+    line_state -> cdc_acm_parameter_rts = rts_state;
+    line_state -> cdc_acm_parameter_dtr = dtr_state;
 
     break;
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_LINE_STATE:
+  case USBClass_CDC_ACM_IOCTL_SET_LINE_STATE:
 
     /* Properly cast the parameter pointer.  */
-    line_state = (UX_SLAVE_CLASS_CDC_ACM_LINE_STATE_PARAMETER *) parameter;
+    line_state = (USBClass_CDC_ACM_LINE_STATE_PARAMETER *) parameter;
 
     /* Set the DTR/RTS signals.  */
-    rts_state = line_state -> ux_slave_class_cdc_acm_parameter_rts;
-    dtr_state = line_state -> ux_slave_class_cdc_acm_parameter_dtr;
+    rts_state = line_state -> cdc_acm_parameter_rts;
+    dtr_state = line_state -> cdc_acm_parameter_dtr;
 
     break;
 
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_ABORT_PIPE:
+  case USBClass_CDC_ACM_IOCTL_ABORT_PIPE:
   {
 
     /* Get the interface from the instance.  */
@@ -602,11 +564,11 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
     /* What direction ?  */
     switch( (ULONG) (ALIGN_TYPE) parameter)
     {
-    case UX_SLAVE_CLASS_CDC_ACM_ENDPOINT_XMIT :
+    case USBClass_CDC_ACM_ENDPOINT_XMIT :
       endpoint = in_endpoint;
       break;
 
-    case UX_SLAVE_CLASS_CDC_ACM_ENDPOINT_RCV :
+    case USBClass_CDC_ACM_ENDPOINT_RCV :
       endpoint = out_endpoint;
       break;
 
@@ -627,7 +589,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
     break;
   }
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_READ_TIMEOUT:
+  case USBClass_CDC_ACM_IOCTL_SET_READ_TIMEOUT:
     if (out_endpoint)
     {
       auto xfer = out_endpoint->get_transfer();
@@ -639,7 +601,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
     }
     break;
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_SET_WRITE_TIMEOUT:
+  case USBClass_CDC_ACM_IOCTL_SET_WRITE_TIMEOUT:
     if (in_endpoint)
     {
       auto xfer = in_endpoint->get_transfer();
@@ -651,7 +613,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
     }
     break;
 
-  case UX_SLAVE_CLASS_CDC_ACM_IOCTL_TRANSMISSION_STOP:
+  case USBClass_CDC_ACM_IOCTL_TRANSMISSION_STOP:
     break;
 
   default:

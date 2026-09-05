@@ -6,14 +6,14 @@
 using namespace USBXX;
 
 #if 0
-UCHAR _ux_system_slave_class_storage_name[] =                               "ux_slave_class_storage";
-UCHAR _ux_system_slave_class_dpump_name[] =                                 "ux_slave_class_dpump";
-UCHAR _ux_system_slave_class_pima_name[] =                                  "ux_slave_class_pima";
-UCHAR _ux_system_slave_class_hid_name[] =                                   "ux_slave_class_hid";
-UCHAR _ux_system_slave_class_rndis_name[] =                                 "ux_slave_class_rndis";
-UCHAR _ux_system_slave_class_cdc_ecm_name[] =                               "ux_slave_class_cdc_ecm";
-UCHAR _ux_system_slave_class_dfu_name[] =                                   "ux_slave_class_dfu";
-UCHAR _ux_system_slave_class_audio_name[] =                                 "ux_slave_class_audio";
+UCHAR _ux_system_slave_class_storage_name[] =                               "storage";
+UCHAR _ux_system_slave_class_dpump_name[] =                                 "dpump";
+UCHAR _ux_system_slave_class_pima_name[] =                                  "pima";
+UCHAR _ux_system_slave_class_hid_name[] =                                   "hid";
+UCHAR _ux_system_slave_class_rndis_name[] =                                 "rndis";
+UCHAR _ux_system_slave_class_cdc_ecm_name[] =                               "cdc_ecm";
+UCHAR _ux_system_slave_class_dfu_name[] =                                   "dfu";
+UCHAR _ux_system_slave_class_audio_name[] =                                 "audio";
 
 UCHAR _ux_system_device_class_printer_name[] =                              "ux_device_class_printer";
 UCHAR _ux_system_device_class_ccid_name[] =                                 "ux_device_class_ccid";
@@ -25,8 +25,7 @@ uint32_t DeviceBase::process_control_event(Transfer *xfer)
 {
 
 USBXX::DCD                *dcd;
-UX_SLAVE_CLASS              *class_ptr;
-UX_SLAVE_CLASS_COMMAND      class_command;
+USBClass              *class_ptr;
 ULONG                       request_type;
 ULONG                       request;
 ULONG                       request_value;
@@ -108,10 +107,6 @@ ULONG                       application_data_length;
         if (((request_type & UX_REQUEST_TYPE) == UX_REQUEST_TYPE_CLASS) ||
             ((request_type & UX_REQUEST_TYPE) == UX_REQUEST_TYPE_VENDOR))
         {
-
-            /* Build all the fields of the Class Command.  */
-            class_command.ux_slave_class_command_request =  UX_SLAVE_CLASS_COMMAND_REQUEST;
-
             /* We need to find which class this request is for.  */
             for (class_index = 0; class_index < UX_MAX_SLAVE_INTERFACES; class_index ++)
             {
@@ -135,7 +130,7 @@ ULONG                       application_data_length;
                        number is same as interface index inside configuration).
                      */
                     if ((request_type == 0xA1) && (request == 0x00) &&
-                        (class_ptr -> ux_slave_class_interface -> descriptor.bInterfaceClass == 0x07))
+                        (class_ptr -> interface -> descriptor.bInterfaceClass == 0x07))
                     {
 
                         /* Check wIndex high byte.  */
@@ -151,11 +146,8 @@ ULONG                       application_data_length;
                     }
                 }
 
-                /* Memorize the class in the command.  */
-                class_command.ux_slave_class_command_class_ptr = class_ptr;
-
                 /* We have found a potential candidate. Call this registered class entry function.  */
-                status = class_ptr -> ux_slave_class_entry_function(&class_command);
+                status = /*class_ptr ->*/ this->class_command_request();
 
                 /* The status simply tells us if the registered class handled the
                    command - if there was an issue processing the command, it would've
