@@ -13,7 +13,7 @@ namespace TXX
 
     bool in_kernel;
     std::vector<object *> objects;
-
+    std::vector<std::tuple<object *, const creator_base &> > deferred;
 
     object_manager() : in_kernel(0)
     {
@@ -21,17 +21,13 @@ namespace TXX
 
     void register_object(object *obj)
     {
-      if (in_kernel) {
-        obj->create();
-      }
-
       objects.push_back(obj);
     }
 
     void on_enter_kernel()
     {
-      for (auto obj : objects) {
-        obj->create();
+      for (auto t : deferred) {
+        std::get<1>(t).create(std::get<0>(t));
       }
 
       in_kernel = true;
@@ -60,7 +56,13 @@ void object::on_enter_kernel()
 }
 
 
-object::object(const std::string &_name) : name(_name)
+object::object(const std::string &_name, const creator_base &_creator) : name(_name)
 {
+  if (!mgr.in_kernel) {
+    mgr.deferred.emplace_back(this, _creator);
+  } else {
+    _creator.create(this);
+  }
+
   mgr.register_object(this);
 }

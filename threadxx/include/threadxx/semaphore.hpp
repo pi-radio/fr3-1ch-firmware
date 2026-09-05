@@ -9,15 +9,17 @@
 
 namespace TXX
 {
-  class Semaphore : object
+  class Semaphore : public TXX::object
   {
     TX_SEMAPHORE sema;
-    std::string name;
 
-    void create() override { tx_semaphore_create(&sema, (char *)name.c_str(), 0); }
+    void create() { tx_semaphore_create(&sema, (char *)name.c_str(), 0); }
+
+    friend class creator<Semaphore>;
+    static constexpr creator<Semaphore> c = {};
 
   public:
-    Semaphore(const std::string &_name) : object(_name) {}
+    Semaphore(const std::string &_name) : object(_name, c) {}
 
     uint32_t get_suspended_count() { return sema.tx_semaphore_suspended_count; }
 
