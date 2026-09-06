@@ -38,11 +38,9 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
     ULONG slave_length,
     ULONG host_length)
 {
-UX_INTERRUPT_SAVE_AREA
+  UX_INTERRUPT_SAVE_AREA
 
-UINT                    status;
-Endpoint       *endpoint;
-ULONG                   device_state;
+  UINT                    status;
 
 
     /* Do we have to skip this transfer?  */
@@ -53,12 +51,10 @@ ULONG                   device_state;
        while we check the device state and set the transfer status.  */
     UX_DISABLE
 
-    /* Get the device state.  */
-    device_state =  _ux_system_slave->device->state;
-
     /* We can only transfer when the device is ATTACHED, ADDRESSED OR CONFIGURED.  */
-    if ((device_state == UX_DEVICE_ATTACHED) || (device_state == UX_DEVICE_ADDRESSED)
-            || (device_state == UX_DEVICE_CONFIGURED))
+    if ((state == UX_DEVICE_ATTACHED) ||
+        (state == UX_DEVICE_ADDRESSED) ||
+        (state == UX_DEVICE_CONFIGURED))
 
         /* Set the transfer to pending.  */
         xfer->set_pending();
@@ -74,19 +70,16 @@ ULONG                   device_state;
     /* Restore interrupts.  */
     UX_RESTORE
                     
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_xfer, xfer, 0, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
     /* Get the endpoint associated with this transaction.  */
-    endpoint =  xfer -> endpoint;
+    auto endpoint =  xfer -> endpoint;
     
     /* If the endpoint is non Control, check the endpoint direction and set the data phase direction.  */
-    if ((endpoint -> ux_slave_endpoint_descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE) != UX_CONTROL_ENDPOINT)
+    if ((endpoint -> descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE) != UX_CONTROL_ENDPOINT)
     {
 
         /* Check if the endpoint is STALLED. In this case, we must refuse the transaction until the endpoint
            has been reset by the host.  */
-        while (endpoint -> ux_slave_endpoint_state == UX_ENDPOINT_HALTED)
+        while (endpoint -> state == UX_ENDPOINT_HALTED)
 
             /* Wait for 100ms for endpoint to be reset by a CLEAR_FEATURE command.  */
         {
@@ -102,7 +95,7 @@ ULONG                   device_state;
         }
 
         /* Isolate the direction from the endpoint address.  */
-        if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) == UX_ENDPOINT_IN)
+        if ((endpoint -> descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) == UX_ENDPOINT_IN)
             xfer -> phase =  TransferPhase::DATA_OUT;
         else    
             xfer -> phase =  TransferPhase::DATA_IN;
@@ -114,7 +107,7 @@ ULONG                   device_state;
        a explicit ZLP request, no need to force ZLP.  */
     if ((xfer -> phase ==  TransferPhase::DATA_OUT) &&
         (slave_length != 0) && (host_length != slave_length) && 
-        (slave_length % endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize) == 0)
+        (slave_length % endpoint -> descriptor.wMaxPacketSize) == 0)
     {
 
         /* If so force Zero Length Packet.  */
@@ -140,7 +133,7 @@ ULONG                   device_state;
                             xfer -> data;
 
     /* Call the DCD driver transfer function.   */
-    status =  dcd->transfer_request(xfer);
+    status = xfer->transfer();
 
     /* And return the status.  */
     return(status);

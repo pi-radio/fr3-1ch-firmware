@@ -12,6 +12,7 @@
 #include <usbxx/ux_device_stack.h>
 
 #include <usbxx/device.hpp>
+#include <usbxx/event_log.hpp>
 
 #include <usbxx/stm32/pcd.hpp>
 
@@ -56,18 +57,17 @@ uint32_t STM32::DCD::initialize()
     throw std::runtime_error("Unable to initialize USB stack");
   }
 
-  for (int i = 0; i < 8; i++) {
-    ep_in[i].index = i;
-    ep_out[i].index = i;
-    ep_in[i].dcd = this;
-    ep_out[i].dcd = this;
+  control_endpoint = std::make_shared<STM32::ControlEndpoint>(device, this, 0);
 
-    ep_in[i].ux_slave_endpoint_device = device;
-    ep_out[i].ux_slave_endpoint_device = device;
-  }
+  endpoints[0x00] = control_endpoint;
+  endpoints[0x80] = control_endpoint;
 
-  ep_in[0].used = true;
-  ep_out[0].used = true;
+  control_endpoint->transfer.endpoint = control_endpoint;
+  control_endpoint->transfer.timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
+
+  /* Adjust the current data pointer as well.  */
+  control_endpoint->transfer.current_data_pointer = control_endpoint->transfer.data;
+
 
   HAL_PCDEx_PMAConfig(&hpcd, 0x00, PCD_SNG_BUF, 0x40);
   HAL_PCDEx_PMAConfig(&hpcd, 0x80, PCD_SNG_BUF, 0x80);
@@ -75,7 +75,7 @@ uint32_t STM32::DCD::initialize()
   HAL_PCDEx_PMAConfig(&hpcd, 0x82, PCD_SNG_BUF, 0x140);
   HAL_PCDEx_PMAConfig(&hpcd, 0x03, PCD_SNG_BUF, 0xC0);
 
-  ux_slave_dcd_status =  UX_DCD_STATUS_OPERATIONAL;
+  status =  UX_DCD_STATUS_OPERATIONAL;
 
   hpcd.Lock = HAL_LOCKED;
 
@@ -88,78 +88,33 @@ uint32_t STM32::DCD::initialize()
   return 0;
 }
 
-USBXX::Endpoint *STM32::DCD::allocate_endpoint(std::shared_ptr<Interface> iface, const EndpointDescriptor &desc)
+USBXX::Endpoint::ptr STM32::DCD::allocate_endpoint(Interface::ptr iface, const EndpointDescriptor &desc)
 {
-  Endpoint *retval;
 
   uint8_t epaddr = desc.bEndpointAddress;
 
-  bool is_in = epaddr & 0x80;
-  uint8_t epidx = epaddr & 0xF;
+  STM32::Endpoint::ptr retval = std::make_shared<STM32::Endpoint>(device, this, epaddr);
 
-  if (is_in) {
-    retval = &ep_in[epidx];
-  } else {
-    retval = &ep_out[epidx];
-    if (ep_out[epidx].used) {
-      throw std::runtime_error("Unable to allocate out endpoint");
-    }
+  retval->transfer.endpoint = retval;
+  retval->descriptor = desc;
+  retval->device = device;
+  retval->interface = iface;
+  retval->direction = (epaddr & 0x80) ? true : false;
 
-    retval = &ep_out[epidx];
-  }
-
-  if (retval->used) {
-    throw std::runtime_error(std::format("Unable to allocate endpoint {}", epaddr));
-  }
-
-  if ((desc.bEndpointAddress & 0x7F) != 0) {
-    int a = 0;
-  }
-
-  retval->ux_slave_endpoint_descriptor = desc;
-  retval->used = true;
-  retval-> ux_slave_endpoint_device = device;
-  retval->ux_slave_endpoint_interface = iface;
+  endpoints[epaddr] = retval;
 
   return retval;
 }
 
 UINT  STM32::DCD::complete_initialization()
 {
-  Transfer       *xfer;
-
   device->descriptor = read_in_descriptor<DeviceDescriptor>(device->get_current_descriptor().get_desc());
 
-  /* Now we create a transfer request to accept the first SETUP packet
-  and get the ball running. First get the address of the endpoint
-  transfer request container.  */
-  xfer = (Transfer *)device->get_control_transfer();
+  control_endpoint->descriptor.wMaxPacketSize =
+      device->descriptor.bMaxPacketSize0;
 
-  /* Set the timeout to be for Control Endpoint.  */
-  xfer->timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
+  control_endpoint->transfer.requested_length = device->descriptor.bMaxPacketSize0;
 
-  /* Adjust the current data pointer as well.  */
-  xfer -> current_data_pointer =
-                      xfer -> data;
-
-  /* Update the transfer request endpoint pointer with the default endpoint.  */
-
-  auto control_endpoint = get_control_endpoint();
-
-  xfer -> endpoint =  control_endpoint;
-
-  /* The control endpoint max packet size needs to be filled manually in its descriptor.  */
-  xfer -> endpoint -> ux_slave_endpoint_descriptor.wMaxPacketSize =
-                          device -> descriptor.bMaxPacketSize0;
-
-  /* On the control endpoint, always expect the maximum.  */
-  xfer -> requested_length =
-                          device -> descriptor.bMaxPacketSize0;
-
-  /* Create the default control endpoint attached to the device.
-  Once this endpoint is enabled, the host can then send a setup packet
-  The device controller will receive it and will call the setup function
-  module.  */
   control_endpoint->create();
 
   /* Open Control OUT endpoint.  */
@@ -171,20 +126,20 @@ UINT  STM32::DCD::complete_initialization()
   HAL_PCD_EP_Open(pcd_handle, 0x80U, device -> descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
 
   /* Ensure the control endpoint is properly reset.  */
-  control_endpoint->ux_slave_endpoint_state = UX_ENDPOINT_RESET;
+  control_endpoint->state = EndpointState::RESET;
 
   /* Mark the phase as SETUP.  */
-  xfer -> type =  TransferType::SETUP;
+  control_endpoint->transfer.type =  TransferType::SETUP;
 
   /* Mark this transfer request as pending.  */
-  xfer->set_pending();
+  control_endpoint->transfer.set_pending();
 
   /* Ask for 8 bytes of the SETUP packet.  */
-  xfer -> requested_length =    UX_SETUP_SIZE;
-  xfer -> in_transfer_length =  UX_SETUP_SIZE;
+  control_endpoint->transfer.requested_length =    UX_SETUP_SIZE;
+  control_endpoint->transfer. in_transfer_length =  UX_SETUP_SIZE;
 
   /* Reset the number of bytes sent/received.  */
-  xfer -> actual_length =  0;
+  control_endpoint->transfer.actual_length =  0;
 
   /* Check the status change callback.  */
   device->on_attached();
@@ -195,7 +150,7 @@ UINT  STM32::DCD::complete_initialization()
 UINT  STM32::DCD::uninitialize()
 {
     /* Set the state of the controller to HALTED now.  */
-  ux_slave_dcd_status =  UX_DCD_STATUS_HALTED;
+  status =  UX_DCD_STATUS_HALTED;
 
   return 0;
 }
@@ -204,513 +159,47 @@ UINT  STM32::DCD::uninitialize()
 
 void STM32::DCD::set_device_address(uint8_t addr)
 {
-  ux_slave_dcd_device_address = addr;
+  device_address = addr;
 
   HAL_PCD_SetAddress(pcd_handle, addr);
 }
 
-uint16_t STM32::DCD::receive(PCD_EPTypeDef *ep, uint16_t wEPVal)
-{
-  uint16_t count;
-
-  /* Manage Buffer0 OUT */
-  if ((wEPVal & USB_EP_DTOG_RX) != 0U)
-  {
-    /* Get count of received Data on buffer0 */
-    count = (uint16_t)PCD_GET_EP_DBUF0_CNT(hpcd.Instance, ep->num);
-
-    if (ep->xfer_len >= count)
-    {
-      ep->xfer_len -= count;
-    }
-    else
-    {
-      ep->xfer_len = 0U;
-    }
-
-    if (ep->xfer_len == 0U)
-    {
-      /* Set NAK to OUT endpoint since double buffer is enabled */
-      PCD_SET_EP_RX_STATUS(hpcd.Instance, ep->num, USB_EP_RX_NAK);
-    }
-
-    /* Check if Buffer1 is in blocked state which requires to toggle */
-    if ((wEPVal & USB_EP_DTOG_TX) != 0U)
-    {
-      PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 0U);
-    }
-
-    if (count != 0U)
-    {
-      USB_ReadPMA(hpcd.Instance, ep->xfer_buff, ep->pmaaddr0, count);
-    }
-  }
-  /* Manage Buffer 1 DTOG_RX=0 */
-  else
-  {
-    /* Get count of received data */
-    count = (uint16_t)PCD_GET_EP_DBUF1_CNT(hpcd.Instance, ep->num);
-
-    if (ep->xfer_len >= count)
-    {
-      ep->xfer_len -= count;
-    }
-    else
-    {
-      ep->xfer_len = 0U;
-    }
-
-    if (ep->xfer_len == 0U)
-    {
-      /* Set NAK on the current endpoint */
-      PCD_SET_EP_RX_STATUS(hpcd.Instance, ep->num, USB_EP_RX_NAK);
-    }
-
-    /* Need to FreeUser Buffer */
-    if ((wEPVal & USB_EP_DTOG_TX) == 0U)
-    {
-      PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 0U);
-    }
-
-    if (count != 0U)
-    {
-      USB_ReadPMA(hpcd.Instance, ep->xfer_buff, ep->pmaaddr1, count);
-    }
-  }
-
-  return count;
-}
-
-
-/**
-  * @brief  Manage double buffer bulk IN transaction from ISR
-  * @param  hpcd PCD handle
-  * @param  ep current endpoint handle
-  * @param  wEPVal Last snapshot of EPRx register value taken in ISR
-  * @retval HAL status
-  */
-HAL_StatusTypeDef STM32::DCD::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
-{
-  uint32_t len;
-  uint16_t TxPctSize;
-
-  /* Data Buffer0 ACK received */
-  if ((wEPVal & USB_EP_DTOG_TX) != 0U)
-  {
-    /* multi-packet on the NON control IN endpoint */
-    TxPctSize = (uint16_t)PCD_GET_EP_DBUF0_CNT(hpcd.Instance, ep->num);
-
-    if (ep->xfer_len > TxPctSize)
-    {
-      ep->xfer_len -= TxPctSize;
-    }
-    else
-    {
-      ep->xfer_len = 0U;
-    }
-
-    /* Transfer is completed */
-    if (ep->xfer_len == 0U)
-    {
-      USB_DRD_SET_CHEP_DBUF0_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
-      pcd_set_dbuf1_cnt(ep->num, ep->is_in, 0U);
-
-      if (ep->type == EP_TYPE_BULK)
-      {
-        /* Set Bulk endpoint in NAK state */
-        PCD_SET_EP_TX_STATUS(hpcd.Instance, ep->num, USB_EP_TX_NAK);
-      }
-
-      /* TX COMPLETE */
-      on_data_in(ep->num);
-
-      if ((wEPVal & USB_EP_DTOG_RX) != 0U)
-      {
-        PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 1U);
-      }
-
-      return HAL_OK;
-    }
-    else /* Transfer is not yet Done */
-    {
-      /* Need to Free USB Buffer */
-      if ((wEPVal & USB_EP_DTOG_RX) != 0U)
-      {
-        PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 1U);
-      }
-
-      /* Still there is data to Fill in the next Buffer */
-      if (ep->xfer_fill_db == 1U)
-      {
-        ep->xfer_buff += TxPctSize;
-        ep->xfer_count += TxPctSize;
-
-        /* Calculate the len of the new buffer to fill */
-        if (ep->xfer_len_db >= ep->maxpacket)
-        {
-          len = ep->maxpacket;
-          ep->xfer_len_db -= len;
-        }
-        else if (ep->xfer_len_db == 0U)
-        {
-          len = TxPctSize;
-          ep->xfer_fill_db = 0U;
-        }
-        else
-        {
-          ep->xfer_fill_db = 0U;
-          len = ep->xfer_len_db;
-          ep->xfer_len_db = 0U;
-        }
-
-        /* Write remaining Data to Buffer */
-        /* Set the Double buffer counter for pma buffer0 */
-        PCD_SET_EP_DBUF0_CNT(hpcd.Instance, ep->num, ep->is_in, len);
-
-        /* Copy user buffer to USB PMA */
-        USB_WritePMA(hpcd.Instance, ep->xfer_buff,  ep->pmaaddr0, (uint16_t)len);
-      }
-    }
-  }
-  else /* Data Buffer1 ACK received */
-  {
-    /* multi-packet on the NON control IN endpoint */
-    TxPctSize = (uint16_t)PCD_GET_EP_DBUF1_CNT(hpcd.Instance, ep->num);
-
-    if (ep->xfer_len >= TxPctSize)
-    {
-      ep->xfer_len -= TxPctSize;
-    }
-    else
-    {
-      ep->xfer_len = 0U;
-    }
-
-    /* Transfer is completed */
-    if (ep->xfer_len == 0U)
-    {
-      PCD_SET_EP_DBUF0_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
-      PCD_SET_EP_DBUF1_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
-
-      if (ep->type == EP_TYPE_BULK)
-      {
-        /* Set Bulk endpoint in NAK state */
-        PCD_SET_EP_TX_STATUS(hpcd.Instance, ep->num, USB_EP_TX_NAK);
-      }
-
-      /* TX COMPLETE */
-      on_data_in(ep->num);
-
-      /* need to Free USB Buff */
-      if ((wEPVal & USB_EP_DTOG_RX) == 0U)
-      {
-        PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 1U);
-      }
-
-      return HAL_OK;
-    }
-    else /* Transfer is not yet Done */
-    {
-      /* Need to Free USB Buffer */
-      if ((wEPVal & USB_EP_DTOG_RX) == 0U)
-      {
-        PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 1U);
-      }
-
-      /* Still there is data to Fill in the next Buffer */
-      if (ep->xfer_fill_db == 1U)
-      {
-        ep->xfer_buff += TxPctSize;
-        ep->xfer_count += TxPctSize;
-
-        /* Calculate the len of the new buffer to fill */
-        if (ep->xfer_len_db >= ep->maxpacket)
-        {
-          len = ep->maxpacket;
-          ep->xfer_len_db -= len;
-        }
-        else if (ep->xfer_len_db == 0U)
-        {
-          len = TxPctSize;
-          ep->xfer_fill_db = 0U;
-        }
-        else
-        {
-          len = ep->xfer_len_db;
-          ep->xfer_len_db = 0U;
-          ep->xfer_fill_db = 0;
-        }
-
-        /* Set the Double buffer counter for pma buffer1 */
-        PCD_SET_EP_DBUF1_CNT(hpcd.Instance, ep->num, ep->is_in, len);
-
-        /* Copy the user buffer to USB PMA */
-        USB_WritePMA(hpcd.Instance, ep->xfer_buff,  ep->pmaaddr1, (uint16_t)len);
-      }
-    }
-  }
-
-  /* Enable endpoint IN */
-  PCD_SET_EP_TX_STATUS(hpcd.Instance, ep->num, USB_EP_TX_VALID);
-
-  return HAL_OK;
-}
-
-void STM32::DCD::control_IRQ()
-{
-  PCD_EPTypeDef *ep;
-  auto wIstr = (uint16_t)hpcd.Instance->ISTR;
-  uint16_t wEPVal;
-
-  if ((wIstr & USB_ISTR_DIR) == 0U)
-  {
-    PCD_CLEAR_TX_EP_CTR(hpcd.Instance, PCD_ENDP0);
-    ep = &hpcd.IN_ep[0];
-
-    ep->xfer_count = PCD_GET_EP_TX_CNT(hpcd.Instance, ep->num);
-    ep->xfer_buff += ep->xfer_count;
-
-    /* TX COMPLETE */
-    on_data_in(0);
-
-    if ((hpcd.USB_Address > 0U) && (ep->xfer_len == 0U))
-    {
-      hpcd.Instance->DADDR = ((uint16_t)hpcd.USB_Address | USB_DADDR_EF);
-      hpcd.USB_Address = 0U;
-    }
-  }
-  else
-  {
-    /* DIR = 1 */
-
-    /* DIR = 1 & CTR_RX => SETUP or OUT int */
-    /* DIR = 1 & (CTR_TX | CTR_RX) => 2 int pending */
-    ep = &hpcd.OUT_ep[0];
-    wEPVal = (uint16_t)PCD_GET_ENDPOINT(hpcd.Instance, PCD_ENDP0);
-
-    if ((wEPVal & USB_EP_SETUP) != 0U)
-    {
-      /* Get SETUP Packet */
-      ep->xfer_count = PCD_GET_EP_RX_CNT(hpcd.Instance, ep->num);
-
-      if (ep->xfer_count != 8U)
-      {
-        /* Set Stall condition for EP0 IN/OUT */
-        PCD_SET_EP_RX_STATUS(hpcd.Instance, PCD_ENDP0, USB_EP_RX_STALL);
-        PCD_SET_EP_TX_STATUS(hpcd.Instance, PCD_ENDP0, USB_EP_TX_STALL);
-
-        /* SETUP bit kept frozen while CTR_RX = 1 */
-        PCD_CLEAR_RX_EP_CTR(hpcd.Instance, PCD_ENDP0);
-
-        return;
-      }
-
-      USB_ReadPMA(hpcd.Instance, (uint8_t *)hpcd.Setup,
-                  ep->pmaadress, (uint16_t)ep->xfer_count);
-
-      /* SETUP bit kept frozen while CTR_RX = 1 */
-      PCD_CLEAR_RX_EP_CTR(hpcd.Instance, PCD_ENDP0);
-
-      /* Process SETUP Packet*/
-      setup();
-    }
-    else if ((wEPVal & USB_EP_VTRX) != 0U)
-    {
-      PCD_CLEAR_RX_EP_CTR(hpcd.Instance, PCD_ENDP0);
-
-      /* Get Control Data OUT Packet */
-      ep->xfer_count = PCD_GET_EP_RX_CNT(hpcd.Instance, ep->num);
-
-      if (ep->xfer_count == 0U)
-      {
-        /* Status phase re-arm for next setup */
-        PCD_SET_EP_RX_STATUS(hpcd.Instance, PCD_ENDP0, USB_EP_RX_VALID);
-      }
-      else
-      {
-        if (ep->xfer_buff != 0U)
-        {
-          USB_ReadPMA(hpcd.Instance, ep->xfer_buff,
-                      ep->pmaadress, (uint16_t)ep->xfer_count);  /* max 64bytes */
-
-          ep->xfer_buff += ep->xfer_count;
-
-          /* Process Control Data OUT Packet */
-          on_data_out(0);
-        }
-      }
-    }
-  }
-
-}
-
 void STM32::DCD::endpoint_IRQ()
 {
-  PCD_EPTypeDef *ep;
-  uint16_t count;
   uint16_t wIstr;
   uint16_t wEPVal;
-  uint16_t TxPctSize;
   uint8_t epindex;
-
-#if (USE_USB_DOUBLE_BUFFER != 1U)
-  count = 0U;
-#endif /* USE_USB_DOUBLE_BUFFER */
 
   /* stay in loop while pending interrupts */
   while ((hpcd.Instance->ISTR & USB_ISTR_CTR) != 0U)
   {
     wIstr = (uint16_t)hpcd.Instance->ISTR;
 
-    /* extract highest priority endpoint number */
     epindex = (uint8_t)(wIstr & USB_ISTR_IDN);
 
-    if (epindex == 0U)
-    {
-      control_IRQ();
-      continue;
-    }
-
-    /* Decode and service non control endpoints interrupt */
-    /* process related endpoint register */
     wEPVal = (uint16_t)PCD_GET_ENDPOINT(hpcd.Instance, epindex);
 
-    if ((wEPVal & USB_EP_VTRX) != 0U)
+    event_log.push_event(UsbEvent::ENDPOINT_IRQ, epindex);
+
+
+
+    if (wEPVal & USB_EP_VTRX)
     {
-      /* clear int flag */
-      PCD_CLEAR_RX_EP_CTR(hpcd.Instance, epindex);
-      ep = &hpcd.OUT_ep[epindex];
+      auto ep = endpoints[epindex];
 
-      /* OUT Single Buffering */
-      if (ep->doublebuffer == 0U)
-      {
-        count = (uint16_t)PCD_GET_EP_RX_CNT(hpcd.Instance, ep->num);
-
-        if (count != 0U)
-        {
-          USB_ReadPMA(hpcd.Instance, ep->xfer_buff, ep->pmaadress, count);
-        }
-      }
-      else
-      {
-        /* manage double buffer bulk out */
-        if (ep->type == EP_TYPE_BULK)
-        {
-          count = receive(ep, wEPVal);
-        }
-        else /* manage double buffer iso out */
-        {
-          /* free EP OUT Buffer */
-          PCD_FREE_USER_BUFFER(hpcd.Instance, ep->num, 0U);
-
-          if ((PCD_GET_ENDPOINT(hpcd.Instance, ep->num) & USB_EP_DTOG_RX) != 0U)
-          {
-            /* read from endpoint BUF0Addr buffer */
-            count = (uint16_t)PCD_GET_EP_DBUF0_CNT(hpcd.Instance, ep->num);
-
-            if (count != 0U)
-            {
-              USB_ReadPMA(hpcd.Instance, ep->xfer_buff, ep->pmaaddr0, count);
-            }
-          }
-          else
-          {
-            /* read from endpoint BUF1Addr buffer */
-            count = (uint16_t)PCD_GET_EP_DBUF1_CNT(hpcd.Instance, ep->num);
-
-            if (count != 0U)
-            {
-              USB_ReadPMA(hpcd.Instance, ep->xfer_buff, ep->pmaaddr1, count);
-            }
-          }
-        }
-      }
-
-      /* multi-packet on the NON control OUT endpoint */
-      ep->xfer_count += count;
-
-      if ((ep->xfer_len == 0U) || (count < ep->maxpacket))
-      {
-        /* RX COMPLETE */
-        on_data_out(ep->num);
-      }
-      else
-      {
-         ep->xfer_buff += count;
-        (void)USB_EPStartXfer(hpcd.Instance, ep);
-      }
+      ep->on_interrupt();
     }
 
-    if ((wEPVal & USB_EP_VTTX) != 0U)
+    if (wEPVal & USB_EP_VTTX)
     {
-      ep = &hpcd.IN_ep[epindex];
+      auto ep = endpoints[0x80 | epindex];
 
-      /* clear int flag */
-      PCD_CLEAR_TX_EP_CTR(hpcd.Instance, epindex);
-
-      if (ep->type == EP_TYPE_ISOC)
-      {
-        ep->xfer_len = 0U;
-
-#if (USE_USB_DOUBLE_BUFFER == 1U)
-        if (ep->doublebuffer != 0U)
-        {
-          if ((wEPVal & USB_EP_DTOG_TX) != 0U)
-          {
-            PCD_SET_EP_DBUF0_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
-          }
-          else
-          {
-            PCD_SET_EP_DBUF1_CNT(hpcd.Instance, ep->num, ep->is_in, 0U);
-          }
-        }
-#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
-
-        /* TX COMPLETE */
-        STM32::gDCD->on_data_in(ep->num);
-      }
-      else
-      {
-        /* Manage Single Buffer Transaction */
-        if ((wEPVal & USB_EP_KIND) == 0U)
-        {
-          /* Multi-packet on the NON control IN endpoint */
-          TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(hpcd.Instance, ep->num);
-
-          if (ep->xfer_len > TxPctSize)
-          {
-            ep->xfer_len -= TxPctSize;
-          }
-          else
-          {
-            ep->xfer_len = 0U;
-          }
-
-          /* Zero Length Packet? */
-          if (ep->xfer_len == 0U)
-          {
-            /* TX COMPLETE */
-            on_data_in(ep->num);
-          }
-          else
-          {
-            /* Transfer is not yet Done */
-            ep->xfer_buff += TxPctSize;
-            ep->xfer_count += TxPctSize;
-            (void)USB_EPStartXfer(hpcd.Instance, ep);
-          }
-
-        }
-#if (USE_USB_DOUBLE_BUFFER == 1U)
-        /* Double Buffer bulk IN (bulk transfer Len > Ep_Mps) */
-        else
-        {
-          transmit(ep, wEPVal);
-        }
-#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
-      }
+      ep->on_interrupt();
     }
   }
+    /* Decode and service non control endpoints interrupt */
+    /* process related endpoint register */
+
 
   return;
 }
@@ -718,13 +207,15 @@ void STM32::DCD::endpoint_IRQ()
 
 void STM32::DCD::handle_IRQ()
 {
-  uint32_t wIstr = USB_ReadInterrupts(hpcd.Instance);
+  uint32_t wIstr = USB_ReadInterrupts(pcd);
 
   if ((wIstr & USB_ISTR_CTR) == USB_ISTR_CTR)
   {
     /* servicing of the endpoint correct transfer interrupt */
     /* clear of the CTR flag into the sub */
     endpoint_IRQ();
+
+    //event_log.push_event(UsbEvent::END_IRQ);
 
     return;
   }
@@ -737,6 +228,8 @@ void STM32::DCD::handle_IRQ()
 
     (void)HAL_PCD_SetAddress(&hpcd, 0U);
 
+    //event_log.push_event(UsbEvent::END_IRQ);
+
     return;
   }
 
@@ -744,12 +237,16 @@ void STM32::DCD::handle_IRQ()
   {
     __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_PMAOVR);
 
+    //event_log.push_event(UsbEvent::END_IRQ);
+
     return;
   }
 
   if ((wIstr & USB_ISTR_ERR) == USB_ISTR_ERR)
   {
     __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ERR);
+
+    //event_log.push_event(UsbEvent::END_IRQ);
 
     return;
   }
@@ -770,6 +267,8 @@ void STM32::DCD::handle_IRQ()
 
     __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_WKUP);
 
+    //event_log.push_event(UsbEvent::END_IRQ);
+
     return;
   }
 
@@ -784,6 +283,8 @@ void STM32::DCD::handle_IRQ()
     hpcd.Instance->CNTR |= USB_CNTR_SUSPRDY;
 
     STM32::gDCD->suspend();
+
+    //event_log.push_event(UsbEvent::END_IRQ);
 
     return;
   }
@@ -807,6 +308,8 @@ void STM32::DCD::handle_IRQ()
       STM32::gDCD->suspend();
     }
 
+    //event_log.push_event(UsbEvent::END_IRQ);
+
     return;
   }
 
@@ -816,6 +319,8 @@ void STM32::DCD::handle_IRQ()
 
     STM32::gDCD->on_sof();
 
+    //event_log.push_event(UsbEvent::END_IRQ);
+
     return;
   }
 
@@ -823,6 +328,8 @@ void STM32::DCD::handle_IRQ()
   {
     /* clear ESOF flag in ISTR */
     __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ESOF);
+
+    //event_log.push_event(UsbEvent::END_IRQ);
 
     return;
   }

@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <string>
 
+#include <threadxx/object.hpp>
 #include <threadxx/dbgstream.hpp>
 
 #include "tx_api.h"
@@ -20,15 +21,20 @@ namespace TXX {
   };
   
 
-  class ThreadBase {
+  class ThreadBase : public object {
+  protected:
     TX_THREAD _thread;
-    const std::string _name;
     int _priority;
     int _preempt;
     bool _autostart;
     int _timeslice;
     uint8_t *_stack;
     size_t _stack_size;
+
+    friend class creator<ThreadBase>;
+    static constexpr creator<ThreadBase> c = {};
+
+    void create();
 
   protected:
     static void launch(ULONG a) {
@@ -43,8 +49,10 @@ namespace TXX {
     void entry() {
       try {
         main();
-      } catch (...) {
-        dbg::dbgout << "Uncaught exception in thread " << _name << std::endl;
+      } catch (const std::exception &e) {
+        const char *what = e.what();
+        dbg::dbgout << "Uncaught exception in thread " << name << std::endl;
+        __asm volatile ("BKPT     %0" : : "i"(0));
       }
     }
 
@@ -60,7 +68,7 @@ namespace TXX {
     virtual void main() = 0;
 
   public:
-    void create();
+    virtual void resume() { tx_thread_resume(&_thread); }
   };
 
   template <int stack_size>

@@ -14,33 +14,27 @@ namespace USBXX
     DeviceBase *device;
 
   public:
-    UINT            ux_slave_dcd_status;
-    UINT            ux_slave_dcd_controller_type;
-    UINT            ux_slave_dcd_otg_capabilities;
-    UINT            ux_slave_dcd_irq;
-    ULONG           ux_slave_dcd_io;
-    ULONG           ux_slave_dcd_device_address;
-    void            *ux_slave_dcd_controller_hardware;
+    UINT            status;
+    UINT            controller_type;
+    UINT            otg_capabilities;
+    UINT            irq;
+    ULONG           io;
+    ULONG           device_address;
+    void            *controller_hardware;
 
     virtual uint32_t initialize() = 0;
     virtual UINT uninitialize() = 0;
 
-    virtual Endpoint *get_endpoint(uint8_t) = 0;
-    virtual Endpoint *get_control_endpoint() = 0;
+    virtual USBXX::Endpoint::ptr get_endpoint(uint8_t) = 0;
+    virtual USBXX::Endpoint::ptr get_control_endpoint() = 0;
     virtual Transfer *get_control_transfer() = 0;
 
-    virtual Endpoint *allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) = 0;
+    virtual USBXX::Endpoint::ptr allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) = 0;
     virtual uint32_t get_frame_number() = 0;
-    virtual UINT transfer_request(Transfer *xfer) = 0;
     virtual UINT complete_initialization() = 0;
 
     void set_device(DeviceBase *_dev) { device = _dev; }
 
-
-
-    virtual void setup() = 0;
-    virtual void on_data_in(uint8_t epnum) = 0;
-    virtual void on_data_out(uint8_t epnum) = 0;
     virtual void reset() = 0;
     virtual void connect() = 0;
     virtual void disconnect() = 0;

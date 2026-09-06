@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
@@ -43,7 +45,6 @@ ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor;
 InterfaceDescriptor         interface_descriptor;
-Endpoint               *endpoint;
 USBClass                  *class_ptr;
 UINT                            status;
 
@@ -122,12 +123,8 @@ UINT                            status;
                             endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
 
                             endpoint->destroy();
-                            endpoint->used = false;
-                            endpoint -> ux_slave_endpoint_state =  0;
-                            endpoint -> ux_slave_endpoint_next_endpoint =  nullptr;
-                            endpoint -> ux_slave_endpoint_interface =  nullptr;
-                            endpoint -> ux_slave_endpoint_device =  nullptr;
 
+                            // TODO -- Add DCD callback to free endpoint
                           }
 
                             /* Point beyond the interface descriptor.  */
@@ -156,7 +153,7 @@ UINT                            status;
 
                                     /* Find a free endpoint in the pool and hook it to the
                                        existing interface after it's created by DCD.  */
-                                    endpoint = dcd->allocate_endpoint(iface, desc.bEndpointAddress);
+                                    auto endpoint = dcd->allocate_endpoint(iface, desc.bEndpointAddress);
 
 
                                     /* Create the endpoint at the DCD level.  */
@@ -167,7 +164,8 @@ UINT                            status;
                                     {
 
                                         /* Error was returned, endpoint cannot be created.  */
-                                        endpoint->used = false;
+                                        // TODO -- Add free endpoint
+                                        assert(0);
                                         return(status);
                                     }
 

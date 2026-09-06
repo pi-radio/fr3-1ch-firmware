@@ -60,7 +60,7 @@ using namespace USBXX;
 /*                                                                        */
 /*  CALLS                                                                 */ 
 /*                                                                        */ 
-/*    (ux_slave_dcd_function)               DCD dispatch function         */ 
+/*    (function)               DCD dispatch function         */ 
 /*                                                                        */ 
 /*  CALLED BY                                                             */ 
 /*                                                                        */ 

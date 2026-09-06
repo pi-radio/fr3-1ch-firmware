@@ -41,9 +41,6 @@ cooked_terminal::cooked_terminal(termobj *parent, termio *_io) :
 void cooked_terminal::startup()
 {
   cmd_queue.create();
-  rx_thread.create();
-  //tx_thread.create();
-  refresh_thread.create();
 }
 
 void cooked_terminal::draw(position p, const uint8_t *buf, size_t len)

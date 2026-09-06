@@ -1,4 +1,4 @@
-
+#if 0
 #define UX_SOURCE_CODE
 #define UX_DCD_STM32_SOURCE_CODE
 
@@ -145,89 +145,35 @@ void STM32::Endpoint::stall()
 
 void STM32::Endpoint::on_data_in()
 {
-  auto PCD = dcd->get_PCD();
   auto hpcd = dcd->get_hpcd();
-  auto wEPVal = (uint16_t)PCD_GET_ENDPOINT(PCD, epindex());
 
-  auto ep = &hpcd->IN_ep[epindex()];
-
-  /* clear int flag */
-  PCD_CLEAR_TX_EP_CTR(PCD, epindex());
-
-  /* Multi-packet on the NON control IN endpoint */
-  auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, ep->num);
-
-  if (ep->xfer_len > TxPctSize)
+  /* Check if a ZLP should be armed.  */
+  if (transfer.force_zlp &&
+      transfer.requested_length)
   {
-    ep->xfer_len -= TxPctSize;
+    transfer.force_zlp = UX_FALSE;
+    transfer.in_transfer_length = 0;
+
+    /* Arm a ZLP packet on IN.  */
+    HAL_PCD_EP_Transmit(hpcd, epindex(), 0, 0);
   }
   else
   {
-    ep->xfer_len = 0U;
+    transfer.actual_length = transfer.requested_length;
+
+  /* Non control endpoint operation, use semaphore.  */
+    transfer.complete(UX_SUCCESS);
   }
 
-  /* Zero Length Packet? */
-  if (ep->xfer_len == 0U)
-  {
-    /* Check if a ZLP should be armed.  */
-    if (transfer.force_zlp &&
-        transfer.requested_length)
-    {
-      transfer.force_zlp = UX_FALSE;
-      transfer.in_transfer_length = 0;
-
-      /* Arm a ZLP packet on IN.  */
-      HAL_PCD_EP_Transmit(hpcd, epindex(), 0, 0);
-    }
-    else
-    {
-      transfer.actual_length = transfer.requested_length;
-
-    /* Non control endpoint operation, use semaphore.  */
-      transfer.complete(UX_SUCCESS);
-    }
-  }
-  else
-  {
-    /* Transfer is not yet Done */
-    ep->xfer_buff += TxPctSize;
-    ep->xfer_count += TxPctSize;
-    (void)USB_EPStartXfer(PCD, ep);
-  }
 }
 
 void STM32::Endpoint::on_data_out()
 {
-  auto PCD = dcd->get_PCD();
   auto hpcd = dcd->get_hpcd();
 
-  PCD_CLEAR_RX_EP_CTR(PCD, epindex());
-  auto ep = &hpcd->OUT_ep[epindex()];
+  transfer.actual_length = HAL_PCD_EP_GetRxCount(hpcd, epindex());
 
-  /* OUT Single Buffering */
-  assert(ep->doublebuffer == 0U);
-
-  auto count = (uint16_t)PCD_GET_EP_RX_CNT(PCD, ep->num);
-
-  if (count != 0U)
-  {
-    USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaadress, count);
-  }
-
-  /* multi-packet on the NON control OUT endpoint */
-  ep->xfer_count += count;
-
-  if ((ep->xfer_len == 0U) || (count < ep->maxpacket))
-  {
-    transfer.actual_length = HAL_PCD_EP_GetRxCount(hpcd, epindex());
-
-    transfer.complete(UX_SUCCESS);
-  }
-  else
-  {
-     ep->xfer_buff += count;
-    (void)USB_EPStartXfer(PCD, ep);
-  }
+  transfer.complete(UX_SUCCESS);
 }
 
 
@@ -241,12 +187,135 @@ void STM32::Endpoint::on_interrupt()
 
   if ((wEPVal & USB_EP_VTRX) != 0U)
   {
-    on_data_out();
+    /* clear int flag */
+    PCD_CLEAR_RX_EP_CTR(PCD, epindex());
+    auto ep = &hpcd->OUT_ep[epindex()];
+
+    /* OUT Single Buffering */
+    if (ep->doublebuffer == 0U)
+    {
+      count = (uint16_t)PCD_GET_EP_RX_CNT(PCD, ep->num);
+
+      if (count != 0U)
+      {
+        USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaadress, count);
+      }
+    }
+    else
+    {
+      /* manage double buffer bulk out */
+      if (ep->type == EP_TYPE_BULK)
+      {
+        count = receive(ep, wEPVal);
+      }
+      else /* manage double buffer iso out */
+      {
+        /* free EP OUT Buffer */
+        PCD_FREE_USER_BUFFER(PCD, ep->num, 0U);
+
+        if ((PCD_GET_ENDPOINT(PCD, ep->num) & USB_EP_DTOG_RX) != 0U)
+        {
+          /* read from endpoint BUF0Addr buffer */
+          count = (uint16_t)PCD_GET_EP_DBUF0_CNT(PCD, ep->num);
+
+          if (count != 0U)
+          {
+            USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaaddr0, count);
+          }
+        }
+        else
+        {
+          /* read from endpoint BUF1Addr buffer */
+          count = (uint16_t)PCD_GET_EP_DBUF1_CNT(PCD, ep->num);
+
+          if (count != 0U)
+          {
+            USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaaddr1, count);
+          }
+        }
+      }
+    }
+
+    /* multi-packet on the NON control OUT endpoint */
+    ep->xfer_count += count;
+
+    if ((ep->xfer_len == 0U) || (count < ep->maxpacket))
+    {
+      /* RX COMPLETE */
+      on_data_out();
+    }
+    else
+    {
+       ep->xfer_buff += count;
+      (void)USB_EPStartXfer(PCD, ep);
+    }
   }
 
   if ((wEPVal & USB_EP_VTTX) != 0U)
   {
-    on_data_in();
+    auto ep = &hpcd->IN_ep[epindex()];
+
+    /* clear int flag */
+    PCD_CLEAR_TX_EP_CTR(PCD, epindex());
+
+    if (ep->type == EP_TYPE_ISOC)
+    {
+      ep->xfer_len = 0U;
+
+#if (USE_USB_DOUBLE_BUFFER == 1U)
+      if (ep->doublebuffer != 0U)
+      {
+        if ((wEPVal & USB_EP_DTOG_TX) != 0U)
+        {
+          PCD_SET_EP_DBUF0_CNT(PCD, ep->num, ep->is_in, 0U);
+        }
+        else
+        {
+          PCD_SET_EP_DBUF1_CNT(PCD, ep->num, ep->is_in, 0U);
+        }
+      }
+#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
+
+      /* TX COMPLETE */
+      on_data_in();
+    }
+    else
+    {
+      /* Manage Single Buffer Transaction */
+      if ((wEPVal & USB_EP_KIND) == 0U)
+      {
+        /* Multi-packet on the NON control IN endpoint */
+        auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, ep->num);
+
+        if (ep->xfer_len > TxPctSize)
+        {
+          ep->xfer_len -= TxPctSize;
+        }
+        else
+        {
+          ep->xfer_len = 0U;
+        }
+
+        /* Zero Length Packet? */
+        if (ep->xfer_len == 0U)
+        {
+          /* TX COMPLETE */
+          on_data_in();
+        }
+        else
+        {
+          /* Transfer is not yet Done */
+          ep->xfer_buff += TxPctSize;
+          ep->xfer_count += TxPctSize;
+          (void)USB_EPStartXfer(PCD, ep);
+        }
+
+      }
+      else
+      {
+        transmit(ep, wEPVal);
+      }
+    }
   }
 }
 
@@ -495,3 +564,4 @@ HAL_StatusTypeDef STM32::Endpoint::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
 }
 
 
+#endif

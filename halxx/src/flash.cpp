@@ -49,6 +49,8 @@ void Flash::Init()
   FLASH_NS->WRP1R_PRG = 0xC0000000;
   FLASH_NS->WRP2R_PRG = 0xC0000000;
 
+  FLASH_NS->ACR = 0x3F;
+
   FLASH_NS->NSCR |= FLASH_CR_PG;
 }
 
@@ -72,7 +74,7 @@ void Flash::WaitErase()
 
   if (FLASH_NS->NSSR & FLASH_FLAG_PGSERR) {
     FLASH_NS->NSCCR = FLASH_CCR_CLR_PGSERR;
-    throw ProgramSequenceError();
+    throw WriteProtectError();
   }
 
 }
@@ -98,6 +100,10 @@ void Flash::WaitProgram()
   if (FLASH_NS->NSSR & FLASH_FLAG_PGSERR) {
     FLASH_NS->NSCCR = FLASH_CCR_CLR_PGSERR;
     throw ProgramSequenceError();
+  }
+
+  if (FLASH_NS->NSSR & FLASH_FLAG_WRPERR) {
+    throw WriteProtectError();
   }
 
 }
@@ -172,14 +178,8 @@ void HEFlash::write16(uint32_t offset, uint16_t v)
   Flash::WaitProgram();
 
 
-  try {
-    uint16_t test = read16(offset);
-
-    assert(test == v);
-  } catch(UncorrectibleECCError e) {
-    int v = 1;
-    v++;
-  }
+  if (read16(offset) != v)
+    throw ProgramInconsistentError();
 }
 
 extern "C" void handle_flash(void)

@@ -2,6 +2,7 @@
 
 #include <usbxx/endpoint.hpp>
 #include <usbxx/stm32/transfer.hpp>
+#include <usbxx/stm32/pcd.hpp>
 
 #include <usbxx/ux_stm32_config.h>
 
@@ -13,6 +14,7 @@ namespace USBXX
 
     enum class EndpointState
     {
+      RESET,
       IDLE,
       DATA_TX,
       DATA_RX,
@@ -23,6 +25,8 @@ namespace USBXX
     class Endpoint : public USBXX::Endpoint
     {
     public:
+      using ptr = std::shared_ptr<Endpoint>;
+
       bool in_transfer;
       bool stalled;
       bool done;
@@ -38,13 +42,7 @@ namespace USBXX
       UCHAR           direction;
       DCD      *dcd;
 
-      Endpoint() :
-        state(EndpointState::IDLE),
-        index(0),
-        direction(0)
-      {
-        reset_flags();
-      }
+      Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index);
 
 
 
@@ -71,6 +69,43 @@ namespace USBXX
       UINT reset() override;
       void stall() override;
       void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
+      void ack_ctrl() override { throw std::runtime_error("Incorrect endpoint for control acknowledgement"); };
+
+      uint32_t epindex() { return descriptor.bEndpointAddress & 0xF; }
+      virtual HAL_StatusTypeDef transmit(PCD_EPTypeDef *ep, uint16_t wEPVal);
+      virtual uint16_t receive(PCD_EPTypeDef *ep, uint16_t wEPVal);
+
+      virtual void on_data_out();
+      virtual void on_data_in();
+      virtual void on_interrupt();
+    };
+
+    class ControlEndpoint : public Endpoint
+    {
+      enum class AckMode {
+        NONE,
+        DATA_IN,
+        SETUP,
+        DATA_OUT
+      };
+
+      AckMode ack_mode;
+    public:
+      using ptr = std::shared_ptr<ControlEndpoint>;
+
+
+      ControlEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
+        STM32::Endpoint(_device, _dcd, _index),
+        ack_mode(AckMode::NONE)
+      {
+      }
+
+      void on_setup();
+      void on_data_out() override;
+      void on_data_in() override;
+      void on_interrupt() override;
+      void ack_ctrl() override;
+
     };
   }
 }

@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <vector>
+#include <deque>
 
 namespace USBXX
 {
@@ -28,7 +29,6 @@ namespace USBXX
 
 struct UX_SYSTEM_SLAVE
 {
-    USBXX::DeviceBase *device;
     UCHAR           *ux_system_slave_dfu_framework;
     ULONG           ux_system_slave_dfu_framework_length;
     USBXX::USBClass  *ux_system_slave_class_array;
@@ -52,6 +52,8 @@ namespace USBXX
 {
   class DeviceBase
   {
+    friend class ControlThread;
+
     static UINT _usbxx_change_notification(ULONG);
 
     uint32_t on_change(uint32_t);
@@ -64,6 +66,29 @@ namespace USBXX
     LanguageIDs lang_ids;
 
     DCD *dcd;
+
+    class ControlThread : public TXX::Thread<8192> {
+      DeviceBase *_dev;
+    public:
+      ControlThread(DeviceBase *dev) : TXX::Thread<8192>("USB Control Thread"), _dev(dev)
+      {
+        _priority = 1;
+        _preempt = 1;
+      }
+
+      void main() override { _dev->control_thread_main(); }
+    };
+
+    TXX::Semaphore control_request_sema;
+    std::deque<Transfer *> control_requests;
+
+    ControlThread control_thread;
+    void control_thread_main();
+    void handle_control_request(const ControlRequest &req);
+    uint32_t get_entity_status(const ControlRequest &req);
+    uint32_t set_feature(const ControlRequest &req);
+    uint32_t clear_feature(const ControlRequest &req);
+
 
   public:
 
@@ -156,7 +181,7 @@ namespace USBXX
     }
 
     Transfer *get_control_transfer() { return dcd->get_control_transfer(); };
-    Endpoint *get_control_endpoint() { return dcd->get_control_endpoint(); }
+    USBXX::Endpoint::ptr get_control_endpoint() { return dcd->get_control_endpoint(); }
 
     void set_state(uint32_t state) { state = state; }
     uint32_t get_state() { return state; }
@@ -174,15 +199,12 @@ namespace USBXX
     uint32_t on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value);
     uint32_t on_get_configuration();
     uint32_t on_set_configuration(uint32_t configuration_value);
-    uint32_t clear_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
 
-    uint32_t process_control_event(Transfer *transfer_request);
-    uint32_t set_feature(uint32_t request_type, uint32_t request_value, uint32_t request_index);
+    void process_control_event(Transfer *transfer_request);
     uint32_t set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
         uint32_t alternate_setting_value);
-    uint32_t get_entity_status(uint32_t request_type, uint32_t request_index, uint32_t request_length);
 
-    UINT on_vendor_request(ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *) { return 0; };
+    UINT on_vendor_request(const ControlRequest &, UCHAR *, ULONG *) { return 0; };
 
     uint32_t get_interface(uint8_t interface_value);
 
@@ -246,7 +268,6 @@ namespace USBXX
     }
 
     void start_app() override {
-      app_thread.create();
     }
   };
 };

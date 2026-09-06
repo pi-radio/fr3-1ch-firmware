@@ -1,7 +1,11 @@
+#include <threadxx/intr.hpp>
+
 #include <usbxx/ux_api.h>
 #include <usbxx/ux_device_stack.h>
 
 #include <usbxx/device.hpp>
+
+#include <usbxx/event_log.hpp>
 
 using namespace USBXX;
 
@@ -20,256 +24,189 @@ UCHAR _ux_system_device_class_ccid_name[] =                                 "ux_
 UCHAR _ux_system_device_class_video_name[] =                                "ux_device_class_video";
 #endif
 
-
-uint32_t DeviceBase::process_control_event(Transfer *xfer)
+void DeviceBase::handle_control_request(const ControlRequest &req)
 {
+  uint32_t status;
 
-USBXX::DCD                *dcd;
-USBClass              *class_ptr;
-ULONG                       request_type;
-ULONG                       request;
-ULONG                       request_value;
-ULONG                       request_index;
-ULONG                       request_length;
-ULONG                       class_index;
-UINT                        status =  UX_ERROR;
-ULONG                       application_data_length;
+  /* Check if there is a vendor registered function at the application layer.  If the request
+     is VENDOR and the request match, pass the request to the application.  */
+  if (req.type == RequestType::VENDOR)
+  {
+    uint32_t application_data_length = UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH;
+    auto xfer = get_control_transfer();
 
-
-    /* Get the pointer to the device.  */
-    auto device = _ux_system_slave->device;
-
-    /* Get the pointer to the DCD.  */
-    dcd = device->get_dcd();
-
-
-    /* Ensure that the Setup request has been received correctly.  */
-    if (xfer->is_valid())
+    if (on_vendor_request(req, xfer->data, &application_data_length))
     {
-
-        /* Seems so far, the Setup request is valid. Extract all fields of
-           the request.  */
-        request_type   =   *xfer -> setup;
-        request        =   *(xfer -> setup + UX_SETUP_REQUEST);
-        request_value  =   usb_get_short(xfer -> setup + UX_SETUP_VALUE);
-        request_index  =   usb_get_short(xfer -> setup + UX_SETUP_INDEX);
-        request_length =   usb_get_short(xfer -> setup + UX_SETUP_LENGTH);
-
-        /* Filter for GET_DESCRIPTOR/SET_DESCRIPTOR commands. If the descriptor to be returned is not a standard descriptor,
-           treat the command as a CLASS command.  */
-        if ((request == UX_GET_DESCRIPTOR || request == UX_SET_DESCRIPTOR) && (((request_value >> 8) & UX_REQUEST_TYPE) != UX_REQUEST_TYPE_STANDARD))
-        {
-
-            /* This request is to be handled by the class layer.  */
-            request_type &=  (UINT)~UX_REQUEST_TYPE;
-            request_type |= UX_REQUEST_TYPE_CLASS;
-        }
-
-        /* Check if there is a vendor registered function at the application layer.  If the request
-           is VENDOR and the request match, pass the request to the application.  */
-        if ((request_type & UX_REQUEST_TYPE) == UX_REQUEST_TYPE_VENDOR)
-        {                /* This is a Microsoft extended function. It happens before the device is configured.
-                   The request is passed to the application directly.  */
-                application_data_length = UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH;
-                status = device->on_vendor_request(request, request_value,
-                                                                                            request_index, request_length,
-                                                                                            xfer -> data,
-                                                                                            &application_data_length);
-
-                /* Check the status from the application.  */
-                if (status == UX_SUCCESS)
-                {
-                    /* Get the pointer to the transfer request associated with the control endpoint.  */
-                    auto xfer2 = device->get_control_transfer();
-
-                    /* Set the direction to OUT.  */
-                    xfer2 -> phase =  TransferPhase::DATA_OUT;
-
-                    /* Perform the data transfer.  */
-                    transfer_request(xfer2, application_data_length, request_length);
-
-                    /* We are done here.  */
-                    return 0;
-                }
-                else
-                {
-
-                    /* The application did not like the vendor command format, stall the control endpoint.  */
-                    device -> get_control_endpoint()->stall();
-
-                    /* We are done here.  */
-                    return 0;
-                }
-        }
-
-        /* Check the destination of the request. If the request is of type CLASS or VENDOR_SPECIFIC,
-           the function has to be passed to the class layer.  */
-        if (((request_type & UX_REQUEST_TYPE) == UX_REQUEST_TYPE_CLASS) ||
-            ((request_type & UX_REQUEST_TYPE) == UX_REQUEST_TYPE_VENDOR))
-        {
-            /* We need to find which class this request is for.  */
-            for (class_index = 0; class_index < UX_MAX_SLAVE_INTERFACES; class_index ++)
-            {
-
-                /* Get the class for the interface.  */
-                class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[class_index];
-
-                /* If class is not ready, try next.  */
-                if (class_ptr == nullptr)
-                    continue;
-
-                /* Is the request target to an interface?  */
-                if ((request_type & UX_REQUEST_TARGET) == UX_REQUEST_TARGET_INTERFACE)
-                {
-
-                    /* Yes, so the request index contains the index of the interface
-                       the request is for. So if the current index does not match
-                       the request index, we should go to the next one.  */
-                    /* For printer class (0x07) GET_DEVICE_ID (0x00) the high byte of
-                       wIndex is interface index (for recommended index sequence the interface
-                       number is same as interface index inside configuration).
-                     */
-                    if ((request_type == 0xA1) && (request == 0x00) &&
-                        (class_ptr -> interface -> descriptor.bInterfaceClass == 0x07))
-                    {
-
-                        /* Check wIndex high byte.  */
-                        if(*(xfer -> setup + UX_SETUP_INDEX + 1) != class_index)
-                            continue;
-                    }
-                    else
-                    {
-
-                        /* Check wIndex low.  */
-                        if ((request_index & 0xFF) != class_index)
-                            continue;
-                    }
-                }
-
-                /* We have found a potential candidate. Call this registered class entry function.  */
-                status = /*class_ptr ->*/ this->class_command_request();
-
-                /* The status simply tells us if the registered class handled the
-                   command - if there was an issue processing the command, it would've
-                   stalled the control endpoint, notifying the host (and not us).  */
-                if (status == UX_SUCCESS)
-
-                    /* We are done, break the loop!  */
-                    break;
-
-                /* Not handled, try next.  */
-            }
-
-            /* If no class handled the command, then we have an error here.  */
-            if (status != UX_SUCCESS)
-
-                /* We stall the command (request not supported).  */
-                device->get_control_endpoint()->stall();
-
-            /* We are done for class/vendor request.  */
-            return(status);
-        }
-
-        /* At this point, the request must be a standard request that the device stack should handle.  */
-        switch (request)
-        {
-
-        case UX_GET_STATUS:
-
-            status = get_entity_status(request_type, request_index, request_length);
-            break;
-
-        case UX_CLEAR_FEATURE:
-
-            status =  clear_feature(request_type, request_value, request_index);
-            break;
-
-        case UX_SET_FEATURE:
-
-            status =  set_feature(request_type, request_value, request_index);
-            break;
-
-        case UX_SET_ADDRESS:
-
-            /* Memorize the address. Some controllers memorize the address here. Some don't.  */
-
-
-            /* Force the new address.  */
-            dcd->set_device_address(request_value);
-
-            status = 0;
-
-            break;
-
-        case UX_GET_DESCRIPTOR:
-        {
-          ControlRequest req(xfer->setup);
-
-          status = send_descriptor(req); //request_value, request_index, request_length);
-          break;
-        }
-
-        case UX_SET_DESCRIPTOR:
-
-            status = UX_FUNCTION_NOT_SUPPORTED;
-            break;
-
-        case UX_GET_CONFIGURATION:
-
-            status = device->on_get_configuration();
-            break;
-
-        case UX_SET_CONFIGURATION:
-
-            status =  device->on_set_configuration(request_value);
-            break;
-
-        case UX_GET_INTERFACE:
-
-            status = device->on_get_alternate_setting(request_index);
-            break;
-
-        case UX_SET_INTERFACE:
-
-            status =  device->on_set_alternate_setting(request_index,request_value);
-            break;
-
-
-        case UX_SYNCH_FRAME:
-
-            status = UX_SUCCESS;
-            break;
-
-        default :
-
-            status = UX_FUNCTION_NOT_SUPPORTED;
-            break;
-        }
-
-        if (status != UX_SUCCESS)
-
-            /* Stall the control endpoint to issue protocol error. */
-           device->get_control_endpoint()->stall();
+      get_control_endpoint()->stall();
+      return;
     }
 
-    /* Return the function status.  */
-    return(status);
+    xfer -> phase =  TransferPhase::DATA_OUT;
+
+    transfer_request(xfer, application_data_length, req.length);
+
+    return;
+  }
+
+  if ((req.type == RequestType::CLASS) ||
+      (req.type == RequestType::VENDOR))
+  {
+    /* We need to find which class this request is for.  */
+    for (auto class_index = 0; class_index < UX_MAX_SLAVE_INTERFACES; class_index ++)
+    {
+      auto class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[class_index];
+
+      if (class_ptr == nullptr)
+          continue;
+
+      if (req.recipient == RequestRecipient::INTERFACE)
+      {
+#if 0  /* Printer crap */
+        if ((req.type == 0xA1) && (req.code == 0x00) &&
+            (class_ptr -> interface -> descriptor.bInterfaceClass == 0x07))
+        {
+          if(*(get_control_transfer() -> setup + UX_SETUP_INDEX + 1) != class_index)
+            continue;
+        }
+        else
+#endif
+        {
+          if ((req.index & 0xFF) != class_index)
+            continue;
+        }
+      }
+
+      status = /*class_ptr ->*/ this->class_command_request();
+
+      /* The status simply tells us if the registered class handled the
+           command - if there was an issue processing the command, it would've
+           stalled the control endpoint, notifying the host (and not us).  */
+      if (status == UX_SUCCESS)
+        break;
+    }
+
+    if (status != UX_SUCCESS)
+      get_control_endpoint()->stall();
+
+    return;
+  }
+
+  switch (req.code)
+  {
+  case UX_GET_STATUS:
+    status = get_entity_status(req);
+    break;
+
+  case UX_CLEAR_FEATURE:
+    status = clear_feature(req);
+    break;
+
+  case UX_SET_FEATURE:
+    status = set_feature(req);
+    break;
+
+  case UX_SET_ADDRESS:
+    status = UX_SUCCESS;
+    dcd->set_device_address(req.value);
+    break;
+
+  case UX_GET_DESCRIPTOR:
+    status = send_descriptor(req); //request_value, request_index, request_length);
+    break;
+
+  case UX_SET_DESCRIPTOR:
+    status = UX_FUNCTION_NOT_SUPPORTED;
+    break;
+
+  case UX_GET_CONFIGURATION:
+    status = on_get_configuration();
+    break;
+
+  case UX_SET_CONFIGURATION:
+    status = on_set_configuration(req.value);
+    break;
+
+  case UX_GET_INTERFACE:
+    status = on_get_alternate_setting(req.index);
+    break;
+
+  case UX_SET_INTERFACE:
+    status = on_set_alternate_setting(req.index, req.value);
+    break;
+
+  case UX_SYNCH_FRAME:
+    status = UX_SUCCESS;
+    break;
+
+  default:
+    status = UX_FUNCTION_NOT_SUPPORTED;
+    break;
+  }
+
+  if (status == UX_SUCCESS) {
+    get_control_endpoint()->ack_ctrl();
+  } else {
+    get_control_endpoint()->stall();
+  }
 }
 
-uint32_t DeviceBase::get_entity_status(uint32_t request_type, uint32_t request_index, uint32_t request_length)
+void DeviceBase::control_thread_main()
+{
+  while (true) {
+    Transfer *xfer;
+
+    control_request_sema.get();
+
+    {
+      TXX::lock_intr l;
+
+      xfer = control_requests.front();
+      control_requests.pop_front();
+
+      if (!xfer->is_valid())
+        continue;
+
+      event_log.push_event(UsbEvent::START_CONTROL_REQUEST);
+
+      ControlRequest req(xfer->setup);
+
+      /* Filter for GET_DESCRIPTOR/SET_DESCRIPTOR commands. If the descriptor to be returned is not a standard descriptor,
+         treat the command as a CLASS command.  */
+      if ((req.code == UX_GET_DESCRIPTOR ||
+          req.code == UX_SET_DESCRIPTOR) &&
+          (((req.value >> 8) & UX_REQUEST_TYPE) != UX_REQUEST_TYPE_STANDARD))
+        req.type = RequestType::CLASS;
+
+
+      handle_control_request(req);
+
+      event_log.push_event(UsbEvent::END_CONTROL_REQUEST);
+    }
+  }
+}
+
+void DeviceBase::process_control_event(Transfer *xfer)
+{
+  {
+    TXX::lock_intr l;
+
+    control_requests.push_back(xfer);
+
+    control_request_sema.put();
+  }
+}
+
+uint32_t DeviceBase::get_entity_status(const ControlRequest &req)
 {
 Transfer       *xfer;
 UINT                    status;
 ULONG                   data_length;
 
-    /* Get the pointer to the device.  */
-    auto device = _ux_system_slave->device;
-
     /* Get the control endpoint for the device.  */
-    auto endpoint =  device -> get_control_endpoint();
+    auto endpoint = get_control_endpoint();
 
     /* Get the pointer to the transfer request associated with the endpoint.  */
-    xfer = device->get_control_transfer();
+    xfer = get_control_transfer();
 
     /* Reset the status buffer.  */
     *xfer -> data =  0;
@@ -279,14 +216,14 @@ ULONG                   data_length;
     data_length = 2;
 
     /* The status can be for either the device or the endpoint.  */
-    switch (request_type & UX_REQUEST_TARGET)
+    switch (req.recipient)
     {
 
-    case UX_REQUEST_TARGET_DEVICE:
+    case RequestRecipient::DEVICE:
 
         /* When the device is probed, it is either for the power/remote capabilities or OTG role swap.
            We differentiate with the Windex, 0 or OTG status Selector.  */
-        if (request_index == UX_OTG_STATUS_SELECTOR)
+        if (req.index == UX_OTG_STATUS_SELECTOR)
         {
 
             /* Set the data length to 1.  */
@@ -308,9 +245,9 @@ ULONG                   data_length;
 
         break;
 
-    case UX_REQUEST_TARGET_ENDPOINT:
+    case RequestRecipient::ENDPOINT:
     {
-      auto tgt = device->dcd->get_endpoint(request_index);
+      auto tgt = dcd->get_endpoint(req.index);
 
       if (tgt->is_stalled()) {
         *xfer -> data = 1;
@@ -330,7 +267,7 @@ ULONG                   data_length;
     xfer -> phase =  TransferPhase::DATA_OUT;
 
     /* Send the descriptor with the appropriate length to the host.  */
-    status = device->transfer_request(xfer, data_length, data_length);
+    status = transfer_request(xfer, data_length, data_length);
 
     /* Return the function status.  */
     return(status);

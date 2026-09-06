@@ -1,3 +1,4 @@
+#if 0
 
 #define UX_SOURCE_CODE
 #define UX_DCD_STM32_SOURCE_CODE
@@ -154,21 +155,25 @@ void STM32::Endpoint::on_data_in()
   /* clear int flag */
   PCD_CLEAR_TX_EP_CTR(PCD, epindex());
 
-  /* Multi-packet on the NON control IN endpoint */
-  auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, ep->num);
-
-  if (ep->xfer_len > TxPctSize)
-  {
-    ep->xfer_len -= TxPctSize;
-  }
-  else
+  if (ep->type == EP_TYPE_ISOC)
   {
     ep->xfer_len = 0U;
-  }
 
-  /* Zero Length Packet? */
-  if (ep->xfer_len == 0U)
-  {
+#if (USE_USB_DOUBLE_BUFFER == 1U)
+    if (ep->doublebuffer != 0U)
+    {
+      if ((wEPVal & USB_EP_DTOG_TX) != 0U)
+      {
+        PCD_SET_EP_DBUF0_CNT(PCD, ep->num, ep->is_in, 0U);
+      }
+      else
+      {
+        PCD_SET_EP_DBUF1_CNT(PCD, ep->num, ep->is_in, 0U);
+      }
+    }
+#endif /* (USE_USB_DOUBLE_BUFFER == 1U) */
+
+    /* TX COMPLETE */
     /* Check if a ZLP should be armed.  */
     if (transfer.force_zlp &&
         transfer.requested_length)
@@ -189,10 +194,55 @@ void STM32::Endpoint::on_data_in()
   }
   else
   {
-    /* Transfer is not yet Done */
-    ep->xfer_buff += TxPctSize;
-    ep->xfer_count += TxPctSize;
-    (void)USB_EPStartXfer(PCD, ep);
+    /* Manage Single Buffer Transaction */
+    if ((wEPVal & USB_EP_KIND) == 0U)
+    {
+      /* Multi-packet on the NON control IN endpoint */
+      auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, ep->num);
+
+      if (ep->xfer_len > TxPctSize)
+      {
+        ep->xfer_len -= TxPctSize;
+      }
+      else
+      {
+        ep->xfer_len = 0U;
+      }
+
+      /* Zero Length Packet? */
+      if (ep->xfer_len == 0U)
+      {
+        /* Check if a ZLP should be armed.  */
+        if (transfer.force_zlp &&
+            transfer.requested_length)
+        {
+          transfer.force_zlp = UX_FALSE;
+          transfer.in_transfer_length = 0;
+
+          /* Arm a ZLP packet on IN.  */
+          HAL_PCD_EP_Transmit(hpcd, epindex(), 0, 0);
+        }
+        else
+        {
+          transfer.actual_length = transfer.requested_length;
+
+        /* Non control endpoint operation, use semaphore.  */
+          transfer.complete(UX_SUCCESS);
+        }
+      }
+      else
+      {
+        /* Transfer is not yet Done */
+        ep->xfer_buff += TxPctSize;
+        ep->xfer_count += TxPctSize;
+        (void)USB_EPStartXfer(PCD, ep);
+      }
+
+    }
+    else
+    {
+      transmit(ep, wEPVal);
+    }
   }
 }
 
@@ -495,3 +545,4 @@ HAL_StatusTypeDef STM32::Endpoint::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
 }
 
 
+#endif

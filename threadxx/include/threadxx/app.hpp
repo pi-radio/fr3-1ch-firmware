@@ -52,7 +52,7 @@ namespace TXX
     
     App() : app_thread(this) { };
 
-    void app_create_main() override { app_thread.create(); }
+    void app_create_main() override { }
   };
 
   void register_setup_func(void (*)(void *), void *);

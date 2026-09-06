@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <threadxx/semaphore.hpp>
 
 namespace USBXX {
@@ -9,6 +11,7 @@ struct Endpoint;
 namespace USBXX
 {
   enum class TransferPhase {
+    IDLE,
     SETUP,
     DATA_IN,
     DATA_OUT,
@@ -31,14 +34,17 @@ namespace USBXX
   class Transfer
   {
   protected:
-    TXX::Semaphore  semaphore;
 
   public:
+    static constexpr uint32_t MAGIC = 0xFEEDF00D;
+
+    uint32_t        begin_magic;
+    TXX::Semaphore  semaphore;
     TransferStatus  status;
     ULONG           completion_code;
 
     TransferType           type;
-    USBXX::Endpoint *endpoint;
+    std::shared_ptr<USBXX::Endpoint> endpoint;
     UCHAR           *data;
     UCHAR           *current_data_pointer;
     ULONG           requested_length;
@@ -51,11 +57,11 @@ namespace USBXX
     ULONG           force_zlp;
     UCHAR           setup[8];
     ULONG           status_phase_ignore;
+    uint32_t        end_magic;
 
-    Transfer() : semaphore("transfer semaphore") {
-      data = (UCHAR *)::malloc(2048);
-    };
+    Transfer();
 
+    virtual uint32_t transfer() = 0;
     virtual void complete(uint32_t code) = 0;
     virtual void abort(uint32_t code) = 0;
     void set_pending();

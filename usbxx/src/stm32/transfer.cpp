@@ -17,58 +17,9 @@ void STM32::Transfer::complete(uint32_t code)
     semaphore.put();
 }
 
-#if 0
-UX_INTERRUPT_SAVE_AREA
-
-USBXX::DCD    *dcd;
-
-    UX_PARAMETER_NOT_USED(completion_code);
-
-    /* If trace is enabled, insert this event into the trace buffer.  */
-    UX_TRACE_IN_LINE_INSERT(UX_TRACE_DEVICE_STACK_TRANSFER_ABORT, xfer, completion_code, 0, 0, UX_TRACE_DEVICE_STACK_EVENTS, 0, 0)
-
-    /* Get the pointer to the DCD.  */
-    dcd = STM32::gDCD;
-
-    /* Sets the completion code due to bus reset.  */
-    xfer -> completion_code = completion_code;
-
-    /* Ensure we're not preempted by the transfer completion ISR.  */
-    UX_DISABLE
-
-    /* It's possible the transfer already completed. Ensure it hasn't before doing the abort.  */
-    if (xfer -> status == UX_TRANSFER_STATUS_PENDING)
-    {
-
-        /* Call the DCD if necessary for cleaning up the pending transfer.  */
-        dcd->abort_transfer(xfer);
-
-        /* Restore interrupts. Note that the transfer request should not be modified now.  */
-        UX_RESTORE
-
-        /* We need to set the completion code for the transfer to aborted. Note
-           that the transfer request function cannot simultaneously modify this
-           because if the transfer was pending, then the transfer's thread is
-           currently waiting for it to complete.  */
-
-        /* Wake up the device driver who is waiting on the semaphore.  */
-        xfer->abort();
-    }
-    else
-    {
-
-        /* Restore interrupts.  */
-        UX_RESTORE
-    }
-
-    /* This function never fails.  */
-    return 0;
-
-#endif
-
 void STM32::Transfer::abort(uint32_t code)
 {
-  STM32::Endpoint *stm32ep = (STM32::Endpoint *)endpoint;
+  auto stm32ep = static_pointer_cast<STM32::Endpoint>(endpoint);
 
   completion_code = code;
 
@@ -87,69 +38,64 @@ void STM32::Transfer::abort(uint32_t code)
     semaphore.put();
 }
 
-
-
-
-UINT  STM32::DCD::transfer_in(Transfer *xfer)
+uint32_t STM32::Transfer::transfer()
 {
-  /* Get the pointer to the logical endpoint from the transfer request.  */
-  auto endpoint =  xfer -> endpoint;
-
-  /* We have a request for a SETUP or OUT Endpoint.  */
-  /* Receive data.  */
-  HAL_PCD_EP_Receive(pcd_handle,
-                      endpoint->ux_slave_endpoint_descriptor.bEndpointAddress,
-                      xfer->data,
-                      xfer->requested_length);
-
-  /* If the endpoint is a Control endpoint, all this is happening under Interrupt and there is no
-     thread to suspend.  */
-  if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & (UINT)~UX_ENDPOINT_DIRECTION) != 0)
-  {
-    return xfer->wait();
+  /* Check for transfer direction.  Is this a IN endpoint ? */
+  if (phase == TransferPhase::DATA_OUT)
+    return transfer_out();
+  else if (phase == TransferPhase::DATA_IN) {
+    return transfer_in();
   }
 
-  return 0;
+  // Invalid transfer
+  assert(0);
 }
 
 
-UINT  STM32::DCD::transfer_out(Transfer *xfer)
-{
-  UINT retval = 0;
-  /* Get the pointer to the logical endpoint from the transfer request.  */
-  auto endpoint =  xfer -> endpoint;
 
-  if (endpoint->ux_slave_endpoint_descriptor.bEndpointAddress != 0) {
+uint32_t  STM32::Transfer::transfer_in()
+{
+  auto stm32ep = static_pointer_cast<STM32::Endpoint>(endpoint);
+
+  /* We have a request for a SETUP or OUT Endpoint.  */
+  /* Receive data.  */
+  HAL_PCD_EP_Receive(stm32ep->dcd->get_hpcd(),
+                     endpoint->descriptor.bEndpointAddress,
+                     data,
+                     requested_length);
+
+  if (endpoint->is_control())
+      return 0;
+
+
+  return wait();
+}
+
+
+uint32_t STM32::Transfer::transfer_out()
+{
+  uint32_t retval = 0;
+
+  if (!endpoint->is_control()) {
     int a = 0;
   }
 
+  auto stm32ep = static_pointer_cast<STM32::Endpoint>(endpoint);
+
 /* Transmit data.  */
-  HAL_PCD_EP_Transmit(pcd_handle,
-                      endpoint->ux_slave_endpoint_descriptor.bEndpointAddress,
-                      xfer->data,
-                      xfer->requested_length);
+  HAL_PCD_EP_Transmit(stm32ep->dcd->get_hpcd(),
+                      endpoint->descriptor.bEndpointAddress,
+                      data,
+                      requested_length);
 
-  /* If the endpoint is a Control endpoint, all this is happening under Interrupt and there is no
-     thread to suspend.  */
-  if ((endpoint -> ux_slave_endpoint_descriptor.bEndpointAddress & (UINT)~UX_ENDPOINT_DIRECTION) != 0)
-  {
-    /* We should wait for the semaphore to wake us up.  */
-    retval = xfer->wait();
+  if (endpoint->is_control())
+    return 0;
 
-    xfer -> actual_length = xfer->requested_length;
-  }
+  retval = wait();
+
+  actual_length = requested_length;
 
   /* Return to caller with success.  */
   return retval;
 }
 
-UINT  STM32::DCD::transfer_request(USBXX::Transfer *_xfer)
-{
-  Transfer *xfer = (Transfer *)_xfer;
-
-  /* Check for transfer direction.  Is this a IN endpoint ? */
-  if (xfer -> phase == TransferPhase::DATA_OUT)
-    return transfer_out(xfer);
-
-  return transfer_in(xfer);
-}

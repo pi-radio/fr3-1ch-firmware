@@ -23,6 +23,16 @@ namespace flash
     ProgramSequenceError() {}
   };
 
+  struct WriteProtectError
+  {
+    WriteProtectError() {}
+  };
+
+  struct ProgramInconsistentError
+  {
+    ProgramInconsistentError() {}
+  };
+
 
   struct UncorrectibleECCError
   {

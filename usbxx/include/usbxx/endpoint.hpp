@@ -100,27 +100,19 @@ namespace USBXX
     }
   };
 
-  struct Endpoint
+  struct Endpoint : public std::enable_shared_from_this<Endpoint>
   {
-    bool used;
+    using ptr = std::shared_ptr<Endpoint>;
 
-    ULONG           ux_slave_endpoint_state;
-    EndpointDescriptor
-                    ux_slave_endpoint_descriptor;
-    Endpoint
-                    *ux_slave_endpoint_next_endpoint;
-    std::shared_ptr<Interface> ux_slave_endpoint_interface;
-    USBXX::DeviceBase
-                    *ux_slave_endpoint_device;
+    ULONG                      state;
+    EndpointDescriptor         descriptor;
+    USBXX::DeviceBase          *device;
+    std::shared_ptr<Interface> interface;
 
-    Endpoint() : used(false)
-    {
-
-    }
+    Endpoint(USBXX::DeviceBase *_device);
 
     virtual void reset_flags()
     {
-      used = false;
     }
 
     virtual void abort_all_transfers()
@@ -128,7 +120,7 @@ namespace USBXX
 
     }
 
-    bool is_control() { return (ux_slave_endpoint_descriptor.bEndpointAddress & 0x7F) == 0; }
+    bool is_control() { return (descriptor.bEndpointAddress & 0x7F) == 0; }
 
     virtual Transfer *get_transfer() = 0;
 
@@ -138,5 +130,6 @@ namespace USBXX
     virtual UINT reset() = 0;
     virtual void stall() = 0;
     virtual void abort_all_transfers(uint32_t) = 0;
+    virtual void ack_ctrl() = 0;
   };
 }

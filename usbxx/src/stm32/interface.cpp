@@ -43,11 +43,9 @@ uint32_t Interface::stop()
 {
   for (auto endpoint : endpoints) {
       endpoint->destroy();
-      endpoint->used = false;
-      endpoint -> ux_slave_endpoint_state =  0;
-      endpoint -> ux_slave_endpoint_next_endpoint =  nullptr;
-      endpoint -> ux_slave_endpoint_interface =  nullptr;
-      endpoint -> ux_slave_endpoint_device =  nullptr;
+      endpoint -> state =  0;
+      endpoint -> interface =  nullptr;
+      endpoint -> device =  nullptr;
   }
 
   return 0;

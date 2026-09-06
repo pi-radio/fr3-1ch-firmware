@@ -88,7 +88,6 @@ void CDCACMDevice::class_init()
 
   tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
   tx_queue.create();
-  tx_thread.create();
 }
 
 bool CDCACMDevice::class_query(Interface::ptr iface)
@@ -226,23 +225,20 @@ uint32_t USBXX::CDCACMDevice::class_uninitialize()
 
 uint32_t USBXX::CDCACMDevice::class_activate(std::shared_ptr<Interface> iface)
 {
-  if (iface->descriptor.bNumEndpoints != 2)
-    return 0;
+  iface->class_instance = (VOID *)this;
 
-    iface -> class_instance =  (VOID *)this;
+  cdc_acm_interface = iface;
 
-    cdc_acm_interface = iface;
+  for (auto endpoint : iface->endpoints) {
+    if ((endpoint->descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
+      out_endpoint = endpoint;
+    else
+      in_endpoint = endpoint;
+  }
 
-    for (auto endpoint : iface->endpoints) {
-      if ((endpoint->ux_slave_endpoint_descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
-        out_endpoint = endpoint;
-      else
-        in_endpoint = endpoint;
-    }
+  tx_event_flags_set(&flags, FLAG_STARTED, TX_OR);
 
-    tx_event_flags_set(&flags, FLAG_STARTED, TX_OR);
-
-    return 0;
+  return 0;
 }
 
 uint32_t USBXX::CDCACMDevice::class_deactivate()
@@ -348,8 +344,6 @@ uint32_t USBXX::CDCACMDevice::class_command_request()
 
 UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
 {
-  Endpoint           *endpoint;
-  Transfer           *xfer;
   UINT                        status= UX_SUCCESS;
   ULONG                       local_requested_length;
 
@@ -358,20 +352,20 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
     throw std::runtime_error("CDCACM read on unconfigured device");
 
   /* Locate the endpoints.  */
-  endpoint = out_endpoint;
+  auto endpoint = out_endpoint;
 
   /* Check the endpoint direction, if OUT we have the correct endpoint.  */
   {
     TXX::Mutex::guard guard(ep_in_mutex);
-    xfer = endpoint->get_transfer();
+    auto xfer = endpoint->get_transfer();
 
     *actual_length =  0;
 
     while (state == UX_DEVICE_CONFIGURED && requested_length)
     {
       /* Check if we have enough in the local buffer.  */
-      if (requested_length > endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
-          local_requested_length = endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize;
+      if (requested_length > endpoint->descriptor.wMaxPacketSize)
+          local_requested_length = endpoint->descriptor.wMaxPacketSize;
       else
           local_requested_length = requested_length;
 
@@ -396,7 +390,7 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
 
 
       /* Is this a short packet or a ZLP indicating we are done with this transfer ?  */
-      if (xfer->actual_length < endpoint->ux_slave_endpoint_descriptor.wMaxPacketSize)
+      if (xfer->actual_length < endpoint->descriptor.wMaxPacketSize)
           return 0;
     }
   }
@@ -412,7 +406,6 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
                           ULONG requested_length,
                           ULONG *actual_length)
 {
-  Endpoint           *endpoint;
   Transfer           *xfer;
   ULONG                       local_requested_length;
   ULONG                       local_host_length;
@@ -430,7 +423,7 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
   auto iface = cdc_acm_interface;
 
   /* Locate the endpoints.  */
-  endpoint = in_endpoint;
+  auto endpoint = in_endpoint;
 
   {
     TXX::Mutex::guard guard(ep_out_mutex);
@@ -499,7 +492,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
   UINT status;
   USBClass_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
   USBClass_CDC_ACM_LINE_STATE_PARAMETER *line_state;
-  Endpoint *endpoint;
+  Endpoint::ptr endpoint;
   Transfer *xfer;
 
   /* Let's be optimist ! */

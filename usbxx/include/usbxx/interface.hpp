@@ -24,10 +24,12 @@ namespace USBXX
     USBXX::InterfaceDescriptor descriptor;
 
 
-    std::vector<USBXX::Endpoint *> endpoints;
+    std::vector<USBXX::Endpoint::ptr> endpoints;
 
     Interface(DeviceBase *_dev) :
-      device(_dev)
+      device(_dev),
+      status(0),
+      usb_class(nullptr)
     {
 
     }

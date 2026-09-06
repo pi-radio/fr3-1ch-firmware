@@ -2,6 +2,24 @@
 
 using namespace USBXX;
 
+Transfer::Transfer() :
+  semaphore("transfer semaphore"),
+  completion_function(nullptr),
+  begin_magic(MAGIC),
+  end_magic(MAGIC)
+{
+  data = (UCHAR *)::malloc(2048);
+  current_data_pointer = data;
+  requested_length = 0;
+  actual_length = 0;
+  in_transfer_length = 0;
+  transfer_length = 0;
+  phase = TransferPhase::IDLE;
+  timeout = TX_WAIT_FOREVER;
+  force_zlp = false;
+  status_phase_ignore = false;
+};
+
 
 void Transfer::set_pending()
 {
@@ -28,6 +46,7 @@ uint32_t Transfer::wait()
 
   return retval;
 }
+
 
 void Transfer::reset() {
   if (semaphore.get_suspended_count())

@@ -20,7 +20,7 @@ namespace consolexx
       io(_io),
       rx_thread(name + " Thread", this, &terminal::_rx_thread) {}
 
-    virtual void startup() { rx_thread.create(); }
+    virtual void startup() { }
 
     virtual int output_handler(const char *buffer, size_t size) = 0;
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 #include <usbxx/dcd.hpp>
 
 #include <usbxx/ux_stm32_config.h>
@@ -57,8 +59,10 @@ namespace USBXX
     {
       PCD_TypeDef *pcd;
       PCD_HandleTypeDef hpcd;
-      STM32::Endpoint ep_out[UX_DCD_STM32_MAX_ED];
-      STM32::Endpoint ep_in[UX_DCD_STM32_MAX_ED];
+      //STM32::Endpoint ep_out[UX_DCD_STM32_MAX_ED];
+      //STM32::Endpoint ep_in[UX_DCD_STM32_MAX_ED];
+
+      std::map<uint8_t, STM32::Endpoint::ptr> endpoints;
       PCD_HandleTypeDef   *pcd_handle;
 
       void control_IRQ();
@@ -67,8 +71,13 @@ namespace USBXX
       HAL_StatusTypeDef transmit(PCD_EPTypeDef *ep, uint16_t wEPVal);
       uint16_t receive(PCD_EPTypeDef *ep, uint16_t wEPVal);
 
+      STM32::ControlEndpoint::ptr control_endpoint;
+
     public:
       DCD(PCD_TypeDef *_pcd);
+
+      PCD_TypeDef *get_PCD() { return pcd; }
+      PCD_HandleTypeDef *get_hpcd() { return pcd_handle; }
 
       void low_level_init();
 
@@ -78,43 +87,33 @@ namespace USBXX
 
       PCD_HandleTypeDef *get_pcd_handle() { return pcd_handle; }
 
-      inline struct STM32::Endpoint *__get_endpoint(ULONG ep_addr)
+      USBXX::Endpoint::ptr get_endpoint(uint8_t epaddr) override
       {
-        ULONG ep_dir = ep_addr & 0x80;
-        ULONG ep_num = ep_addr & 0x7F;
+        auto retval = endpoints[epaddr];
 
-        if (ep_num == 0) {
-          return &ep_out[0];
-        }
+        assert(retval != nullptr);
 
-        if (ep_num >= UX_DCD_STM32_MAX_ED ||
-            ep_num >= pcd_handle->Init.dev_endpoints)
-            return nullptr;
-
-        if (ep_dir)
-            return &ep_in[ep_num];
-
-        return &ep_out[ep_num];
+        return retval;
       }
 
-      Endpoint *get_endpoint(uint8_t epaddr) { return __get_endpoint(epaddr); }
-      Endpoint *get_control_endpoint() override { return &ep_out[0]; };
-      Transfer *get_control_transfer() override { return ep_out[0].get_transfer(); };
+      USBXX::Endpoint::ptr get_control_endpoint() override
+      {
+        assert(control_endpoint != nullptr);
 
-      USBXX::Endpoint *allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) override;
+        return control_endpoint;
+      };
+
+
+      USBXX::Transfer *get_control_transfer() override { return get_control_endpoint()->get_transfer(); };
+
+      USBXX::Endpoint::ptr allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) override;
       uint32_t get_frame_number() override;
       UINT complete_initialization() override;
-      UINT transfer_request(USBXX::Transfer *transfer_request) override;
       UINT uninitialize() override;
 
       UINT transfer_out(Transfer *xfer);
       UINT transfer_in(Transfer *xfer);
 
-      void on_control_in();
-
-      void setup() override;
-      void on_data_in(uint8_t epnum) override;
-      void on_data_out(uint8_t epnum) override;
       void reset() override;
       void connect() override;
       void disconnect() override;
