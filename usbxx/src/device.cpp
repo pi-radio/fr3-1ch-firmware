@@ -65,16 +65,6 @@ void DeviceBase::setup_device()
 
   lang_ids.add_language();
 
-  ULONG                           interfaces_found;
-  ULONG                           endpoints_found;
-  ULONG                           max_interface_number;
-  ULONG                           local_interfaces_found;
-  ULONG                           local_endpoints_found;
-  ULONG                           endpoints_in_interface_found;
-  const UCHAR                     *device_framework;
-  ULONG                           device_framework_length;
-  UCHAR                           descriptor_type;
-  ULONG                           descriptor_length;
   UCHAR                           *memory;
 
   /* Store the max number of slave class drivers in the project structure.  */
@@ -92,127 +82,6 @@ void DeviceBase::setup_device()
 
   /* Save this memory allocation in the USBX project.  */
   _ux_system_slave -> ux_system_slave_class_array = classes;
-
-  interfaces_found                   =  0;
-  endpoints_found                    =  0;
-  max_interface_number               =  0;
-
- /* We need to determine the maximum number of interfaces and endpoints declared in the device framework.
-  This mechanism requires that both framework behave the same way regarding the number of interfaces
-  and endpoints.  */
-  device_framework        = fs_desc.get_desc();
-  device_framework_length = fs_desc.get_desc_len();
-
-  /* Reset all values we are using during the scanning of the framework.  */
-  local_interfaces_found             =  0;
-  local_endpoints_found              =  0;
-  endpoints_in_interface_found       =  0;
-
-  /* Parse the device framework and locate interfaces and endpoint descriptor(s).  */
-  while (device_framework_length != 0)
-  {
-
-      /* Get the length of this descriptor.  */
-      descriptor_length =  (ULONG) *device_framework;
-
-      /* And its type.  */
-      descriptor_type =  *(device_framework + 1);
-
-      /* Check if this is an endpoint descriptor.  */
-      switch(descriptor_type)
-      {
-
-      case UX_INTERFACE_DESCRIPTOR_ITEM:
-
-          /* Check if this is alternate setting 0. If not, do not add another interface found.
-          If this is alternate setting 0, reset the endpoints count for this interface.  */
-          if (*(device_framework + 3) == 0)
-          {
-
-              /* Add the cumulated number of endpoints in the previous interface.  */
-              local_endpoints_found += endpoints_in_interface_found;
-
-              /* Read the number of endpoints for this alternate setting.  */
-              endpoints_in_interface_found = (ULONG) *(device_framework + 4);
-
-              /* Increment the number of interfaces found in the current configuration.  */
-              local_interfaces_found++;
-          }
-          else
-          {
-
-              /* Compare the number of endpoints found in this non 0 alternate setting.  */
-              if (endpoints_in_interface_found < (ULONG) *(device_framework + 4))
-
-                  /* Adjust the number of maximum endpoints in this interface.  */
-                  endpoints_in_interface_found = (ULONG) *(device_framework + 4);
-          }
-
-          /* Check and update max interface number.  */
-          if (*(device_framework + 2) > max_interface_number)
-              max_interface_number = *(device_framework + 2);
-
-          break;
-
-      case UX_CONFIGURATION_DESCRIPTOR_ITEM:
-
-          /* Check if the number of interfaces found in this configuration is the maximum so far. */
-          if (local_interfaces_found > interfaces_found)
-
-              /* We need to adjust the number of maximum interfaces.  */
-              interfaces_found =  local_interfaces_found;
-
-          /* We have a new configuration. We need to reset the number of local interfaces. */
-          local_interfaces_found =  0;
-
-          /* Add the cumulated number of endpoints in the previous interface.  */
-          local_endpoints_found += endpoints_in_interface_found;
-
-          /* Check if the number of endpoints found in the previous configuration is the maximum so far. */
-          if (local_endpoints_found > endpoints_found)
-
-              /* We need to adjust the number of maximum endpoints.  */
-              endpoints_found =  local_endpoints_found;
-
-          /* We have a new configuration. We need to reset the number of local endpoints. */
-          local_endpoints_found         =  0;
-          endpoints_in_interface_found  =  0;
-
-          break;
-
-      default:
-          break;
-      }
-
-      /* Adjust what is left of the device framework.  */
-      device_framework_length -=  descriptor_length;
-
-      /* Point to the next descriptor.  */
-      device_framework +=  descriptor_length;
-  }
-
-  /* Add the cumulated number of endpoints in the previous interface.  */
-  local_endpoints_found += endpoints_in_interface_found;
-
-  /* Check if the number of endpoints found in the previous interface is the maximum so far. */
-  if (local_endpoints_found > endpoints_found)
-
-      /* We need to adjust the number of maximum endpoints.  */
-      endpoints_found =  local_endpoints_found;
-
-
-  /* Check if the number of interfaces found in this configuration is the maximum so far. */
-  if (local_interfaces_found > interfaces_found)
-
-      /* We need to adjust the number of maximum interfaces.  */
-      interfaces_found =  local_interfaces_found;
-
-  /* We do a sanity check on the finding. At least there must be one interface but endpoints are
-  not necessary.  */
-  if (interfaces_found == 0)
-  {
-    throw std::runtime_error("Corrupted descriptor");
-  }
 }
 
 
@@ -375,33 +244,25 @@ void DeviceBase::uninitialize(void)
 
 uint32_t DeviceBase::set_feature(const ControlRequest &req)
 {
-    auto endpoint = get_control_endpoint();
+  auto endpoint = get_control_endpoint();
 
-    /* The feature can be for either the device or the endpoint.  */
-    switch (req.recipient)
+  /* The feature can be for either the device or the endpoint.  */
+  switch (req.recipient)
+  {
+
+  case RequestRecipient::DEVICE:
+
+    /* Check if we have a DEVICE_REMOTE_WAKEUP Feature.  */
+    if (req.value == UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP)
     {
-
-    case RequestRecipient::DEVICE:
-
-        /* Check if we have a DEVICE_REMOTE_WAKEUP Feature.  */
-        if (req.value == UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP)
-        {
-
-            /* Check if we have the capability. */
-            if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
-            {
-
-                /* Enable the feature. */
-                _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_TRUE;
-
-                /* OK. */
-                return (UX_SUCCESS);
-            }
-            else
-
-                /* Protocol error. */
-                return (UX_FUNCTION_NOT_SUPPORTED);
-        }
+      if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
+      {
+        _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_TRUE;
+        return (UX_SUCCESS);
+      }
+      else
+        return (UX_FUNCTION_NOT_SUPPORTED);
+    }
 
 #ifdef UX_OTG_SUPPORT
         /* Check if we have a A_HNP_SUPPORT Feature. This is set when the Host is HNP capable. */
@@ -428,61 +289,54 @@ uint32_t DeviceBase::set_feature(const ControlRequest &req)
 #endif
 
         /* Request value not supported.  */
-        return(UX_FUNCTION_NOT_SUPPORTED);
+    return(UX_FUNCTION_NOT_SUPPORTED);
 
-    case RequestRecipient::ENDPOINT:
-    {
-      auto eptgt = dcd->get_endpoint(req.index);
+  case RequestRecipient::ENDPOINT:
+  {
+    auto eptgt = dcd->get_endpoint(req.index);
 
-      if (eptgt != nullptr) {
-        eptgt->stall();
-        return 0;
-      }
+    if (eptgt == nullptr) {
+      get_control_endpoint()->stall();
+      return 0;
     }
-        /* We get here when the endpoint is wrong. Should not happen though.  */
-        /* Intentionally fall through into the default case. */
-        /* fall through */
-    default:
 
-        /* We stall the command.  */
-        endpoint->stall();
+    eptgt->stall();
 
-        /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-        return 0;
-    }
+    return 0;
+  }
+
+  default:
+    endpoint->stall();
+    return 0;
+  }
 }
 
 uint32_t DeviceBase::set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
     uint32_t alternate_setting_value)
 {
-ULONG                   descriptor_length;
-UCHAR                   descriptor_type;
-UINT                    status;
-    /* Find a free interface in the pool and hook it to the
-       existing interface.  */
+  ULONG descriptor_length;
+  UCHAR descriptor_type;
+  UINT  status;
 
-    interfaces.push_back(std::make_shared<Interface>(this));
+  interfaces.push_back(std::make_shared<Interface>(this));
 
-    auto iface = interfaces.back();
+  auto iface = interfaces.back();
 
-    /* Mark this interface as used now.  */
-    iface -> status = UX_USED;
+  /* Mark this interface as used now.  */
+  iface->status = UX_USED;
+  iface->descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
 
-    iface -> descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
+  /* Point beyond the interface descriptor.  */
+  device_framework_length -=  (ULONG) *device_framework;
+  device_framework +=  (ULONG) *device_framework;
 
-    /* Point beyond the interface descriptor.  */
-    device_framework_length -=  (ULONG) *device_framework;
-    device_framework +=  (ULONG) *device_framework;
 
-    /* Parse the device framework and locate endpoint descriptor(s).  */
-    while (device_framework_length != 0)
-    {
 
-        /* Get the length of the current descriptor.  */
-        descriptor_length =  (ULONG) *device_framework;
-
-        /* And its type.  */
-        descriptor_type =  *(device_framework + 1);
+  /* Parse the device framework and locate endpoint descriptor(s).  */
+  while (device_framework_length != 0)
+  {
+    descriptor_length =  (ULONG) *device_framework;
+    descriptor_type =  *(device_framework + 1);
 
         /* Check if this is an endpoint descriptor.  */
         switch(descriptor_type)

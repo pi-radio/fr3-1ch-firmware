@@ -65,11 +65,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/usbxx</locationURI>
 		</link>
 		<link>
-			<name>usbxx/usbx</name>
-			<type>2</type>
-			<location>/home/zapman/piradio/fr3-1ch-firmware/usbxx/usbx</location>
-		</link>
-		<link>
 			<name>Drivers/CMSIS/system_stm32h5xx.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Core/Src/system_stm32h5xx.c</locationURI>

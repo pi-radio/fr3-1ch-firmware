@@ -380,6 +380,8 @@ namespace USBXX
       return buf;
     }
 
+    value_type *operator->() { return &buf; }
+
     DescriptorIterator &operator++() {
       uint32_t cur_len = buf.cur_len();
 
@@ -395,12 +397,18 @@ namespace USBXX
       return *this;
     }
 
+
+
     bool operator==(const DescriptorIterator &other) {
       return (buf.buffer == other.buf.buffer);
     }
 
     bool operator!=(const DescriptorIterator &other) {
       return (buf.buffer != other.buf.buffer);
+    }
+
+    uint8_t type() {
+      return buf.buffer[1];
     }
 
     void trim(uint32_t new_len) {
