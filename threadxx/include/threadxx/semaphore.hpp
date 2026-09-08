@@ -15,11 +15,8 @@ namespace TXX
 
     void create() { tx_semaphore_create(&sema, (char *)name.c_str(), 0); }
 
-    friend class creator<Semaphore>;
-    static constexpr creator<Semaphore> c = {};
-
   public:
-    Semaphore(const std::string &_name) : object(_name, c) {}
+    Semaphore(const std::string &_name) : object(_name) { create(); }
 
     uint32_t get_suspended_count() { return sema.tx_semaphore_suspended_count; }
 

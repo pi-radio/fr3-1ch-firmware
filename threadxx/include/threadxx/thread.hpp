@@ -31,9 +31,6 @@ namespace TXX {
     uint8_t *_stack;
     size_t _stack_size;
 
-    friend class creator<ThreadBase>;
-    static constexpr creator<ThreadBase> c = {};
-
     void create();
 
   protected:
@@ -46,15 +43,7 @@ namespace TXX {
       }
     }
 
-    void entry() {
-      try {
-        main();
-      } catch (const std::exception &e) {
-        const char *what = e.what();
-        dbg::dbgout << "Uncaught exception in thread " << name << std::endl;
-        __asm volatile ("BKPT     %0" : : "i"(0));
-      }
-    }
+    void entry();
 
     ThreadBase(const std::string &name,
                 uint8_t *stack,

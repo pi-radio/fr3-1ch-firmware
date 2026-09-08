@@ -13,11 +13,8 @@ namespace TXX
 
     void create() { tx_mutex_create(&mutex, (char *)name.c_str(), TX_NO_INHERIT); }
 
-    friend class creator<Mutex>;
-    static constexpr creator<Mutex> c = {};
-
   public:
-    Mutex(const std::string &_name) : object(_name, c) {}
+    Mutex(const std::string &_name) : object(_name) {}
 
     void get() { tx_mutex_get(&mutex, TX_WAIT_FOREVER); }
     void put() { tx_mutex_put(&mutex); }

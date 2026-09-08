@@ -15,7 +15,7 @@ TXX::ThreadBase::ThreadBase(const std::string &_name,
     int preempt,
     int timeslice,
     bool autostart) :
-    object(_name, c),
+    object(_name),
     _priority(priority),
     _preempt(preempt),
     _autostart(autostart),
@@ -23,6 +23,7 @@ TXX::ThreadBase::ThreadBase(const std::string &_name,
     _stack(stack),
     _stack_size(stack_size)
 {
+  create();
 }
 
 void TXX::ThreadBase::create() {
@@ -34,6 +35,16 @@ void TXX::ThreadBase::create() {
                                   _autostart ? TX_AUTO_START : TX_DONT_START);
 
   if (result != 0) {
+    __asm volatile ("BKPT     %0" : : "i"(0));
+  }
+}
+
+void TXX::ThreadBase::entry() {
+  try {
+    main();
+  } catch (const std::exception &e) {
+    const char *what = e.what();
+    dbg::dbgout << "Uncaught exception in thread " << name << std::endl;
     __asm volatile ("BKPT     %0" : : "i"(0));
   }
 }

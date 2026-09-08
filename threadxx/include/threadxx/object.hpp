@@ -10,6 +10,7 @@ namespace TXX
   class object_manager;
   class AppBase;
 
+#if 0
   class creator_base
   {
   public:
@@ -22,6 +23,8 @@ namespace TXX
   public:
     void create(object *obj) const override { ((T *)obj)->create(); }
   };
+#endif
+
 
   class object
   {
@@ -36,6 +39,6 @@ namespace TXX
     std::string name;
 
   public:
-    object(const std::string &, const creator_base &);
+    object(const std::string &);
   };
 }

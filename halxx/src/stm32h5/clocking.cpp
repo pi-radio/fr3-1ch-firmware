@@ -53,6 +53,21 @@ extern uint32_t _ebss;
 extern "C" void __libc_init_array();
 extern "C" int main(void);
 
+extern uint32_t g_pfnVectors;
+
+extern void *_tx_thread_system_stack_ptr;
+extern "C" void _tx_thread_initialize(void);
+extern "C" void _tx_timer_initialize(void);
+
+extern uint32_t _tx_thread_system_state;
+extern uint32_t _tx_thread_preempt_disable;
+
+#define TX_SOURCE_CODE
+
+#include "tx_api.h"
+#include "tx_initialize.h"
+
+
 void SystemInit(void)
 {
   uint32_t reg_opsr;
@@ -80,8 +95,20 @@ void SystemInit(void)
   RCC->CFGR2 = 0U;
 
   /* Reset HSEON, HSECSSON, HSEBYP, HSEEXT, HSIDIV, HSIKERON, CSION, CSIKERON, HSI48 and PLLxON bits */
-  RCC->CR &= ~(RCC_CR_HSEON | RCC_CR_HSECSSON | RCC_CR_HSEBYP | RCC_CR_HSEEXT | RCC_CR_HSIDIV | RCC_CR_HSIKERON | \
-               RCC_CR_CSION | RCC_CR_CSIKERON |RCC_CR_HSI48ON | RCC_CR_PLL1ON | RCC_CR_PLL2ON | RCC_CR_PLL3ON);
+  RCC->CR &= ~(
+      RCC_CR_HSEON |
+      RCC_CR_HSECSSON |
+      RCC_CR_HSEBYP |
+      RCC_CR_HSEEXT |
+      RCC_CR_HSIDIV |
+      RCC_CR_HSIKERON |
+      RCC_CR_CSION |
+      RCC_CR_CSIKERON |
+      RCC_CR_HSI48ON |
+      RCC_CR_PLL1ON |
+      RCC_CR_PLL2ON |
+      RCC_CR_PLL3ON
+      );
 
   /* Reset PLLxCFGR register */
   RCC->PLL1CFGR = 0U;
@@ -108,12 +135,45 @@ void SystemInit(void)
   RCC->CIER = 0U;
 
   /* Configure the Vector Table location add offset address ------------------*/
-  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
+  /* Vector Table Relocation in Internal FLASH (can also be in SRAM) */
+  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;
 
-  /* Check OPSR register to verify if there is an ongoing swap or option bytes update interrupted by a reset */
+  // Turn on cycle counter
+  DWT->CTRL |= 1;
+
+  // Set the ThreadX system stack to be the same as the reset stack
+  _tx_thread_system_stack_ptr = (void *)g_pfnVectors;
+
+  _tx_thread_system_state =  TX_INITIALIZE_IN_PROGRESS;
+
+  /* Call any port specific preprocessing.  */
+  _tx_thread_initialize();
+  _tx_timer_initialize();
+
+  _tx_thread_preempt_disable++;
+
+  /* Set the system state to indicate initialization is almost done.  */
+  _tx_thread_system_state =  TX_INITIALIZE_ALMOST_DONE;
+
+  uint32_t SYSTEM_CLOCK = 32000000;
+  uint32_t SYSTICK_CYCLES = ((SYSTEM_CLOCK / 1000) -1);
+
+  SysTick->LOAD = SYSTICK_CYCLES;
+  SysTick->CTRL = 7;
+
+  uint32_t *pSHPR = (uint32_t *)&SCB->SHPR;
+
+  pSHPR[0] = 0;
+  pSHPR[1] = 0xFF000000;
+  pSHPR[2] = 0x40FF0000;
+
+
+  /* Check OPSR register to verify if there is an ongoing swap or option bytes
+   * update interrupted by a reset */
   reg_opsr = FLASH->OPSR & FLASH_OPSR_CODE_OP;
 
-  if ((reg_opsr == FLASH_OPSR_CODE_OP) || (reg_opsr == (FLASH_OPSR_CODE_OP_2 | FLASH_OPSR_CODE_OP_1)))
+  if ((reg_opsr == FLASH_OPSR_CODE_OP) ||
+      (reg_opsr == (FLASH_OPSR_CODE_OP_2 | FLASH_OPSR_CODE_OP_1)))
   {
     /* Check FLASH Option Control Register access */
     if ((FLASH->OPTCR & FLASH_OPTCR_OPTLOCK) != 0U)
@@ -196,30 +256,32 @@ void SystemCoreClockUpdate(void)
     SystemCoreClock = HSE_VALUE;
     break;
 
-  case 0x18UL:  /* PLL1 used as system clock source */
-    /* PLL_VCO = (HSE_VALUE or HSI_VALUE or CSI_VALUE/ PLLM) * PLLN
-    SYSCLK = PLL_VCO / PLLR
+  case 0x18UL:
+    /*
+      PLL1 used as system clock source
+      PLL_VCO = (HSE_VALUE or HSI_VALUE or CSI_VALUE/ PLLM) * PLLN
+      SYSCLK = PLL_VCO / PLLR
     */
     pllsource = (RCC->PLL1CFGR & RCC_PLL1CFGR_PLL1SRC);
-    pllm = ((RCC->PLL1CFGR & RCC_PLL1CFGR_PLL1M)>> RCC_PLL1CFGR_PLL1M_Pos);
-    pllfracen = ((RCC->PLL1CFGR & RCC_PLL1CFGR_PLL1FRACEN)>>RCC_PLL1CFGR_PLL1FRACEN_Pos);
-    fracn1 = (float_t)(uint32_t)(pllfracen* ((RCC->PLL1FRACR & RCC_PLL1FRACR_PLL1FRACN)>> RCC_PLL1FRACR_PLL1FRACN_Pos));
+    pllm = ((RCC->PLL1CFGR & RCC_PLL1CFGR_PLL1M) >> RCC_PLL1CFGR_PLL1M_Pos);
+    pllfracen = ((RCC->PLL1CFGR & RCC_PLL1CFGR_PLL1FRACEN) >> RCC_PLL1CFGR_PLL1FRACEN_Pos);
+    fracn1 = (float_t)(uint32_t)(pllfracen* ((RCC->PLL1FRACR & RCC_PLL1FRACR_PLL1FRACN) >> RCC_PLL1FRACR_PLL1FRACN_Pos));
 
     switch (pllsource)
     {
     case 0x01UL:  /* HSI used as PLL clock source */
       hsivalue = (HSI_VALUE >> ((RCC->CR & RCC_CR_HSIDIV)>> 3)) ;
-      pllvco = ((float_t)hsivalue / (float_t)pllm) * ((float_t)(uint32_t)(RCC->PLL1DIVR & RCC_PLL1DIVR_PLL1N) + \
+      pllvco = ((float_t)hsivalue / (float_t)pllm) * ((float_t)(uint32_t)(RCC->PLL1DIVR & RCC_PLL1DIVR_PLL1N) +
                 (fracn1/(float_t)0x2000) +(float_t)1 );
       break;
 
     case 0x02UL:  /* CSI used as PLL clock source */
-      pllvco = ((float_t)CSI_VALUE / (float_t)pllm) * ((float_t)(uint32_t)(RCC->PLL1DIVR & RCC_PLL1DIVR_PLL1N) + \
+      pllvco = ((float_t)CSI_VALUE / (float_t)pllm) * ((float_t)(uint32_t)(RCC->PLL1DIVR & RCC_PLL1DIVR_PLL1N) +
                 (fracn1/(float_t)0x2000) +(float_t)1 );
       break;
 
     case 0x03UL:  /* HSE used as PLL clock source */
-      pllvco = ((float_t)HSE_VALUE / (float_t)pllm) * ((float_t)(uint32_t)(RCC->PLL1DIVR & RCC_PLL1DIVR_PLL1N) + \
+      pllvco = ((float_t)HSE_VALUE / (float_t)pllm) * ((float_t)(uint32_t)(RCC->PLL1DIVR & RCC_PLL1DIVR_PLL1N) +
                 (fracn1/(float_t)0x2000) +(float_t)1 );
       break;
 

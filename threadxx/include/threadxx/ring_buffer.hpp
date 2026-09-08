@@ -70,6 +70,10 @@ namespace TXX
     }
 
   public:
+    ring_buffer_base() :
+      start(0), end(0) {
+    }
+
     int push(T c) {
       if (full()) {
         ++start;
