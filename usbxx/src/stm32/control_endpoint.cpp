@@ -44,8 +44,6 @@ void STM32::ControlEndpoint::on_setup()
 {
   auto hpcd = dcd->get_hpcd();
 
-  ::memcpy(transfer.setup, hpcd->Setup, UX_SETUP_SIZE);
-
   /* Clear the length of the data received.  */
   transfer.actual_length =  0;
 
@@ -59,7 +57,6 @@ void STM32::ControlEndpoint::on_setup()
   stalled = false;
   done = false;
 
-
   /* Check if the transaction is IN.  */
   if (*transfer.setup & UX_REQUEST_IN)
   {
@@ -68,47 +65,46 @@ void STM32::ControlEndpoint::on_setup()
     ack_mode = AckMode::DATA_IN;
 
     device->process_control_event(&transfer);
+
+    return;
   }
-  else
+
+  if (*(transfer.setup + 6) == 0 &&
+      *(transfer.setup + 7) == 0)
   {
-    direction  = UX_ENDPOINT_OUT;
+    direction = UX_ENDPOINT_IN;
 
-    if (*(transfer.setup + 6) == 0 &&
-        *(transfer.setup + 7) == 0)
-    {
-      direction = UX_ENDPOINT_IN;
+    ack_mode = AckMode::SETUP;
 
-      ack_mode = AckMode::SETUP;
+    device->process_control_event(&transfer);
 
-      device->process_control_event(&transfer);
-    }
-    else
-    {
-      transfer.requested_length = usb_get_short(transfer.setup + 6);
-
-      if (transfer.requested_length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
-      {
-        stall();
-
-        state =  EndpointState::IDLE;
-
-        return;
-      }
-      else
-      {
-        transfer.actual_length =  0;
-        transfer.current_data_pointer =  transfer.data;
-
-        HAL_PCD_EP_Receive(hpcd,
-                           descriptor.bEndpointAddress,
-                           transfer.current_data_pointer,
-                           transfer.requested_length);
-
-                /* Set the state to RX.  */
-        state =  EndpointState::DATA_RX;
-      }
-    }
+    return;
   }
+
+  direction  = UX_ENDPOINT_OUT;
+
+  transfer.requested_length = usb_get_short(transfer.setup + 6);
+
+  if (transfer.requested_length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+  {
+    stall();
+
+    state =  EndpointState::IDLE;
+
+    return;
+  }
+
+
+  transfer.actual_length =  0;
+  transfer.current_data_pointer =  transfer.data;
+
+  HAL_PCD_EP_Receive(hpcd,
+      descriptor.bEndpointAddress,
+      transfer.current_data_pointer,
+      transfer.requested_length);
+
+              /* Set the state to RX.  */
+  state =  EndpointState::DATA_RX;
 }
 
 
@@ -252,66 +248,70 @@ void STM32::ControlEndpoint::on_interrupt()
       PCD->DADDR = ((uint16_t)hpcd->USB_Address | USB_DADDR_EF);
       hpcd->USB_Address = 0U;
     }
+
+    return;
   }
-  else
+
+  /* DIR = 1 */
+
+  /* DIR = 1 & CTR_RX => SETUP or OUT int */
+  /* DIR = 1 & (CTR_TX | CTR_RX) => 2 int pending */
+  ep = &hpcd->OUT_ep[0];
+  wEPVal = (uint16_t)PCD_GET_ENDPOINT(PCD, PCD_ENDP0);
+
+  if ((wEPVal & USB_EP_SETUP) != 0U)
   {
-    /* DIR = 1 */
+    /* Get SETUP Packet */
+    ep->xfer_count = PCD_GET_EP_RX_CNT(PCD, ep->num);
 
-    /* DIR = 1 & CTR_RX => SETUP or OUT int */
-    /* DIR = 1 & (CTR_TX | CTR_RX) => 2 int pending */
-    ep = &hpcd->OUT_ep[0];
-    wEPVal = (uint16_t)PCD_GET_ENDPOINT(PCD, PCD_ENDP0);
-
-    if ((wEPVal & USB_EP_SETUP) != 0U)
+    if (ep->xfer_count != 8U)
     {
-      /* Get SETUP Packet */
-      ep->xfer_count = PCD_GET_EP_RX_CNT(PCD, ep->num);
-
-      if (ep->xfer_count != 8U)
-      {
-        /* Set Stall condition for EP0 IN/OUT */
-        PCD_SET_EP_RX_STATUS(PCD, PCD_ENDP0, USB_EP_RX_STALL);
-        PCD_SET_EP_TX_STATUS(PCD, PCD_ENDP0, USB_EP_TX_STALL);
-
-        /* SETUP bit kept frozen while CTR_RX = 1 */
-        PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
-
-        return;
-      }
-
-      USB_ReadPMA(PCD, (uint8_t *)hpcd->Setup,
-                  ep->pmaadress, (uint16_t)ep->xfer_count);
+      /* Set Stall condition for EP0 IN/OUT */
+      PCD_SET_EP_RX_STATUS(PCD, PCD_ENDP0, USB_EP_RX_STALL);
+      PCD_SET_EP_TX_STATUS(PCD, PCD_ENDP0, USB_EP_TX_STALL);
 
       /* SETUP bit kept frozen while CTR_RX = 1 */
       PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
 
-      /* Process SETUP Packet*/
-      on_setup();
+      return;
     }
-    else if ((wEPVal & USB_EP_VTRX) != 0U)
+
+    USB_ReadPMA(PCD, transfer.setup,
+                ep->pmaadress, (uint16_t)ep->xfer_count);
+
+    /* SETUP bit kept frozen while CTR_RX = 1 */
+    PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
+
+    /* Process SETUP Packet*/
+    on_setup();
+
+    return;
+  }
+
+
+  if ((wEPVal & USB_EP_VTRX) != 0U)
+  {
+    PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
+
+    /* Get Control Data OUT Packet */
+    ep->xfer_count = PCD_GET_EP_RX_CNT(PCD, ep->num);
+
+    if (ep->xfer_count == 0U)
     {
-      PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
-
-      /* Get Control Data OUT Packet */
-      ep->xfer_count = PCD_GET_EP_RX_CNT(PCD, ep->num);
-
-      if (ep->xfer_count == 0U)
+      /* Status phase re-arm for next setup */
+      PCD_SET_EP_RX_STATUS(PCD, PCD_ENDP0, USB_EP_RX_VALID);
+    }
+    else
+    {
+      if (ep->xfer_buff != 0U)
       {
-        /* Status phase re-arm for next setup */
-        PCD_SET_EP_RX_STATUS(PCD, PCD_ENDP0, USB_EP_RX_VALID);
-      }
-      else
-      {
-        if (ep->xfer_buff != 0U)
-        {
-          USB_ReadPMA(PCD, ep->xfer_buff,
-                      ep->pmaadress, (uint16_t)ep->xfer_count);  /* max 64bytes */
+        USB_ReadPMA(PCD, ep->xfer_buff,
+                    ep->pmaadress, (uint16_t)ep->xfer_count);  /* max 64bytes */
 
-          ep->xfer_buff += ep->xfer_count;
+        ep->xfer_buff += ep->xfer_count;
 
-          /* Process Control Data OUT Packet */
-          on_data_out();
-        }
+        /* Process Control Data OUT Packet */
+        on_data_out();
       }
     }
   }

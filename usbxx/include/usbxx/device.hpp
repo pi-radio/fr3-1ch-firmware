@@ -80,6 +80,7 @@ namespace USBXX
 
     TXX::Semaphore control_request_sema;
     std::deque<Transfer *> control_requests;
+    Transfer *control_xfer;
 
     ControlThread control_thread;
     void control_thread_main();

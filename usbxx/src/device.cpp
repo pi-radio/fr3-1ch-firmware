@@ -44,7 +44,8 @@ DeviceBase::DeviceBase() :
     fs_desc(USBD_FULL_SPEED),
     hs_desc(USBD_HIGH_SPEED),
     control_thread(this),
-    control_request_sema("USB Device Control Thread Semaphore")
+    control_request_sema("USB Device Control Thread Semaphore"),
+    control_xfer(nullptr)
 {
   ::memset(&ux_system_slave, 0, sizeof(ux_system_slave));
 }

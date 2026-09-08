@@ -39,14 +39,14 @@ uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
 
 uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value)
 {
-const UCHAR                           *device_framework;
-ULONG                           device_framework_length;
-ULONG                           descriptor_length;
-UCHAR                           descriptor_type;
-ConfigurationDescriptor     configuration_descriptor;
-InterfaceDescriptor         interface_descriptor;
-USBClass                  *class_ptr;
-UINT                            status;
+  const UCHAR                           *device_framework;
+  ULONG                           device_framework_length;
+  ULONG                           descriptor_length;
+  UCHAR                           descriptor_type;
+  ConfigurationDescriptor     configuration_descriptor;
+  InterfaceDescriptor         interface_descriptor;
+  USBClass                  *class_ptr;
+  UINT                            status;
 
     /* Protocol error must be reported when it's unconfigured */
     if (state != UX_DEVICE_CONFIGURED)

@@ -155,8 +155,13 @@ void DeviceBase::control_thread_main()
     {
       TXX::lock_intr l;
 
+#if 0
       xfer = control_requests.front();
       control_requests.pop_front();
+#else
+      xfer = control_xfer;
+      control_xfer = nullptr;
+#endif
 
       if (!xfer->is_valid())
         continue;
@@ -182,13 +187,20 @@ void DeviceBase::control_thread_main()
 
 void DeviceBase::process_control_event(Transfer *xfer)
 {
+  event_log.push_event(UsbEvent::RX_CONTROL_REQUEST);
+
   {
     TXX::lock_intr l;
 
+#if 0
     control_requests.push_back(xfer);
-
-    control_request_sema.put();
+#else
+    assert(control_xfer == nullptr);
+    control_xfer = xfer;
+#endif
   }
+
+  control_request_sema.put();
 }
 
 uint32_t DeviceBase::get_entity_status(const ControlRequest &req)
