@@ -261,214 +261,143 @@ uint32_t DeviceBase::on_get_configuration()
 
 uint32_t  DeviceBase::on_set_configuration(uint32_t configuration_value)
 {
-const UCHAR *                         device_framework;
-ULONG                           device_framework_length;
-ULONG                           descriptor_length;
-UCHAR                           descriptor_type;
-ConfigurationDescriptor     configuration_descriptor = { 0 };
-InterfaceDescriptor         interface_descriptor;
-USBClass::ptr                   current_class =  nullptr;
-ULONG                           iad_flag;
-ULONG                           iad_first_interface =  0;
-ULONG                           iad_number_interfaces =  0;
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-ULONG                           class_index;
-#endif
+  /* If the configuration value is already selected, keep it.  */
+  if (configuration_selected == configuration_value)
+      return 0;
 
+  auto cur_desc = get_current_descriptor();
 
-    /* Reset the IAD flag.  */
-    iad_flag =  UX_FALSE;
+  auto di = cur_desc.begin();
 
-    /* If the configuration value is already selected, keep it.  */
-    if (configuration_selected == configuration_value)
-        return 0;
+  ConfigurationDescriptor config_desc;
 
-    /* We may have multiple configurations !, the index will tell us what
-       configuration descriptor we need to return.  */
-    device_framework = get_current_descriptor().get_desc();
-    device_framework_length = get_current_descriptor().get_desc_len();
+  for(; di != cur_desc.end(); ++di) {
+    if (di.type() != ConfigurationDescriptor::desc_type)
+      continue;
 
-    /* Parse the device framework and locate a configuration descriptor.  */
-    while (device_framework_length != 0)
-    {
-        /* Get the length of the current descriptor.  */
-        descriptor_length =  (ULONG) *device_framework;
+    config_desc = di->read_in<ConfigurationDescriptor>();
 
-        /* And its type.  */
-        descriptor_type =  *(device_framework + 1);
+    if (config_desc.bConfigurationValue == configuration_value) {
+      break;
+    }
+  }
 
-        /* Check if this is a configuration descriptor.  */
-        if (descriptor_type == UX_CONFIGURATION_DESCRIPTOR_ITEM)
-        {
-          configuration_descriptor = read_in_descriptor<ConfigurationDescriptor>(device_framework);
+  if (di == cur_desc.end()) {
+    return UX_ERROR;
+  }
 
-          /* Now we need to check the configuration value. It has
-               to be the same as the one specified in the setup function.  */
-            if (configuration_descriptor.bConfigurationValue == configuration_value)
-                /* The configuration is found. */
-                break;
-        }
+  /* We unmount the configuration if there is previous configuration selected. */
+  if (configuration_selected)
+  {
+    for (auto iface : interfaces) {
+        auto class_inst =  iface -> usb_class;
 
-        /* Adjust what is left of the device framework.  */
-        device_framework_length -= descriptor_length;
-        /* Point to the next descriptor.  */
-        device_framework += descriptor_length;
+        if (class_inst != nullptr)
+            /*class_inst -> */ class_deactivate();
+
+        iface->stop();
     }
 
-    /* Configuration not found. */
-    if (device_framework_length == 0 && configuration_value != 0)
-        return(UX_ERROR);
+    interfaces.clear();
+  }
 
-    /* We unmount the configuration if there is previous configuration selected. */
-    if (configuration_selected)
+  configuration_selected =  0;
+
+  state =  UX_DEVICE_ATTACHED;
+
+  dcd->on_state_change(UX_DEVICE_ATTACHED);
+
+  if (configuration_value == 0)
+      return 0;
+
+  configuration_selected =  configuration_value;
+
+  /* Configuration character D6 is for Self-powered */
+  _ux_system_slave -> ux_system_slave_power_state = (config_desc.bmAttributes & 0x40) ? UX_DEVICE_SELF_POWERED : UX_DEVICE_BUS_POWERED;
+
+  /* Configuration character D5 is for Remote Wakeup */
+  _ux_system_slave -> ux_system_slave_remote_wakeup_capability = (config_desc.bmAttributes & 0x20) ? UX_TRUE : UX_FALSE;
+
+  di.trim(config_desc.wTotalLength);
+
+  bool     iad_flag = false;
+  uint32_t iad_first_interface =  0;
+  uint32_t iad_number_interfaces =  0;
+  InterfaceDescriptor interface_descriptor;
+  USBClass::ptr current_class =  nullptr;
+
+
+  while(di != cur_desc.end()) {
+    /* Check if this is an interface association descriptor.  */
+    if(di.type() == InterfaceAssociationDescriptor::desc_type)
     {
-      for (auto iface : interfaces) {
-          auto class_inst =  iface -> usb_class;
+      auto iad_desc = di->read_in<InterfaceAssociationDescriptor>();
 
-          if (class_inst != nullptr)
-              /*class_inst -> */ class_deactivate();
+      iad_flag = true;
+      iad_first_interface = iad_desc.bFirstInterface;
+      iad_number_interfaces = iad_desc.bInterfaceCount;
 
-          iface->stop();
+      ++di;
+
+      continue;
+    }
+
+    if (di.type() != InterfaceDescriptor::desc_type) {
+      ++di;
+      continue;
+    }
+
+    interface_descriptor = di->read_in<InterfaceDescriptor>();
+
+    if (interface_descriptor.bAlternateSetting == 0)
+    {
+      if (iad_flag)
+      {
+        if (interface_descriptor.bInterfaceNumber == iad_first_interface)
+        {
+          for (auto class_inst : classes) {
+            if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
+                (configuration_value == class_inst -> configuration_number))
+            {
+              iface_to_class[interface_descriptor.bInterfaceNumber] = class_inst;
+              current_class = class_inst;
+              break;
+            }
+          }
+        }
+        else
+          iface_to_class[interface_descriptor.bInterfaceNumber] = current_class;
+
+        /* Decrement the number of interfaces found in the same IAD.  */
+        iad_number_interfaces--;
+
+        if (iad_number_interfaces == 0)
+          iad_flag = false;
+      }
+      else
+      {
+        for (auto class_inst : classes)
+        {
+          if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
+              (configuration_value == class_inst -> configuration_number))
+          {
+            iface_to_class[interface_descriptor.bInterfaceNumber] = class_inst;
+            break;
+          }
+        }
       }
 
-      interfaces.clear();
+      set_interface(di, 0);
     }
+  }
 
-    /* No configuration is selected.  */
-    configuration_selected =  0;
+  /* Mark the device as configured now. */
+  state =  UX_DEVICE_CONFIGURED;
 
-    /* Mark the device as attached now. */
-    state =  UX_DEVICE_ATTACHED;
+  /* The DCD needs to update the device state too.  */
+  dcd->on_state_change(UX_DEVICE_CONFIGURED);
 
-    /* The DCD needs to update the device state too.  */
-    dcd->on_state_change(UX_DEVICE_ATTACHED);
-
-    /* If the host tries to unconfigure, we are done. */
-    if (configuration_value == 0)
-        return 0;
-
-    /* Memorize the configuration selected.  */
-    configuration_selected =  configuration_value;
-
-    configuration_descriptor = read_in_descriptor<ConfigurationDescriptor>(device_framework);
-
-    /* Configuration character D6 is for Self-powered */
-    _ux_system_slave -> ux_system_slave_power_state = (configuration_descriptor.bmAttributes & 0x40) ? UX_DEVICE_SELF_POWERED : UX_DEVICE_BUS_POWERED;
-
-    /* Configuration character D5 is for Remote Wakeup */
-    _ux_system_slave -> ux_system_slave_remote_wakeup_capability = (configuration_descriptor.bmAttributes & 0x20) ? UX_TRUE : UX_FALSE;
-
-    /* Search only in current configuration */
-    device_framework_length =  configuration_descriptor.wTotalLength;
-
-    /*  We need to scan all the interface descriptors following this
-        configuration descriptor and enable all endpoints associated
-        with the default alternate setting of each interface.  */
-    while (device_framework_length != 0)
-    {
-
-        /* Get the length of the current descriptor.  */
-        descriptor_length =  (ULONG) *device_framework;
-
-        /* And its type.  */
-        descriptor_type =  *(device_framework + 1);
-
-        /* Check if this is an interface association descriptor.  */
-        if(descriptor_type == UX_INTERFACE_ASSOCIATION_DESCRIPTOR_ITEM)
-        {
-
-            /* Set the IAD flag.  */
-            iad_flag = UX_TRUE;
-
-            /* Get the first interface we have in the IAD. */
-            iad_first_interface = (ULONG)  *(device_framework + 2);
-
-            /* Get the number of interfaces we have in the IAD. */
-            iad_number_interfaces = (ULONG)  *(device_framework + 3);
-        }
-
-        /* Check if this is an interface descriptor.  */
-        if(descriptor_type == UX_INTERFACE_DESCRIPTOR_ITEM)
-        {
-          interface_descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
-
-            /* If the alternate setting is 0 for this interface, we need to
-               memorize its class association and start it.  */
-            if (interface_descriptor.bAlternateSetting == 0)
-            {
-
-                /* Are we in a IAD scenario ? */
-                if (iad_flag == UX_TRUE)
-                {
-
-                    /* Check if this is the first interface from the IAD. In this case,
-                       we need to match a class to this interface.  */
-                    if (interface_descriptor.bInterfaceNumber == iad_first_interface)
-                    {
-                      for (auto class_inst : classes) {
-                        if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
-                            (configuration_value == class_inst -> configuration_number))
-                        {
-
-                            /* Memorize the class in the class/interface array.  */
-                            iface_to_class[interface_descriptor.bInterfaceNumber] = class_inst;
-
-                            /* And again as the current class.  */
-                            current_class = class_inst;
-
-                            break;
-                        }
-                      }
-                    }
-                    else
-                        iface_to_class[interface_descriptor.bInterfaceNumber] = current_class;
-
-                    /* Decrement the number of interfaces found in the same IAD.  */
-                    iad_number_interfaces--;
-
-                    /* If none are left, get out of the IAD state machine.  */
-                    if (iad_number_interfaces == 0)
-
-                        /* We have exhausted the interfaces within the IAD.  */
-                        iad_flag = UX_FALSE;
-
-                }
-                else
-                {
-                  for (auto class_inst : classes)
-                  {
-                    /* Check if this is the same interface for the same configuration. */
-                    if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
-                            (configuration_value == class_inst -> configuration_number))
-                    {
-
-                        /* Memorize the class in the class/interface array.  */
-                        iface_to_class[interface_descriptor.bInterfaceNumber] = class_inst;
-
-                        break;
-                    }
-                  }
-                }
-
-                /* Set the interface.  */
-                set_interface(device_framework, device_framework_length, 0);
-            }
-        }
-
-        /* Adjust what is left of the device framework.  */
-        device_framework_length -=  descriptor_length;
-
-        /* Point to the next descriptor.  */
-        device_framework +=  descriptor_length;
-    }
-
-    /* Mark the device as configured now. */
-    state =  UX_DEVICE_CONFIGURED;
-
-    /* The DCD needs to update the device state too.  */
-    dcd->on_state_change(UX_DEVICE_CONFIGURED);
-
-    /* Configuration mounted. */
-    return 0;
+  /* Configuration mounted. */
+  return 0;
 }
 

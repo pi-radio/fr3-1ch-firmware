@@ -265,90 +265,59 @@ uint32_t DeviceBase::set_feature(const ControlRequest &req)
   }
 }
 
-uint32_t DeviceBase::set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
+uint32_t DeviceBase::set_interface(DescriptorIterator &di,
     uint32_t alternate_setting_value)
 {
-  ULONG descriptor_length;
-  UCHAR descriptor_type;
   UINT  status;
 
   interfaces.push_back(std::make_shared<Interface>(this));
 
   auto iface = interfaces.back();
 
-  /* Mark this interface as used now.  */
-  iface->status = UX_USED;
-  iface->descriptor = read_in_descriptor<InterfaceDescriptor>(device_framework);
+  iface->descriptor = di->read_in<InterfaceDescriptor>();
 
-  /* Point beyond the interface descriptor.  */
-  device_framework_length -=  (ULONG) *device_framework;
-  device_framework +=  (ULONG) *device_framework;
+  ++di;
 
 
-
-  /* Parse the device framework and locate endpoint descriptor(s).  */
-  while (device_framework_length != 0)
+  for(; di != DescriptorIterator::end(); ++di)
   {
-    descriptor_length =  (ULONG) *device_framework;
-    descriptor_type =  *(device_framework + 1);
+    /* Check if this is an endpoint descriptor.  */
+    switch(di.type())
+    {
+      case UX_ENDPOINT_DESCRIPTOR_ITEM:
+      {
+        auto desc = di->read_in<EndpointDescriptor>();
+          /* Find a free endpoint in the pool and hook it to the
+             existing interface after it's created by DCD.  */
 
-        /* Check if this is an endpoint descriptor.  */
-        switch(descriptor_type)
+        auto endpoint = dcd->allocate_endpoint(iface, desc);
+
+        /* Create the endpoint at the DCD level.  */
+        status = endpoint->create();
+
+          /* Do a sanity check on endpoint creation.  */
+        if (status != UX_SUCCESS)
         {
-
-        case UX_ENDPOINT_DESCRIPTOR_ITEM:
-        {
-          EndpointDescriptor desc = USBXX::read_in_descriptor<EndpointDescriptor>(device_framework);
-            /* Find a free endpoint in the pool and hook it to the
-               existing interface after it's created by DCD.  */
-
-          auto endpoint = dcd->allocate_endpoint(iface, desc);
-
-          /* Create the endpoint at the DCD level.  */
-          status = endpoint->create();
-
-            /* Do a sanity check on endpoint creation.  */
-            if (status != UX_SUCCESS)
-            {
-
-                /* Error was returned, endpoint cannot be created.  */
-                // TODO -- ADD FREE ENDPOINT!!!!
-              assert(0);
-                return(status);
-            }
-
-            iface->endpoints.push_back(endpoint);
+          assert(0);
+          return(status);
         }
+
+        iface->endpoints.push_back(endpoint);
+      }
+      break;
+
+      case UX_CONFIGURATION_DESCRIPTOR_ITEM:
+      case UX_INTERFACE_DESCRIPTOR_ITEM:
+        return iface->start();
+
+      default:
         break;
-
-        case UX_CONFIGURATION_DESCRIPTOR_ITEM:
-        case UX_INTERFACE_DESCRIPTOR_ITEM:
-
-            /* If the descriptor is a configuration or interface,
-               we have parsed and mounted all endpoints.
-               The interface attached to this configuration must be started at the class level.  */
-          iface->start();
-
-            /* Return the status to the caller.  */
-            return(status);
-
-        default:
-            break;
-        }
-
-        /* Adjust what is left of the device framework.  */
-        device_framework_length -=  descriptor_length;
-
-        /* Point to the next descriptor.  */
-        device_framework +=  descriptor_length;
     }
+  }
 
-    /* The interface attached to this configuration must be started at the class
-       level.  */
-    iface->start();
-
-    /* Return the status to the caller.  */
-    return(status);
+  /* The interface attached to this configuration must be started at the class
+     level.  */
+  return iface->start();
 }
 
 

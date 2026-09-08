@@ -114,7 +114,11 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
     break;
 
   case UX_SET_CONFIGURATION:
+    event_log.push_event(UsbEvent::SET_CONFIGURATION_START);
     status = on_set_configuration(req.value);
+    event_log.push_event(UsbEvent::SET_CONFIGURATION_END);
+    if (req.value != 0)
+      int a = 0;
     break;
 
   case UX_GET_INTERFACE:

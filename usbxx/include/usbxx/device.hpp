@@ -200,7 +200,7 @@ namespace USBXX
     uint32_t on_set_configuration(uint32_t configuration_value);
 
     void process_control_event(Transfer *transfer_request);
-    uint32_t set_interface(const uint8_t * device_framework, uint32_t device_framework_length,
+    uint32_t set_interface(DescriptorIterator &,
         uint32_t alternate_setting_value);
 
     UINT on_vendor_request(const ControlRequest &, UCHAR *, ULONG *) { return 0; };

@@ -8,8 +8,8 @@
 #ifndef USBXX_USBXXDESCRIPTOR_HPP_
 #define USBXX_USBXXDESCRIPTOR_HPP_
 
-#include <stdint.h>
-
+#include <cassert>
+#include <cstdint>
 #include <cstring>
 #include <vector>
 #include <string>
@@ -67,7 +67,7 @@ namespace USBXX
 #define UX_DEVICE_QUALIFIER_DESCRIPTOR_ITEM                             6u
 #define UX_OTHER_SPEED_DESCRIPTOR_ITEM                                  7u
 #define UX_OTG_DESCRIPTOR_ITEM                                          9u
-#define UX_INTERFACE_ASSOCIATION_DESCRIPTOR_ITEM                        11u
+#define InterfaceAssociationDescriptor_ITEM                        11u
 #define UX_DEVICE_CAPABILITY_DESCRIPTOR_ITEM                            16u
 #define UX_DFU_FUNCTIONAL_DESCRIPTOR_ITEM                               0x21u
 #define UX_HUB_DESCRIPTOR_ITEM                                          0x29u
@@ -193,7 +193,7 @@ namespace USBXX
     uint8_t           _align_size[2];
   };
 
-  DECLARE_DESCRIPTOR(UX_INTERFACE_ASSOCIATION_DESCRIPTOR)
+  DECLARE_DESCRIPTOR(InterfaceAssociationDescriptor)
   {
     static constexpr uint8_t desc_type = 11;
     static constexpr auto structure = std::to_array({1,1,1,1,1,1,1,1});
@@ -265,7 +265,7 @@ namespace USBXX
 
 
 #if 0
-  #define UX_INTERFACE_ASSOCIATION_DESCRIPTOR_ENTRIES         8
+  #define InterfaceAssociationDescriptor_ENTRIES         8
 
   #define UX_DEVICE_QUALIFIER_DESCRIPTOR_ENTRIES                          9
 
@@ -394,6 +394,8 @@ namespace USBXX
       buf.buffer += cur_len;
       buf.len -= cur_len;
 
+      assert(type() != 0);
+
       return *this;
     }
 
@@ -418,8 +420,11 @@ namespace USBXX
 
       buf.len = new_len;
     }
-  };
 
+    static DescriptorIterator end() {
+      return DescriptorIterator(0, nullptr);
+    }
+  };
 
   class Strings
   {

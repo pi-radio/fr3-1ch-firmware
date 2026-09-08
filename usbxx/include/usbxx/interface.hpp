@@ -17,7 +17,6 @@ namespace USBXX
     using ptr = std::shared_ptr<Interface>;
 
     DeviceBase *device;
-    ULONG           status;
     std::shared_ptr<USBClass>  usb_class;
     VOID            *class_instance;
 
@@ -28,7 +27,6 @@ namespace USBXX
 
     Interface(DeviceBase *_dev) :
       device(_dev),
-      status(0),
       usb_class(nullptr)
     {
 

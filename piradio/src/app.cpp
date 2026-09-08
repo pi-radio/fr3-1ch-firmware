@@ -293,8 +293,6 @@ void PiRadioApp::pre_kernel()
 
 void PiRadioApp::tx_init()
 {
-  usb_serial.start();
-
   term.startup();
 
   output_win = term.get_cooked().create<consolexx::window>(1, 0, 37, 132);
@@ -315,6 +313,8 @@ void PiRadioApp::app_main()
   hardware->power_up();
 
   hardware->restore_settings();
+
+  usb_serial.start();
 
   while (true) {
     auto cmd = cmd_queue.pop();

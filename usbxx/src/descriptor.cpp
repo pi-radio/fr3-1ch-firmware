@@ -229,7 +229,7 @@ void USBXX::Descriptor::add_class_to_conf(uint8_t cls)
   assign_endpoint(cls, USBD_CDCACM_EPINCMD_ADDR, USBD_EP_TYPE_INTR,
       is_hs() ? USBD_CDCACM_EPINCMD_HS_MPS : USBD_CDCACM_EPINCMD_FS_MPS);
 
-  auto pIadDesc = allocate_section<UX_INTERFACE_ASSOCIATION_DESCRIPTOR>();
+  auto pIadDesc = allocate_section<InterfaceAssociationDescriptor>();
   pIadDesc->bFirstInterface = iface1;
   pIadDesc->bInterfaceCount = 2U;    /* 2 interfaces */
   pIadDesc->bFunctionClass = 0x02U;
