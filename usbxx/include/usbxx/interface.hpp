@@ -18,7 +18,7 @@ namespace USBXX
 
     DeviceBase *device;
     ULONG           status;
-    USBClass  *usb_class;
+    std::shared_ptr<USBClass>  usb_class;
     VOID            *class_instance;
 
     USBXX::InterfaceDescriptor descriptor;

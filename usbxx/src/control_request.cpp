@@ -52,29 +52,20 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
       (req.type == RequestType::VENDOR))
   {
     /* We need to find which class this request is for.  */
-    for (auto class_index = 0; class_index < UX_MAX_SLAVE_INTERFACES; class_index ++)
+    for (auto iface : interfaces)
     {
-      auto class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[class_index];
-
-      if (class_ptr == nullptr)
-          continue;
-
-      if (req.recipient == RequestRecipient::INTERFACE)
-      {
 #if 0  /* Printer crap */
-        if ((req.type == 0xA1) && (req.code == 0x00) &&
-            (class_ptr -> interface -> descriptor.bInterfaceClass == 0x07))
-        {
-          if(*(get_control_transfer() -> setup + UX_SETUP_INDEX + 1) != class_index)
-            continue;
-        }
-        else
-#endif
-        {
-          if ((req.index & 0xFF) != class_index)
-            continue;
-        }
+      if ((req.type == 0xA1) && (req.code == 0x00) &&
+          (class_ptr -> interface -> descriptor.bInterfaceClass == 0x07))
+      {
+        if(*(get_control_transfer() -> setup + UX_SETUP_INDEX + 1) != class_index)
+          continue;
       }
+      //else
+#endif
+
+      if ((req.index & 0xFF) != iface->descriptor.bInterfaceNumber)
+        continue;
 
       status = /*class_ptr ->*/ this->class_command_request();
 

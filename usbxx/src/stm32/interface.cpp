@@ -7,11 +7,11 @@ using namespace USBXX;
 
 uint32_t Interface::start()
 {
-  USBClass              *class_ptr;
+  USBClass::ptr class_ptr;
   UINT                        status;
 
     /* Get the class for the interface.  */
-    class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[descriptor.bInterfaceNumber];
+    class_ptr =  device->get_interface_class(descriptor.bInterfaceNumber);
 
     /* Check if class driver is available. */
     if (class_ptr == nullptr)

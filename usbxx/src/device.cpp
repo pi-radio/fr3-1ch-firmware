@@ -64,26 +64,9 @@ void DeviceBase::setup_device()
   strings.add_string(USBD_IDX_SERIAL_STR, get_serial());
 
   lang_ids.add_language();
-
-  UCHAR                           *memory;
-
-  /* Store the max number of slave class drivers in the project structure.  */
-  UX_SYSTEM_DEVICE_MAX_CLASS_SET(UX_MAX_SLAVE_CLASS_DRIVER);
-
-  /* Allocate memory for the classes.
-   * sizeof(USBClass) * UX_MAX_SLAVE_CLASS_DRIVER) overflow is checked
-   * outside of the function.
-   */
-  memory = (uint8_t *)::malloc(sizeof(USBClass) * UX_MAX_SLAVE_CLASS_DRIVER);
-  if (memory == nullptr)
-    throw std::runtime_error("Unable to allocate room for class entries");
-
-  ::memset(classes, 0, sizeof(USBClass) * UX_MAX_SLAVE_CLASS_DRIVER);
-
-  /* Save this memory allocation in the USBX project.  */
-  _ux_system_slave -> ux_system_slave_class_array = classes;
 }
 
+const char *what = nullptr;
 
 void DeviceBase::start()
 {
@@ -93,9 +76,11 @@ void DeviceBase::start()
     class_init();
     start_app();
   } catch(std::runtime_error &e) {
+    what = e.what();
     dbg::dbgout << "Exception in starting USB device: " << e.what() << std::endl;
     __asm volatile ("BKPT     %0" : : "i"(0));
-  } catch (...) {
+  } catch (const std::exception &e) {
+    what = e.what();
     dbg::dbgout << "Unknown exception in starting USB device!" << std::endl;
     __asm volatile ("BKPT     %0" : : "i"(0));
   }
@@ -103,84 +88,56 @@ void DeviceBase::start()
 
 void DeviceBase::disconnect()
 {
-  USBClass              *class_ptr;
-
-    /* If the device was in the configured state, there may be interfaces
-       attached to the configuration.  */
-    if (state == UX_DEVICE_CONFIGURED)
-    {
+  if (state == UX_DEVICE_CONFIGURED)
+  {
         /* Get the pointer to the first interface.  */
-        for (auto iface : interfaces) {
-          class_ptr =  iface -> usb_class;
+    for (auto iface : interfaces) {
+      auto class_ptr =  iface -> usb_class;
 
-          if (class_ptr != nullptr)
-              /*class_ptr ->*/ class_deactivate();
+      if (class_ptr != nullptr)
+        /*class_ptr ->*/ class_deactivate();
 
-          iface->stop();
-      }
-
-      state =  UX_DEVICE_ATTACHED;
+      iface->stop();
     }
 
-    /* If the device was attached, we need to destroy the control endpoint.  */
-    if (state == UX_DEVICE_ATTACHED)
-      get_control_endpoint()->destroy();
+    state =  UX_DEVICE_ATTACHED;
+  }
 
-    /* We are reverting to configuration 0.  */
-    configuration_selected =  0;
+  /* If the device was attached, we need to destroy the control endpoint.  */
+  if (state == UX_DEVICE_ATTACHED)
+    get_control_endpoint()->destroy();
 
-    /* Set the device to be non attached.  */
-    state =  UX_DEVICE_RESET;
+  /* We are reverting to configuration 0.  */
+  configuration_selected =  0;
 
-    on_removed();
+  /* Set the device to be non attached.  */
+  state =  UX_DEVICE_RESET;
+
+  on_removed();
 }
 
-uint32_t DeviceBase::register_class(const std::string &class_name,
+uint32_t DeviceBase::register_class(USBClass::ptr p_class,
                         uint32_t configuration_number,
                         uint32_t interface_number,
                         void *parameter)
 {
-  USBClass *class_inst;
   UINT     status;
 
-  class_inst =  _ux_system_slave -> ux_system_slave_class_array;
+  p_class->interface_parameter =  parameter;
+  p_class->configuration_number =  configuration_number;
+  p_class->interface_number =  interface_number;
 
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-    /* We need to parse the class table to find an empty spot.  */
-    for (class_index = 0; class_index < _ux_system_slave -> ux_system_slave_max_class; class_index++)
-    {
-#endif
+  classes.push_back(p_class);
 
-        /* Check if this class is already used.  */
-        if (class_inst -> status == UX_UNUSED)
-        {
-           class_inst->name = class_name;
-            class_inst -> interface_parameter =  parameter;
-            class_inst -> configuration_number =  configuration_number;
-            class_inst -> interface_number =  interface_number;
+  /* Call the class initialization routine.  */
+  status = /* class_inst-> */ class_initialize();
 
-            /* Call the class initialization routine.  */
-            status = /* class_inst-> */ class_initialize();
+  /* Check the status.  */
+  if (status != UX_SUCCESS)
+      return(status);
 
-            /* Check the status.  */
-            if (status != UX_SUCCESS)
-                return(status);
-
-            /* Make this class used now.  */
-            class_inst -> status = UX_USED;
-
-            /* Return successful completion.  */
-            return 0;
-        }
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-        /* Move to the next class.  */
-        class_inst ++;
-    }
-#endif
-
-    /* No more entries in the class table.  */
-    return(UX_MEMORY_INSUFFICIENT);
+  /* Return successful completion.  */
+  return 0;
 }
 
 uint32_t DeviceBase::get_interface(uint8_t interface_value)
@@ -227,18 +184,15 @@ uint32_t                    retval;
 void DeviceBase::uninitialize(void)
 {
   Transfer               *xfer;
-    /* Free class memory. */
-    ::free(_ux_system_slave -> ux_system_slave_class_array);
 
-    /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the
+  /* Allocate some memory for the Control Endpoint.  First get the address of the transfer request for the
        control endpoint. */
-    xfer = get_control_transfer();
+  xfer = get_control_transfer();
 
-    /* Free memory for the control endpoint buffer.  */
-    ::free(xfer -> data);
+  /* Free memory for the control endpoint buffer.  */
+  ::free(xfer -> data);
 
-
-    // TODO -- RELEASE ALL ENDPOINTS
+  // TODO -- RELEASE ALL ENDPOINTS
 }
 
 

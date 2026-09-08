@@ -188,8 +188,23 @@ namespace USBXX
 #define USBClass_CDC_ACM_CLASS                                    10
 #define UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE                       UX_SLAVE_REQUEST_DATA_MAX_LENGTH
 
+  class CDCACMClass : public USBClass
+  {
+  public:
+    using ptr = std::shared_ptr<CDCACMClass>;
+
+    CDCACMClass(DeviceBase *_dev) : USBClass("CDC ACM", _dev)
+    {
+
+    }
+  };
+
   // Make app stack paramaterizable
-  class CDCACMDevice : public Device<8192, 2048> {
+  class CDCACMDevice :
+      public Device<8192, 2048>
+  {
+    CDCACMClass::ptr cdcacm;
+
     ULONG cdc_acm_interface_number;
     ULONG cdc_acm_configuration_number;
     USBClass_CDC_ACM_PARAMETER cdc_acm_parameter;

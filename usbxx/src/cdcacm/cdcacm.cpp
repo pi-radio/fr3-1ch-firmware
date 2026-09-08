@@ -18,12 +18,12 @@ CDCACMDevice *CDCACMDevice::stupid_global = NULL;
 
 
 CDCACMDevice::CDCACMDevice() :
-    ep_in_mutex("CDCACM EP In Mutex"),
-    ep_out_mutex("CDCACM EP Out Mutex"),
+    ep_in_mutex("CDC ACM EP In Mutex"),
+    ep_out_mutex("CDC ACM EP Out Mutex"),
     tx_queue("CDC ACM TX Queue"),
-    tx_thread("CDCACM TX Thread", this, &CDCACMDevice::_tx_thread),
-    rx_mutex("CDCACM RX Mutex"),
-    tx_mutex("CDCACM TX Mutex")
+    tx_thread("CDC ACM TX Thread", this, &CDCACMDevice::_tx_thread),
+    rx_mutex("CDC ACM RX Mutex"),
+    tx_mutex("CDC ACM TX Mutex")
 {
   add_class(USBXX::CLASS_TYPE_CDC_ACM);
 
@@ -77,8 +77,10 @@ void CDCACMDevice::class_init()
 
   cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
 
+  cdcacm = std::make_shared<CDCACMClass>(this);
+
   /* Initialize the device cdc acm class */
-  if (register_class("cdc_acm",
+  if (register_class(cdcacm,
                      cdc_acm_configuration_number,
                      cdc_acm_interface_number,
                      NULL) != UX_SUCCESS)

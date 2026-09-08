@@ -201,14 +201,12 @@ UINT                            status;
                             ::memcpy(&iface -> descriptor, &interface_descriptor, sizeof(UX_INTERFACE_DESCRIPTOR)); /* Use case of memcpy is verified. */
 
                             /* Get the class for the interface.  */
-                            class_ptr =  _ux_system_slave -> ux_system_slave_interface_class_array[iface -> descriptor.bInterfaceNumber];
+                            auto class_ptr = iface_to_class[iface -> descriptor.bInterfaceNumber];
 
                             /* Check if class driver is available. */
-                            if (class_ptr == nullptr || class_ptr -> status == UX_UNUSED)
-                            {
-
+                            if (class_ptr == nullptr)
                                 return (UX_NO_CLASS_MATCH);
-                            }
+
                             /* We can now memorize the interface pointer associated with this class.  */
                             class_ptr -> interface = iface;
 
@@ -269,8 +267,7 @@ ULONG                           descriptor_length;
 UCHAR                           descriptor_type;
 ConfigurationDescriptor     configuration_descriptor = { 0 };
 InterfaceDescriptor         interface_descriptor;
-USBClass                  *class_inst;
-USBClass                  *current_class =  nullptr;
+USBClass::ptr                   current_class =  nullptr;
 ULONG                           iad_flag;
 ULONG                           iad_first_interface =  0;
 ULONG                           iad_number_interfaces =  0;
@@ -326,7 +323,7 @@ ULONG                           class_index;
     if (configuration_selected)
     {
       for (auto iface : interfaces) {
-          class_inst =  iface -> usb_class;
+          auto class_inst =  iface -> usb_class;
 
           if (class_inst != nullptr)
               /*class_inst -> */ class_deactivate();
@@ -408,48 +405,23 @@ ULONG                           class_index;
                        we need to match a class to this interface.  */
                     if (interface_descriptor.bInterfaceNumber == iad_first_interface)
                     {
-
-                        /* First interface. Scan the list of classes to find a match.  */
-                        class_inst =  _ux_system_slave -> ux_system_slave_class_array;
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-                        /* Parse all the class drivers.  */
-                        for (class_index = 0; class_index < _ux_system_slave -> ux_system_slave_max_class; class_index++)
+                      for (auto class_inst : classes) {
+                        if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
+                            (configuration_value == class_inst -> configuration_number))
                         {
-#endif
 
-                            /* Check if this class driver is used.  */
-                            if (class_inst -> status == UX_USED)
-                            {
+                            /* Memorize the class in the class/interface array.  */
+                            iface_to_class[interface_descriptor.bInterfaceNumber] = class_inst;
 
-                                /* Check if this is the same interface for the same configuration. */
-                                if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
-                                    (configuration_value == class_inst -> configuration_number))
-                                {
+                            /* And again as the current class.  */
+                            current_class = class_inst;
 
-                                    /* Memorize the class in the class/interface array.  */
-                                    _ux_system_slave -> ux_system_slave_interface_class_array[interface_descriptor.bInterfaceNumber] = class_inst;
-
-                                    /* And again as the current class.  */
-                                    current_class = class_inst;
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-                                    /* We are done here.  */
-                                    break;
-#endif
-                                }
-                            }
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-                            /* Move to the next registered class.  */
-                            class_inst ++;
+                            break;
                         }
-#endif
+                      }
                     }
                     else
-
-                        /* Memorize the class in the class/interface array.  We use the current class. */
-                        _ux_system_slave -> ux_system_slave_interface_class_array[interface_descriptor.bInterfaceNumber] = current_class;
+                        iface_to_class[interface_descriptor.bInterfaceNumber] = current_class;
 
                     /* Decrement the number of interfaces found in the same IAD.  */
                     iad_number_interfaces--;
@@ -463,40 +435,19 @@ ULONG                           class_index;
                 }
                 else
                 {
-
-                    /* First interface. Scan the list of classes to find a match.  */
-                    class_inst =  _ux_system_slave -> ux_system_slave_class_array;
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-                    /* Parse all the class drivers.  */
-                    for (class_index = 0; class_index < _ux_system_slave -> ux_system_slave_max_class; class_index++)
+                  for (auto class_inst : classes)
+                  {
+                    /* Check if this is the same interface for the same configuration. */
+                    if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
+                            (configuration_value == class_inst -> configuration_number))
                     {
-#endif
 
-                        /* Check if this class driver is used.  */
-                        if (class_inst -> status == UX_USED)
-                        {
+                        /* Memorize the class in the class/interface array.  */
+                        iface_to_class[interface_descriptor.bInterfaceNumber] = class_inst;
 
-                            /* Check if this is the same interface for the same configuration. */
-                            if ((interface_descriptor.bInterfaceNumber == class_inst -> interface_number) &&
-                                    (configuration_value == class_inst -> configuration_number))
-                            {
-
-                                /* Memorize the class in the class/interface array.  */
-                                _ux_system_slave -> ux_system_slave_interface_class_array[interface_descriptor.bInterfaceNumber] = class_inst;
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-                                /* We are done here.  */
-                                break;
-#endif
-                            }
-                        }
-
-#if UX_MAX_SLAVE_CLASS_DRIVER > 1
-                        /* Move to the next registered class.  */
-                        class_inst ++;
+                        break;
                     }
-#endif
+                  }
                 }
 
                 /* Set the interface.  */

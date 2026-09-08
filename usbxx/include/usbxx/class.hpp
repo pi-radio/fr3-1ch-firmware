@@ -34,20 +34,27 @@ namespace USBXX
 
   /* Define USBX Device Class container structure.  */
 
-  struct USBClass
+  struct USBClass : public std::enable_shared_from_this<USBClass>
   {
-      std::string  name; /* "+1" for string null-terminator */
+    using ptr = std::shared_ptr<USBClass>;
 
-      UINT            status;
+      std::string  name; /* "+1" for string null-terminator */
+      DeviceBase   *device;
+
       VOID            *instance;
       VOID            *client;
-      UX_THREAD       thread;
-      VOID            *thread_stack;
       VOID            *interface_parameter;
       ULONG           interface_number;
       ULONG           configuration_number;
       std::shared_ptr<Interface>       interface;
 
+      USBClass(const std::string &_name,
+          DeviceBase *_device) :
+            name(_name),
+            device(_device)
+      {
+
+      }
   };
 
 #if 0
