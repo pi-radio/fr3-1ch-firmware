@@ -120,12 +120,15 @@ uint32_t STM32::DCD::initialize()
     hpcd.OUT_ep[i].xfer_len = 0U;
   }
 
-  /* Init Device */
-  if (USB_DevInit(pcd, hpcd.Init) != HAL_OK)
-  {
-    hpcd.State = HAL_PCD_STATE_ERROR;
-    throw std::runtime_error("Failed in USB_DevInit");
-  }
+  pcd->CNTR = USB_CNTR_USBRST;
+
+  /* Release Reset */
+  pcd->CNTR &= ~USB_CNTR_USBRST;
+
+  pcd->CNTR &= ~USB_CNTR_HOST;
+
+  // Clear Interrupts
+  pcd->ISTR = 0U;
 
   address_set = false;
   hpcd.State = HAL_PCD_STATE_READY;

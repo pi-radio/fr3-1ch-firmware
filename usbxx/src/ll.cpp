@@ -625,6 +625,7 @@ HAL_StatusTypeDef USB_SetCurrentMode(USB_DRD_TypeDef *USBx, USB_DRD_ModeTypeDef 
   return HAL_OK;
 }
 
+#if 0
 /**
   * @brief  USB_DevInit Initializes the USB controller registers
   *         for device mode
@@ -655,7 +656,11 @@ HAL_StatusTypeDef USB_DevInit(USB_DRD_TypeDef *USBx, USB_DRD_CfgTypeDef cfg)
   return ret;
 }
 
+#endif
+
 #if defined (HAL_PCD_MODULE_ENABLED)
+
+#if 0
 /**
   * @brief  Activate and configure an endpoint
   * @param  USBx Selected device
@@ -791,6 +796,7 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef 
 
   return ret;
 }
+#endif
 
 /**
   * @brief  De-activate and de-initialize an endpoint

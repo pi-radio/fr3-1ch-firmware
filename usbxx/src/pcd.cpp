@@ -176,59 +176,7 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   * @retval HAL status
   */
 
-#if 0
-HAL_StatusTypeDef HAL_PCD_SetAddress(PCD_HandleTypeDef *hpcd, uint8_t address)
-{
-  __HAL_LOCK(hpcd);
-  hpcd->USB_Address = address;
-  (void)USB_SetDevAddress(hpcd->Instance, address);
-  __HAL_UNLOCK(hpcd);
 
-  return HAL_OK;
-}
-#endif
-
-/**
-  * @brief  Open and configure an endpoint.
-  * @param  hpcd PCD handle
-  * @param  ep_addr endpoint address
-  * @param  ep_mps endpoint max packet size
-  * @param  ep_type endpoint type
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_EP_Open(PCD_HandleTypeDef *hpcd, uint8_t ep_addr,
-                                  uint16_t ep_mps, uint8_t ep_type)
-{
-  HAL_StatusTypeDef ret = HAL_OK;
-  PCD_EPTypeDef *ep;
-
-  if ((ep_addr & 0x80U) == 0x80U)
-  {
-    ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
-    ep->is_in = 1U;
-  }
-  else
-  {
-    ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
-    ep->is_in = 0U;
-  }
-
-  ep->num = ep_addr & EP_ADDR_MSK;
-  ep->maxpacket = (uint32_t)ep_mps & 0x7FFU;
-  ep->type = ep_type;
-
-  /* Set initial data PID. */
-  if (ep_type == EP_TYPE_BULK)
-  {
-    ep->data_pid_start = 0U;
-  }
-
-  __HAL_LOCK(hpcd);
-  (void)USB_ActivateEndpoint(hpcd->Instance, ep);
-  __HAL_UNLOCK(hpcd);
-
-  return ret;
-}
 
 /**
   * @brief  Deactivate an endpoint.
@@ -278,6 +226,7 @@ uint32_t HAL_PCD_EP_GetRxCount(PCD_HandleTypeDef const *hpcd, uint8_t ep_addr)
   * @param  ep_addr endpoint address
   * @retval HAL status
   */
+#if 0
 HAL_StatusTypeDef HAL_PCD_EP_SetStall(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 {
   PCD_EPTypeDef *ep;
@@ -309,7 +258,9 @@ HAL_StatusTypeDef HAL_PCD_EP_SetStall(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 
   return HAL_OK;
 }
+#endif
 
+#if 0
 /**
   * @brief  Clear a STALL condition over in an endpoint
   * @param  hpcd PCD handle
@@ -345,6 +296,7 @@ HAL_StatusTypeDef HAL_PCD_EP_ClrStall(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 
   return HAL_OK;
 }
+#endif
 
 /**
    * @brief  Abort an USB EP transaction.

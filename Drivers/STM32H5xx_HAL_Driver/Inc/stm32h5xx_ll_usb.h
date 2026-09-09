@@ -141,9 +141,10 @@ typedef struct
 
   uint8_t   is_in;                /*!< Endpoint direction
                                        This parameter must be a number between Min_Data = 0 and Max_Data = 1    */
-
+#if 0
   uint8_t   is_stall;             /*!< Endpoint stall condition
                                        This parameter must be a number between Min_Data = 0 and Max_Data = 1    */
+#endif
 
 #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
   uint8_t   is_iso_incomplete;    /*!< Endpoint isoc condition

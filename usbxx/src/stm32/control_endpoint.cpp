@@ -21,6 +21,12 @@ STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
 
 }
 
+PCD_EPTypeDef *STM32::ControlEndpoint::get_epdata()
+{
+  return &dcd->get_hpcd()->IN_ep[epindex()];
+}
+
+
 void STM32::ControlEndpoint::init()
 {
   transfer.endpoint = shared_from_this();
@@ -173,6 +179,29 @@ UINT STM32::ControlEndpoint::create()
   /* Return successful completion.  */
   return 0;
 }
+
+void STM32::ControlEndpoint::clear_stall()
+{
+  auto PCD = dcd->get_PCD();
+  auto g = dcd->guard();
+
+  PCD_CLEAR_RX_DTOG(PCD, epindex());
+  PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_VALID);
+}
+
+void STM32::ControlEndpoint::stall()
+{
+  auto PCD = dcd->get_PCD();
+  auto g = dcd->guard();
+
+#if 0
+  if (ep->is_in != 0U)
+    PCD_SET_EP_TX_STATUS(USBx, ep->num, USB_EP_TX_STALL);
+  else
+#endif
+  PCD_SET_EP_RX_STATUS(dcd->get_PCD(), epindex(), USB_EP_RX_STALL);
+}
+
 
 void STM32::ControlEndpoint::on_setup()
 {

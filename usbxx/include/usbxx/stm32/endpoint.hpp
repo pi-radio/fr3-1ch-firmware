@@ -44,7 +44,7 @@ namespace USBXX
       uint8_t        direction;
       DCD            *dcd;
 
-      PCD_EPTypeDef *get_epdata();
+      virtual PCD_EPTypeDef *get_epdata() = 0;
 
       Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
@@ -63,7 +63,11 @@ namespace USBXX
 
       virtual void activate() = 0;
 
+      virtual void clear_stall() = 0;
+
 public:
+      uint8_t get_addr() { return descriptor.bEndpointAddress; }
+
       Transfer *get_transfer() override { return &transfer; };
 
       void set_descriptor(const EndpointDescriptor &_desc) { descriptor = _desc; }
@@ -82,7 +86,7 @@ public:
       UINT destroy() override;
       bool is_stalled() override;
       UINT reset() override;
-      void stall() override;
+      //void stall() override;
       void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
       void ack_ctrl() override { throw std::runtime_error("Incorrect endpoint for control acknowledgement"); };
 
@@ -105,19 +109,29 @@ public:
     class InEndpoint : public Endpoint
     {
     protected:
+      PCD_EPTypeDef *get_epdata() override;
+
       void activate() override;
+      void clear_stall() override;
 
     public:
       InEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
+
+      void stall() override;
     };
 
     class OutEndpoint : public Endpoint
     {
     protected:
+      PCD_EPTypeDef *get_epdata() override;
+
       void activate() override;
+      void clear_stall() override;
 
     public:
       OutEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
+
+      void stall() override;
     };
 
 
@@ -133,7 +147,10 @@ public:
 
       AckMode ack_mode;
 
+      PCD_EPTypeDef *get_epdata() override;
+
       void activate() override;
+      void clear_stall() override;
 
     public:
       using ptr = std::shared_ptr<ControlEndpoint>;
@@ -145,6 +162,8 @@ public:
 
       void open() override;
       UINT create() override;
+
+      void stall() override;
 
 
       void on_setup();

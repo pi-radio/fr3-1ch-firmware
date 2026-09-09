@@ -121,11 +121,11 @@ UINT STM32::Endpoint::destroy()
 {
  reset_flags();
 
- if ((descriptor.bEndpointAddress & 0x7F) != 0)
+ if ((get_addr() & 0x7F) != 0)
    int a = 0;
 
   /* Deactivate the endpoint.  */
- HAL_PCD_EP_Close(dcd->get_pcd_handle(), descriptor.bEndpointAddress);
+ HAL_PCD_EP_Close(dcd->get_pcd_handle(), get_addr());
 
   /* This function never fails.  */
  return 0;
@@ -133,7 +133,7 @@ UINT STM32::Endpoint::destroy()
 
 void STM32::Endpoint::abort_transfer()
 {
-  HAL_PCD_EP_Abort(dcd->get_pcd_handle(), descriptor.bEndpointAddress);
+  HAL_PCD_EP_Abort(dcd->get_pcd_handle(), get_addr());
 }
 
 bool STM32::Endpoint::is_stalled()
@@ -153,10 +153,7 @@ UINT  STM32::Endpoint::reset()
 
   state =  EndpointState::IDLE;
 
-  auto pcd_handle = dcd->get_pcd_handle();
-
-  /* Clear STALL condition.  */
-  HAL_PCD_EP_ClrStall(pcd_handle, descriptor.bEndpointAddress);
+  clear_stall();
 
   /* Flush buffer. Only OTG */
 
@@ -168,14 +165,15 @@ UINT  STM32::Endpoint::reset()
   return 0;
 }
 
-
+#if 0
 void STM32::Endpoint::stall()
 {
   stalled = true;
 
   /* Stall the endpoint.  */
-  HAL_PCD_EP_SetStall(dcd->get_pcd_handle(), descriptor.bEndpointAddress | direction);
+  HAL_PCD_EP_SetStall(dcd->get_pcd_handle(), get_addr() | direction);
 }
+#endif
 
 void STM32::Endpoint::on_data_in()
 {
