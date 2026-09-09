@@ -131,11 +131,6 @@ UINT STM32::Endpoint::destroy()
  return 0;
 }
 
-void STM32::Endpoint::abort_transfer()
-{
-  HAL_PCD_EP_Abort(dcd->get_pcd_handle(), get_addr());
-}
-
 bool STM32::Endpoint::is_stalled()
 {
   return stalled;
@@ -164,16 +159,6 @@ UINT  STM32::Endpoint::reset()
   /* This function never fails.  */
   return 0;
 }
-
-#if 0
-void STM32::Endpoint::stall()
-{
-  stalled = true;
-
-  /* Stall the endpoint.  */
-  HAL_PCD_EP_SetStall(dcd->get_pcd_handle(), get_addr() | direction);
-}
-#endif
 
 void STM32::Endpoint::on_data_in()
 {

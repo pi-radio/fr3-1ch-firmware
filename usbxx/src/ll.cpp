@@ -871,6 +871,7 @@ HAL_StatusTypeDef USB_DeactivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDe
   * @param  ep pointer to endpoint structure
   * @retval HAL status
   */
+#if 0
 HAL_StatusTypeDef USB_EPSetStall(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep)
 {
   if (ep->is_in != 0U)
@@ -913,6 +914,7 @@ HAL_StatusTypeDef USB_EPClearStall(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep)
 
   return HAL_OK;
 }
+#endif
 
 /**
    * @brief  USB_EPStoptXfer  Stop transfer on an EP

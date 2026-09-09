@@ -136,7 +136,7 @@ uint32_t STM32::DCD::initialize()
   /* Activate LPM */
   if (hpcd.Init.lpm_enable == 1U)
   {
-    (void)HAL_PCDEx_ActivateLPM(&hpcd);
+    activate_lpm(true);
   }
 
   disable_pullup();
@@ -258,5 +258,22 @@ void STM32::DCD::stop()
   disable_pullup();
 
   hpcd.Lock = HAL_UNLOCKED;
+}
+
+void STM32::DCD::activate_lpm(bool v)
+{
+  if (v) {
+    hpcd.lpm_active = 1U;
+    hpcd.LPM_State = LPM_L0;
+
+    pcd->LPMCSR |= USB_LPMCSR_LMPEN;
+    pcd->LPMCSR |= USB_LPMCSR_LPMACK;
+  } else {
+    hpcd.lpm_active = 0U;
+
+    pcd->LPMCSR &= ~(USB_LPMCSR_LMPEN);
+    pcd->LPMCSR &= ~(USB_LPMCSR_LPMACK);
+
+  }
 }
 

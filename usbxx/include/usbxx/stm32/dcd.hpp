@@ -138,6 +138,8 @@ namespace USBXX
       UINT complete_initialization() override;
       UINT uninitialize() override;
 
+      void activate_lpm(bool);
+
       UINT transfer_out(Transfer *xfer);
       UINT transfer_in(Transfer *xfer);
 

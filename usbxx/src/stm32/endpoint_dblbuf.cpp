@@ -51,6 +51,50 @@ HAL_StatusTypeDef  HAL_PCDEx_PMAConfig(PCD_HandleTypeDef *hpcd, uint16_t ep_addr
   return HAL_OK;
 }
 
+void STM32::Endpoint::abort_transfer()
+{
+  auto hpcd = dcd->get_hpcd();
+  auto PCD = dcd->get_PCD();
+
+  PCD_EPTypeDef *ep = get_epdata();
+
+  /* IN endpoint */
+  if (ep->is_in == 1U)
+  {
+    if (ep->doublebuffer == 0U)
+    {
+      if (ep->type != EP_TYPE_ISOC)
+      {
+        /* Configure NAK status for the Endpoint */
+        PCD_SET_EP_TX_STATUS(USBx, ep->num, USB_EP_TX_NAK);
+      }
+      else
+      {
+        /* Configure TX Endpoint to disabled state */
+        PCD_SET_EP_TX_STATUS(USBx, ep->num, USB_EP_TX_DIS);
+      }
+    }
+  }
+  else /* OUT endpoint */
+  {
+    if (ep->doublebuffer == 0U)
+    {
+      if (ep->type != EP_TYPE_ISOC)
+      {
+        /* Configure NAK status for the Endpoint */
+        PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_NAK);
+      }
+      else
+      {
+        /* Configure RX Endpoint to disabled state */
+        PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
+      }
+    }
+  }
+
+  USB_EPStopXfer(PCD, ep);
+}
+
 STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
   USBXX::Endpoint(_device),
   transfer(),

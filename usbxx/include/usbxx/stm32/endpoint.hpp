@@ -75,8 +75,8 @@ public:
 
       virtual void init();
 
+      virtual void abort_transfer() = 0;
 
-      void abort_transfer();
 
       void start_transfer(PCD_EPTypeDef *);
 
@@ -117,6 +117,7 @@ public:
     public:
       InEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
+      void abort_transfer();
       void stall() override;
     };
 
@@ -131,6 +132,7 @@ public:
     public:
       OutEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
+      void abort_transfer();
       void stall() override;
     };
 
@@ -164,6 +166,7 @@ public:
       UINT create() override;
 
       void stall() override;
+      void abort_transfer();
 
 
       void on_setup();

@@ -202,6 +202,14 @@ void STM32::ControlEndpoint::stall()
   PCD_SET_EP_RX_STATUS(dcd->get_PCD(), epindex(), USB_EP_RX_STALL);
 }
 
+void STM32::ControlEndpoint::abort_transfer()
+{
+  auto hpcd = dcd->get_hpcd();
+  auto PCD = dcd->get_PCD();
+
+  /* Configure NAK status for the Endpoint */
+  PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_NAK);
+}
 
 void STM32::ControlEndpoint::on_setup()
 {
