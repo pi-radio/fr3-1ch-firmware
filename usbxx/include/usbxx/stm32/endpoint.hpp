@@ -63,6 +63,8 @@ namespace USBXX
 
       void start_transfer(PCD_EPTypeDef *);
 
+      virtual void open();
+
       UINT create() override;
       UINT destroy() override;
       bool is_stalled() override;
@@ -76,7 +78,11 @@ namespace USBXX
       virtual HAL_StatusTypeDef transmit(PCD_EPTypeDef *ep, uint16_t wEPVal);
       virtual uint16_t receive(PCD_EPTypeDef *ep, uint16_t wEPVal);
 
+      virtual void ll_receive(uint8_t *buf, uint32_t sz);
       virtual void ll_transmit(uint8_t *buf, uint32_t sz);
+
+      virtual void read_pma(uint8_t *buf, uint32_t pmaaddr, uint32_t len);
+      virtual void write_pma(uint32_t pmaaddr, const uint8_t *buf, uint32_t len);
 
       virtual void on_data_out();
       virtual void on_data_in();
@@ -98,6 +104,10 @@ namespace USBXX
 
 
       ControlEndpoint(DeviceBase *_device, DCD *_dcd);
+
+      void open() override;
+      UINT create() override;
+
 
       void on_setup();
       void on_data_out() override;

@@ -1147,8 +1147,8 @@ HAL_StatusTypeDef USB_DeActivateRemoteWakeup(const USB_OTG_GlobalTypeDef *USBx);
 #if defined (USB_DRD_FS)
 HAL_StatusTypeDef USB_CoreInit(USB_DRD_TypeDef *USBx, USB_DRD_CfgTypeDef cfg);
 HAL_StatusTypeDef USB_DevInit(USB_DRD_TypeDef *USBx, USB_DRD_CfgTypeDef cfg);
-HAL_StatusTypeDef USB_EnableGlobalInt(USB_DRD_TypeDef *USBx);
-HAL_StatusTypeDef USB_DisableGlobalInt(USB_DRD_TypeDef *USBx);
+//HAL_StatusTypeDef USB_EnableGlobalInt(USB_DRD_TypeDef *USBx);
+//HAL_StatusTypeDef USB_DisableGlobalInt(USB_DRD_TypeDef *USBx);
 HAL_StatusTypeDef USB_SetCurrentMode(USB_DRD_TypeDef *USBx, USB_DRD_ModeTypeDef mode);
 
 HAL_StatusTypeDef USB_FlushRxFifo(USB_DRD_TypeDef const *USBx);
@@ -1157,15 +1157,15 @@ HAL_StatusTypeDef USB_FlushTxFifo(USB_DRD_TypeDef const *USBx, uint32_t num);
 #if defined (HAL_PCD_MODULE_ENABLED)
 HAL_StatusTypeDef USB_ActivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
 HAL_StatusTypeDef USB_DeactivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
-HAL_StatusTypeDef USB_EPStartXfer(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
+//HAL_StatusTypeDef USB_EPStartXfer(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
 HAL_StatusTypeDef USB_EPSetStall(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
 HAL_StatusTypeDef USB_EPClearStall(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
 HAL_StatusTypeDef USB_EPStopXfer(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep);
 #endif /* defined (HAL_PCD_MODULE_ENABLED) */
 
 HAL_StatusTypeDef USB_SetDevAddress(USB_DRD_TypeDef *USBx, uint8_t address);
-HAL_StatusTypeDef USB_DevConnect(USB_DRD_TypeDef *USBx);
-HAL_StatusTypeDef USB_DevDisconnect(USB_DRD_TypeDef *USBx);
+//HAL_StatusTypeDef USB_DevConnect(USB_DRD_TypeDef *USBx);
+//HAL_StatusTypeDef USB_DevDisconnect(USB_DRD_TypeDef *USBx);
 HAL_StatusTypeDef USB_StopDevice(USB_DRD_TypeDef *USBx);
 uint32_t          USB_ReadInterrupts(USB_DRD_TypeDef const *USBx);
 
@@ -1185,11 +1185,6 @@ HAL_StatusTypeDef USB_HC_Init(USB_DRD_TypeDef *USBx, uint8_t phy_ch_num, uint8_t
 HAL_StatusTypeDef USB_ActivateRemoteWakeup(USB_DRD_TypeDef *USBx);
 HAL_StatusTypeDef USB_DeActivateRemoteWakeup(USB_DRD_TypeDef *USBx);
 
-void              USB_WritePMA(USB_DRD_TypeDef const *USBx, uint8_t *pbUsrBuf,
-                               uint16_t wPMABufAddr, uint16_t wNBytes);
-
-void              USB_ReadPMA(USB_DRD_TypeDef const *USBx, uint8_t *pbUsrBuf,
-                              uint16_t wPMABufAddr, uint16_t wNBytes);
 #endif /* defined (USB_DRD_FS) */
 /**
   * @}

@@ -59,6 +59,8 @@ namespace USBXX
     {
       PCD_TypeDef *pcd;
       PCD_HandleTypeDef hpcd;
+
+
       //STM32::Endpoint ep_out[UX_DCD_STM32_MAX_ED];
       //STM32::Endpoint ep_in[UX_DCD_STM32_MAX_ED];
 
@@ -74,6 +76,10 @@ namespace USBXX
       STM32::ControlEndpoint::ptr control_endpoint;
 
     public:
+      // for use in endpoint
+      bool address_set;
+
+
       DCD(PCD_TypeDef *_pcd);
 
       PCD_TypeDef *get_PCD() { return pcd; }
@@ -103,6 +109,8 @@ namespace USBXX
         return control_endpoint;
       };
 
+      uint8_t get_device_address() { return device_address; };
+
 
       USBXX::Transfer *get_control_transfer() override { return get_control_endpoint()->get_transfer(); };
 
@@ -113,6 +121,13 @@ namespace USBXX
 
       UINT transfer_out(Transfer *xfer);
       UINT transfer_in(Transfer *xfer);
+
+      void stop();
+      void enable_pullup();
+      void disable_pullup();
+
+      void enable_interrupts();
+      void disable_interrupts();
 
       void reset() override;
       void connect() override;

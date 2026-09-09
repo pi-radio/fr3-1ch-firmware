@@ -48,6 +48,12 @@ extern UX_SYSTEM_SLAVE *_ux_system_slave;
 
 namespace USBXX
 {
+  enum class LPMEvent
+  {
+    L0,
+    L1
+  };
+
   class DeviceBase
   {
     friend class ControlThread;
@@ -166,6 +172,8 @@ namespace USBXX
     virtual uint32_t on_resumed() { return 0; }
 
     virtual uint32_t on_sof() { return 0; }
+
+    virtual uint32_t on_lpm_event(LPMEvent) { return 0; }
 
     void start();
     uint32_t transfer_request(Transfer *transfer_request,

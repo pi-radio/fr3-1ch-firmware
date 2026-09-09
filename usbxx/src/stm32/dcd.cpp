@@ -78,7 +78,7 @@ uint32_t STM32::DCD::initialize()
   hpcd.State = HAL_PCD_STATE_BUSY;
 
   /* Disable the Interrupts */
-  USB_DisableGlobalInt(pcd);
+  disable_interrupts();
 
   /*Init the Core (common init.) */
   if (USB_CoreInit(pcd, hpcd.Init) != HAL_OK)
@@ -127,7 +127,7 @@ uint32_t STM32::DCD::initialize()
     throw std::runtime_error("Failed in USB_DevInit");
   }
 
-  hpcd.USB_Address = 0U;
+  address_set = false;
   hpcd.State = HAL_PCD_STATE_READY;
 
   /* Activate LPM */
@@ -136,7 +136,7 @@ uint32_t STM32::DCD::initialize()
     (void)HAL_PCDEx_ActivateLPM(&hpcd);
   }
 
-  (void)USB_DevDisconnect(pcd);
+  disable_pullup();
 
   control_endpoint = std::make_shared<STM32::ControlEndpoint>(device, this);
 
@@ -159,8 +159,8 @@ uint32_t STM32::DCD::initialize()
 
   hpcd.Lock = HAL_LOCKED;
 
-  USB_EnableGlobalInt(pcd);
-  USB_DevConnect(pcd);
+  enable_interrupts();
+  enable_pullup();
 
   hpcd.Lock = HAL_UNLOCKED;
 
@@ -197,13 +197,7 @@ UINT  STM32::DCD::complete_initialization()
 
   control_endpoint->create();
 
-  /* Open Control OUT endpoint.  */
-  HAL_PCD_EP_Flush(pcd_handle, 0x00U);
-  HAL_PCD_EP_Open(pcd_handle, 0x00U, device -> descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
-
-  /* Open Control IN endpoint.  */
-  HAL_PCD_EP_Flush(pcd_handle, 0x80U);
-  HAL_PCD_EP_Open(pcd_handle, 0x80U, device -> descriptor.bMaxPacketSize0, UX_CONTROL_ENDPOINT);
+  control_endpoint->open();
 
   /* Ensure the control endpoint is properly reset.  */
   control_endpoint->state = EndpointState::RESET;
@@ -239,202 +233,39 @@ UINT  STM32::DCD::uninitialize()
 
 void STM32::DCD::set_device_address(uint8_t addr)
 {
-  device_address = addr;
+  assert(hpcd.Lock == HAL_UNLOCKED);
+  hpcd.Lock = HAL_LOCKED;
 
-  HAL_PCD_SetAddress(pcd_handle, addr);
+  if (addr == 0) {
+    device_address = 0;
+    pcd->DADDR = USB_DADDR_EF;
+    address_set = false;
+  } else {
+    assert(device_address == 0);
+    device_address = addr;
+  }
+
+  hpcd.Lock = HAL_UNLOCKED;
 }
 
-void STM32::DCD::endpoint_IRQ()
+void STM32::DCD::enable_pullup()
 {
-  uint16_t wIstr;
-  uint16_t wEPVal;
-  uint8_t epindex;
-
-  /* stay in loop while pending interrupts */
-  while ((pcd->ISTR & USB_ISTR_CTR) != 0U)
-  {
-    wIstr = (uint16_t)pcd->ISTR;
-
-    epindex = (uint8_t)(wIstr & USB_ISTR_IDN);
-
-    wEPVal = (uint16_t)PCD_GET_ENDPOINT(pcd, epindex);
-
-    event_log.push_event(UsbEvent::ENDPOINT_IRQ, epindex);
-
-
-
-    if (wEPVal & USB_EP_VTRX)
-    {
-      auto ep = endpoints[epindex];
-
-      ep->on_interrupt();
-    }
-
-    if (wEPVal & USB_EP_VTTX)
-    {
-      auto ep = endpoints[0x80 | epindex];
-
-      ep->on_interrupt();
-    }
-  }
-    /* Decode and service non control endpoints interrupt */
-    /* process related endpoint register */
-
-
-  return;
+  pcd->BCDR |= USB_BCDR_DPPU;
 }
 
-
-void STM32::DCD::handle_IRQ()
+void STM32::DCD::disable_pullup()
 {
-  uint32_t wIstr = USB_ReadInterrupts(pcd);
-
-  if ((wIstr & USB_ISTR_CTR) == USB_ISTR_CTR)
-  {
-    /* servicing of the endpoint correct transfer interrupt */
-    /* clear of the CTR flag into the sub */
-    endpoint_IRQ();
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_RESET) == USB_ISTR_RESET)
-  {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_RESET);
-
-    reset();
-
-    (void)HAL_PCD_SetAddress(&hpcd, 0U);
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_PMAOVR) == USB_ISTR_PMAOVR)
-  {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_PMAOVR);
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_ERR) == USB_ISTR_ERR)
-  {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ERR);
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_WKUP) == USB_ISTR_WKUP)
-  {
-    pcd->CNTR &= ~(USB_CNTR_SUSPRDY);
-    pcd->CNTR &= ~(USB_CNTR_SUSPEN);
-
-    if (hpcd.LPM_State == LPM_L1)
-    {
-      hpcd.LPM_State = LPM_L0;
-
-      HAL_PCDEx_LPM_Callback(&hpcd, PCD_LPM_L0_ACTIVE);
-    }
-
-    STM32::gDCD->resume();
-
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_WKUP);
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_SUSP) == USB_ISTR_SUSP)
-  {
-    /* Force low-power mode in the macrocell */
-    pcd->CNTR |= USB_CNTR_SUSPEN;
-
-    /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_SUSP);
-
-    pcd->CNTR |= USB_CNTR_SUSPRDY;
-
-    STM32::gDCD->suspend();
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  /* Handle LPM Interrupt */
-  if ((wIstr & USB_ISTR_L1REQ) == USB_ISTR_L1REQ)
-  {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_L1REQ);
-    if (hpcd.LPM_State == LPM_L0)
-    {
-      /* Force suspend and low-power mode before going to L1 state*/
-      pcd->CNTR |= USB_CNTR_SUSPRDY;
-      pcd->CNTR |= USB_CNTR_SUSPEN;
-
-      hpcd.LPM_State = LPM_L1;
-      hpcd.BESL = ((uint32_t)pcd->LPMCSR & USB_LPMCSR_BESL) >> 2;
-      HAL_PCDEx_LPM_Callback(&hpcd, PCD_LPM_L1_ACTIVE);
-    }
-    else
-    {
-      STM32::gDCD->suspend();
-    }
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_SOF) == USB_ISTR_SOF)
-  {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_SOF);
-
-    event_log.set_frame(pcd->FNR & 0x7FF);
-
-    STM32::gDCD->on_sof();
-
-    //event_log.push_event(UsbEvent::END_IRQ);
-
-    return;
-  }
-
-  if ((wIstr & USB_ISTR_ESOF) == USB_ISTR_ESOF)
-  {
-    event_log.push_event(UsbEvent::ESOF, (pcd->FNR >> 11) & 3);
-
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ESOF);
-
-    return;
-  }
+  pcd->BCDR &= ~(USB_BCDR_DPPU);
 }
 
-uint32_t STM32::DCD::get_frame_number()
+
+void STM32::DCD::stop()
 {
+  assert(hpcd.Lock == HAL_UNLOCKED);
+  hpcd.Lock = HAL_LOCKED;
+  disable_interrupts();
+  disable_pullup();
 
-    /* This function never fails. */
-    return 0;
+  hpcd.Lock = HAL_UNLOCKED;
 }
 
-
-extern "C" void USB_DRD_FS_IRQHandler(void)
-{
-  try {
-    STM32::gDCD->handle_IRQ();
-
-    return;
-  } catch (const std::runtime_error &e) {
-    const char *what = e.what();
-    __asm volatile ("BKPT     %0" : : "i"(0));
-  } catch (const std::exception &e) {
-    const char *what = e.what();
-    __asm volatile ("BKPT     %0" : : "i"(0));
-  }
-}

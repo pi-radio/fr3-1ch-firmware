@@ -59,10 +59,8 @@ uint32_t  STM32::Transfer::transfer_in()
 
   /* We have a request for a SETUP or OUT Endpoint.  */
   /* Receive data.  */
-  HAL_PCD_EP_Receive(stm32ep->dcd->get_hpcd(),
-                     endpoint->descriptor.bEndpointAddress,
-                     data,
-                     requested_length);
+  stm32ep->ll_receive(data,
+      requested_length);
 
   if (endpoint->is_control())
       return 0;

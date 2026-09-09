@@ -97,8 +97,12 @@ void STM32::DCD::on_sof()
   device->on_sof();
 }
 
+
+
 void STM32::DCD::on_state_change(uint32_t state)
 {
   if ((ULONG) state == UX_DEVICE_FORCE_DISCONNECT)
-    HAL_PCD_Stop(pcd_handle);
+  {
+    stop();
+  }
 }

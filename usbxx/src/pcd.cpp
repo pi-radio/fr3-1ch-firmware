@@ -132,16 +132,13 @@ HAL_StatusTypeDef HAL_PCD_Start(PCD_HandleTypeDef *hpcd)
   * @param  hpcd PCD handle
   * @retval HAL status
   */
+#if 0
 HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
 {
-  __HAL_LOCK(hpcd);
-  __HAL_PCD_DISABLE(hpcd);
-  (void)USB_DevDisconnect(hpcd->Instance);
-
-  __HAL_UNLOCK(hpcd);
 
   return HAL_OK;
 }
+#endif
 
 #if defined (USB_DRD_FS)
 /**
@@ -173,42 +170,13 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   */
 
 /**
-  * @brief  Connect the USB device
-  * @param  hpcd PCD handle
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_DevConnect(PCD_HandleTypeDef *hpcd)
-{
-  __HAL_LOCK(hpcd);
-
-
-  (void)USB_DevConnect(hpcd->Instance);
-  __HAL_UNLOCK(hpcd);
-
-  return HAL_OK;
-}
-
-/**
-  * @brief  Disconnect the USB device.
-  * @param  hpcd PCD handle
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_DevDisconnect(PCD_HandleTypeDef *hpcd)
-{
-  __HAL_LOCK(hpcd);
-  (void)USB_DevDisconnect(hpcd->Instance);
-
-  __HAL_UNLOCK(hpcd);
-
-  return HAL_OK;
-}
-
-/**
   * @brief  Set the USB Device address.
   * @param  hpcd PCD handle
   * @param  address new device address
   * @retval HAL status
   */
+
+#if 0
 HAL_StatusTypeDef HAL_PCD_SetAddress(PCD_HandleTypeDef *hpcd, uint8_t address)
 {
   __HAL_LOCK(hpcd);
@@ -218,6 +186,8 @@ HAL_StatusTypeDef HAL_PCD_SetAddress(PCD_HandleTypeDef *hpcd, uint8_t address)
 
   return HAL_OK;
 }
+#endif
+
 /**
   * @brief  Open and configure an endpoint.
   * @param  hpcd PCD handle
@@ -289,32 +259,6 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
 }
 
 
-/**
-  * @brief  Receive an amount of data.
-  * @param  hpcd PCD handle
-  * @param  ep_addr endpoint address
-  * @param  pBuf pointer to the reception buffer
-  * @param  len amount of data to be received
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
-{
-  PCD_EPTypeDef *ep;
-
-  ep = &hpcd->OUT_ep[ep_addr & EP_ADDR_MSK];
-
-  /*setup and start the Xfer */
-  ep->xfer_buff = pBuf;
-  ep->xfer_len = len;
-  ep->xfer_count = 0U;
-  ep->is_in = 0U;
-  ep->num = ep_addr & EP_ADDR_MSK;
-
-
-  (void)USB_EPStartXfer(hpcd->Instance, ep);
-
-  return HAL_OK;
-}
 
 /**
   * @brief  Get Received Data Size
@@ -426,30 +370,6 @@ HAL_StatusTypeDef HAL_PCD_EP_Abort(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   ret = USB_EPStopXfer(hpcd->Instance, ep);
 
   return ret;
-}
-
-/**
-  * @brief  Flush an endpoint
-  * @param  hpcd PCD handle
-  * @param  ep_addr endpoint address
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_EP_Flush(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
-{
-  __HAL_LOCK(hpcd);
-
-  if ((ep_addr & 0x80U) == 0x80U)
-  {
-    (void)USB_FlushTxFifo(hpcd->Instance, (uint32_t)ep_addr & EP_ADDR_MSK);
-  }
-  else
-  {
-    (void)USB_FlushRxFifo(hpcd->Instance);
-  }
-
-  __HAL_UNLOCK(hpcd);
-
-  return HAL_OK;
 }
 
 /**
@@ -790,22 +710,7 @@ HAL_StatusTypeDef HAL_PCDEx_DeActivateLPM(PCD_HandleTypeDef *hpcd)
 }
 #endif /* defined (USB_DRD_FS) */
 
-/**
-  * @brief  Send LPM message to user layer callback.
-  * @param  hpcd PCD handle
-  * @param  msg LPM message
-  * @retval HAL status
-  */
-__weak void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hpcd);
-  UNUSED(msg);
 
-  /* NOTE : This function should not be modified, when the callback is needed,
-            the HAL_PCDEx_LPM_Callback could be implemented in the user file
-   */
-}
 
 /**
   * @brief  Send BatteryCharging message to user layer callback.

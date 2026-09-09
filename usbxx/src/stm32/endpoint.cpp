@@ -34,6 +34,12 @@ STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
   reset_flags();
 }
 
+void STM32::Endpoint::open()
+{
+  HAL_PCD_EP_Open(dcd->get_pcd_handle(), descriptor.bEndpointAddress,
+      descriptor.wMaxPacketSize,
+      descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE);
+}
 
 UINT STM32::Endpoint::create()
 {
@@ -71,12 +77,7 @@ UINT STM32::Endpoint::create()
 
   direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
 
-  if (index != 0)
-  {
-    HAL_PCD_EP_Open(dcd->get_pcd_handle(), descriptor.bEndpointAddress,
-                    descriptor.wMaxPacketSize,
-                    descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE);
-  }
+  open();
 
   /* Return successful completion.  */
   return 0;
@@ -99,7 +100,6 @@ UINT STM32::Endpoint::destroy()
 void STM32::Endpoint::abort_transfer()
 {
   HAL_PCD_EP_Abort(dcd->get_pcd_handle(), descriptor.bEndpointAddress);
-  HAL_PCD_EP_Flush(dcd->get_pcd_handle(), descriptor.bEndpointAddress);
 }
 
 bool STM32::Endpoint::is_stalled()
@@ -124,8 +124,7 @@ UINT  STM32::Endpoint::reset()
   /* Clear STALL condition.  */
   HAL_PCD_EP_ClrStall(pcd_handle, descriptor.bEndpointAddress);
 
-  /* Flush buffer.  */
-  HAL_PCD_EP_Flush(pcd_handle, descriptor.bEndpointAddress);
+  /* Flush buffer. Only OTG */
 
   transfer.reset();
 
@@ -193,7 +192,7 @@ void STM32::Endpoint::on_data_in()
     /* Transfer is not yet Done */
     ep->xfer_buff += TxPctSize;
     ep->xfer_count += TxPctSize;
-    (void)USB_EPStartXfer(PCD, ep);
+    start_transfer(ep);
   }
 }
 
@@ -212,7 +211,7 @@ void STM32::Endpoint::on_data_out()
 
   if (count != 0U)
   {
-    USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaadress, count);
+    read_pma(ep->xfer_buff, ep->pmaadress, count);
   }
 
   /* multi-packet on the NON control OUT endpoint */
@@ -227,16 +226,14 @@ void STM32::Endpoint::on_data_out()
   else
   {
      ep->xfer_buff += count;
-    (void)USB_EPStartXfer(PCD, ep);
+     start_transfer(ep);
   }
 }
 
 
 void STM32::Endpoint::on_interrupt()
 {
-  uint32_t count;
   auto PCD = dcd->get_PCD();
-  auto hpcd = dcd->get_hpcd();
 
   auto wEPVal = (uint16_t)PCD_GET_ENDPOINT(PCD, epindex());
 
@@ -286,7 +283,7 @@ uint16_t STM32::Endpoint::receive(PCD_EPTypeDef *ep, uint16_t wEPVal)
 
     if (count != 0U)
     {
-      USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaaddr0, count);
+      read_pma(ep->xfer_buff, ep->pmaaddr0, count);
     }
   }
   /* Manage Buffer 1 DTOG_RX=0 */
@@ -318,7 +315,7 @@ uint16_t STM32::Endpoint::receive(PCD_EPTypeDef *ep, uint16_t wEPVal)
 
     if (count != 0U)
     {
-      USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaaddr1, count);
+      read_pma(ep->xfer_buff, ep->pmaaddr1, count);
     }
   }
 
@@ -407,7 +404,7 @@ HAL_StatusTypeDef STM32::Endpoint::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
         PCD_SET_EP_DBUF0_CNT(PCD, ep->num, ep->is_in, len);
 
         /* Copy user buffer to USB PMA */
-        USB_WritePMA(PCD, ep->xfer_buff,  ep->pmaaddr0, (uint16_t)len);
+        write_pma(ep->pmaaddr0, ep->xfer_buff, (uint16_t)len);
       }
     }
   }
@@ -484,7 +481,7 @@ HAL_StatusTypeDef STM32::Endpoint::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
         PCD_SET_EP_DBUF1_CNT(PCD, ep->num, ep->is_in, len);
 
         /* Copy the user buffer to USB PMA */
-        USB_WritePMA(PCD, ep->xfer_buff,  ep->pmaaddr1, (uint16_t)len);
+        write_pma(ep->pmaaddr1, ep->xfer_buff, (uint16_t)len);
       }
     }
   }
@@ -493,6 +490,172 @@ HAL_StatusTypeDef STM32::Endpoint::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
   PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_VALID);
 
   return HAL_OK;
+}
+
+void STM32::Endpoint::read_pma(uint8_t *buf, uint32_t pmaaddr, uint32_t len)
+{
+  assert(pmaaddr != 0);
+
+  uint32_t *pout = (uint32_t *)buf;
+  volatile uint32_t *pin = (volatile uint32_t *)(USB_DRD_PMAADDR + (uint32_t)pmaaddr);
+
+  while (len >= 4) {
+    *pout++ = *pin++;
+    len -= 4;
+  }
+
+  if (len == 0)
+    return;
+
+  uint32_t v = *pin;
+  buf = (uint8_t *)pout;
+
+  while (len) {
+    *buf++ = v & 0xFF;
+    v >>= 8;
+    len--;
+  }
+
+#if 0
+  UNUSED(USBx);
+  uint32_t count;
+  uint32_t RdVal;
+  __IO uint32_t *pdwVal;
+  uint32_t NbWords = ((uint32_t)wNBytes + 3U) >> 2U;
+  /*Due to the PMA access 32bit only so the last non word data should be processed alone */
+  uint16_t remaining_bytes = wNBytes % 4U;
+  uint8_t *pBuf = pbUsrBuf;
+
+  assert(wPMABufAddr != 0);
+
+  /* Get the PMA Buffer pointer */
+  pdwVal = (__IO uint32_t *)(USB_DRD_PMAADDR + (uint32_t)wPMABufAddr);
+
+  /* if nbre of byte is not word aligned decrement the nbre of word*/
+  if (remaining_bytes != 0U)
+  {
+    NbWords--;
+  }
+
+  /*Read the Calculated Word From the PMA related Buffer*/
+  for (count = NbWords; count != 0U; count--)
+  {
+    __UNALIGNED_UINT32_WRITE(pBuf, *pdwVal);
+
+    pdwVal++;
+    pBuf++;
+    pBuf++;
+    pBuf++;
+    pBuf++;
+  }
+
+  /*When Number of data is not word aligned, read the remaining byte*/
+  if (remaining_bytes != 0U)
+  {
+    RdVal = *(__IO uint32_t *)pdwVal;
+
+    do
+    {
+      *(uint8_t *)pBuf = (uint8_t)(RdVal >> (8U * (uint8_t)(count)));
+      count++;
+      pBuf++;
+      remaining_bytes--;
+    } while (remaining_bytes != 0U);
+  }
+#endif
+}
+
+void STM32::Endpoint::write_pma(uint32_t pmaaddr, const uint8_t *buf, uint32_t len)
+{
+  assert(pmaaddr != 0);
+
+  volatile uint32_t *pout = (volatile uint32_t *)(USB_DRD_PMAADDR + pmaaddr);
+  const uint32_t *pin = (const uint32_t *)buf;
+
+  while (len >= 4) {
+    *pout++ = *pin++;
+    len -= 4;
+  }
+
+  if (len == 0)
+    return;
+
+  uint32_t v = 0;
+  buf = (const uint8_t *)pin;
+
+  for (uint32_t i = 0; i < len; i++) {
+    v |= *buf++ << (8 * i);
+  }
+
+  *pout = v;
+
+
+#if 0
+  UNUSED(USBx);
+  uint32_t WrVal;
+  uint32_t count;
+  __IO uint32_t *pdwVal;
+  uint32_t NbWords = ((uint32_t)wNBytes + 3U) >> 2U;
+  /* Due to the PMA access 32bit only so the last non word data should be processed alone */
+  uint16_t remaining_bytes = wNBytes % 4U;
+  uint8_t *pBuf = pbUsrBuf;
+
+  assert(wPMABufAddr != 0);
+
+  /* Check if there is a remaining byte */
+  if (remaining_bytes != 0U)
+  {
+    NbWords--;
+  }
+
+  /* Get the PMA Buffer pointer */
+  pdwVal = (__IO uint32_t *)(USB_DRD_PMAADDR + (uint32_t)wPMABufAddr);
+
+  /* Write the Calculated Word into the PMA related Buffer */
+  for (count = NbWords; count != 0U; count--)
+  {
+    *pdwVal = __UNALIGNED_UINT32_READ(pBuf);
+    pdwVal++;
+    /* Increment pBuf 4 Time as Word Increment */
+    pBuf++;
+    pBuf++;
+    pBuf++;
+    pBuf++;
+  }
+
+  /* When Number of data is not word aligned, write the remaining Byte */
+  if (remaining_bytes != 0U)
+  {
+    WrVal = 0U;
+
+    do
+    {
+      WrVal |= (uint32_t)(*(uint8_t *)pBuf) << (8U * count);
+      count++;
+      pBuf++;
+      remaining_bytes--;
+    } while (remaining_bytes != 0U);
+
+    *pdwVal = WrVal;
+  }
+#endif
+}
+
+
+void STM32::Endpoint::ll_receive(uint8_t *buf, uint32_t len)
+{
+  PCD_EPTypeDef *ep;
+
+  ep = &dcd->get_hpcd()->OUT_ep[epindex()];
+
+  /*setup and start the Xfer */
+  ep->xfer_buff = buf;
+  ep->xfer_len = len;
+  ep->xfer_count = 0U;
+  ep->is_in = 0U;
+  ep->num = epindex();
+
+  start_transfer(ep);
 }
 
 void STM32::Endpoint::ll_transmit(uint8_t *buf, uint32_t len)
@@ -536,7 +699,7 @@ void STM32::Endpoint::start_transfer(PCD_EPTypeDef *ep)
       int a = 0;
     }
 
-    USB_WritePMA(PCD, ep->xfer_buff, ep->pmaadress, (uint16_t)len);
+    write_pma(ep->pmaadress, ep->xfer_buff,(uint16_t)len);
 
     (USB_DRD_PMA_BUFF + (ep->num))->TXBD &= 0xFFFF;
     (USB_DRD_PMA_BUFF + (ep->num))->TXBD |= (uint32_t)((uint32_t)(len) << 16U);

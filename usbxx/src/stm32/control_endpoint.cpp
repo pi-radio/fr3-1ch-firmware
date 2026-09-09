@@ -49,6 +49,57 @@ void STM32::ControlEndpoint::ack_ctrl()
   ack_mode = AckMode::NONE;
 }
 
+void STM32::ControlEndpoint::open()
+{
+  HAL_PCD_EP_Open(dcd->get_pcd_handle(), 0x00,
+      descriptor.wMaxPacketSize,
+      UX_CONTROL_ENDPOINT);
+
+  HAL_PCD_EP_Open(dcd->get_pcd_handle(), 0x80,
+      descriptor.wMaxPacketSize,
+      UX_CONTROL_ENDPOINT);
+}
+
+UINT STM32::ControlEndpoint::create()
+{
+  assert(descriptor.wMaxPacketSize != 0);
+
+
+
+  /* Calculate endpoint transfer payload max size.  */
+  auto max_transfer_length =
+          descriptor.wMaxPacketSize &
+                                              UX_MAX_PACKET_SIZE_MASK;
+
+  if ((_ux_system_slave -> ux_system_slave_speed == UX_HIGH_SPEED_DEVICE) &&
+      (descriptor.bmAttributes & 0x1u))
+  {
+      auto n_trans = descriptor.wMaxPacketSize &
+                                  UX_MAX_NUMBER_OF_TRANSACTIONS_MASK;
+      if (n_trans)
+      {
+          n_trans >>= UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT;
+          n_trans ++;
+          max_transfer_length *= n_trans;
+      }
+  }
+
+  /* Validate max transfer size and save it.  */
+  UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
+  transfer.transfer_length = max_transfer_length;
+
+  /* We store the endpoint in the transfer request as well.  */
+  transfer.endpoint = shared_from_this();
+
+  /* By default the timeout is infinite on request.  */
+  transfer.timeout = UX_WAIT_FOREVER;
+
+  direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
+
+  /* Return successful completion.  */
+  return 0;
+}
+
 void STM32::ControlEndpoint::on_setup()
 {
   auto hpcd = dcd->get_hpcd();
@@ -107,9 +158,7 @@ void STM32::ControlEndpoint::on_setup()
   transfer.actual_length =  0;
   transfer.current_data_pointer =  transfer.data;
 
-  HAL_PCD_EP_Receive(hpcd,
-      descriptor.bEndpointAddress,
-      transfer.current_data_pointer,
+  ll_receive(transfer.current_data_pointer,
       transfer.requested_length);
 
               /* Set the state to RX.  */
@@ -126,7 +175,7 @@ void STM32::ControlEndpoint::on_data_in()
    /* Check if we need to send data again on control endpoint. */
   if (state == EndpointState::DATA_TX)
   {
-    HAL_PCD_EP_Receive(hpcd, 0, 0, 0);
+    ll_receive(0, 0);
 
     /* Are we done with this transfer ? */
     if (transfer.in_transfer_length <=
@@ -210,9 +259,7 @@ void STM32::ControlEndpoint::on_data_out()
           else
           {
               transfer.current_data_pointer += descriptor.wMaxPacketSize;
-              HAL_PCD_EP_Receive(hpcd,
-                          descriptor.bEndpointAddress,
-                          transfer.current_data_pointer,
+              ll_receive(transfer.current_data_pointer,
                           descriptor.wMaxPacketSize);
           }
       }
@@ -249,10 +296,10 @@ void STM32::ControlEndpoint::on_interrupt()
     /* TX COMPLETE */
     on_data_in();
 
-    if ((hpcd->USB_Address > 0U) && (ep->xfer_len == 0U))
+    if ((ep->xfer_len == 0U) && !dcd->address_set)
     {
-      PCD->DADDR = ((uint16_t)hpcd->USB_Address | USB_DADDR_EF);
-      hpcd->USB_Address = 0U;
+      PCD->DADDR = ((uint16_t)dcd->get_device_address() | USB_DADDR_EF);
+      dcd->address_set = true;
     }
 
     return;
@@ -282,7 +329,7 @@ void STM32::ControlEndpoint::on_interrupt()
       return;
     }
 
-    USB_ReadPMA(PCD, transfer.setup,
+    read_pma(transfer.setup,
                 ep->pmaadress, (uint16_t)ep->xfer_count);
 
     /* SETUP bit kept frozen while CTR_RX = 1 */
@@ -311,7 +358,7 @@ void STM32::ControlEndpoint::on_interrupt()
     {
       if (ep->xfer_buff != 0U)
       {
-        USB_ReadPMA(PCD, ep->xfer_buff,
+        read_pma(ep->xfer_buff,
                     ep->pmaadress, (uint16_t)ep->xfer_count);  /* max 64bytes */
 
         ep->xfer_buff += ep->xfer_count;

@@ -16,9 +16,6 @@ namespace USBXX
     ENDPOINT_XMIT,
     ENDPOINT_RECV,
 
-    START_IRQ,
-    END_IRQ,
-
     ENDPOINT_IRQ,
 
     ESOF,
