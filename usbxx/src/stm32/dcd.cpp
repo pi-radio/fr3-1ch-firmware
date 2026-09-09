@@ -52,12 +52,93 @@ uint32_t STM32::DCD::initialize()
     (USB_DRD_PMA_BUFF + i)->RXBD = 0;
   }
 
-  if (HAL_PCD_Init(&hpcd) != HAL_OK)
+  assert(pcd==USB_DRD_FS);
+
+  if (hpcd.State == HAL_PCD_STATE_RESET)
   {
-    throw std::runtime_error("Unable to initialize USB stack");
+    RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+    /* Allocate lock resource and initialize it */
+    hpcd.Lock = HAL_UNLOCKED;
+
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USB;
+    PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      throw std::runtime_error("Unable to setup USB clock");
+    }
+
+    HAL_PWREx_EnableVddUSB();
+    __HAL_RCC_USB_CLK_ENABLE();
+
+    HAL_NVIC_SetPriority(USB_DRD_FS_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USB_DRD_FS_IRQn);
   }
 
-  control_endpoint = std::make_shared<STM32::ControlEndpoint>(device, this, 0);
+  hpcd.State = HAL_PCD_STATE_BUSY;
+
+  /* Disable the Interrupts */
+  USB_DisableGlobalInt(pcd);
+
+  /*Init the Core (common init.) */
+  if (USB_CoreInit(pcd, hpcd.Init) != HAL_OK)
+  {
+    hpcd.State = HAL_PCD_STATE_ERROR;
+    return HAL_ERROR;
+  }
+
+  /* Force Device Mode */
+  if (USB_SetCurrentMode(pcd, USB_DEVICE_MODE) != HAL_OK)
+  {
+    hpcd.State = HAL_PCD_STATE_ERROR;
+    return HAL_ERROR;
+  }
+
+  int i;
+
+  /* Init endpoints structures */
+  for (i = 0U; i < hpcd.Init.dev_endpoints; i++)
+  {
+    /* Init ep structure */
+    hpcd.IN_ep[i].is_in = 1U;
+    hpcd.IN_ep[i].num = i;
+    /* Control until ep is activated */
+    hpcd.IN_ep[i].type = EP_TYPE_CTRL;
+    hpcd.IN_ep[i].maxpacket = 0U;
+    hpcd.IN_ep[i].xfer_buff = 0U;
+    hpcd.IN_ep[i].xfer_len = 0U;
+  }
+
+  for (i = 0U; i < hpcd.Init.dev_endpoints; i++)
+  {
+    hpcd.OUT_ep[i].is_in = 0U;
+    hpcd.OUT_ep[i].num = i;
+    /* Control until ep is activated */
+    hpcd.OUT_ep[i].type = EP_TYPE_CTRL;
+    hpcd.OUT_ep[i].maxpacket = 0U;
+    hpcd.OUT_ep[i].xfer_buff = 0U;
+    hpcd.OUT_ep[i].xfer_len = 0U;
+  }
+
+  /* Init Device */
+  if (USB_DevInit(pcd, hpcd.Init) != HAL_OK)
+  {
+    hpcd.State = HAL_PCD_STATE_ERROR;
+    throw std::runtime_error("Failed in USB_DevInit");
+  }
+
+  hpcd.USB_Address = 0U;
+  hpcd.State = HAL_PCD_STATE_READY;
+
+  /* Activate LPM */
+  if (hpcd.Init.lpm_enable == 1U)
+  {
+    (void)HAL_PCDEx_ActivateLPM(&hpcd);
+  }
+
+  (void)USB_DevDisconnect(pcd);
+
+  control_endpoint = std::make_shared<STM32::ControlEndpoint>(device, this);
 
   endpoints[0x00] = control_endpoint;
   endpoints[0x80] = control_endpoint;
@@ -69,8 +150,7 @@ uint32_t STM32::DCD::initialize()
   control_endpoint->transfer.current_data_pointer = control_endpoint->transfer.data;
 
 
-  HAL_PCDEx_PMAConfig(&hpcd, 0x00, PCD_SNG_BUF, 0x40);
-  HAL_PCDEx_PMAConfig(&hpcd, 0x80, PCD_SNG_BUF, 0x80);
+
   HAL_PCDEx_PMAConfig(&hpcd, 0x81, PCD_SNG_BUF, 0x100);
   HAL_PCDEx_PMAConfig(&hpcd, 0x82, PCD_SNG_BUF, 0x140);
   HAL_PCDEx_PMAConfig(&hpcd, 0x03, PCD_SNG_BUF, 0xC0);
@@ -79,8 +159,8 @@ uint32_t STM32::DCD::initialize()
 
   hpcd.Lock = HAL_LOCKED;
 
-  USB_EnableGlobalInt(hpcd.Instance);
-  USB_DevConnect(hpcd.Instance);
+  USB_EnableGlobalInt(pcd);
+  USB_DevConnect(pcd);
 
   hpcd.Lock = HAL_UNLOCKED;
 
@@ -171,13 +251,13 @@ void STM32::DCD::endpoint_IRQ()
   uint8_t epindex;
 
   /* stay in loop while pending interrupts */
-  while ((hpcd.Instance->ISTR & USB_ISTR_CTR) != 0U)
+  while ((pcd->ISTR & USB_ISTR_CTR) != 0U)
   {
-    wIstr = (uint16_t)hpcd.Instance->ISTR;
+    wIstr = (uint16_t)pcd->ISTR;
 
     epindex = (uint8_t)(wIstr & USB_ISTR_IDN);
 
-    wEPVal = (uint16_t)PCD_GET_ENDPOINT(hpcd.Instance, epindex);
+    wEPVal = (uint16_t)PCD_GET_ENDPOINT(pcd, epindex);
 
     event_log.push_event(UsbEvent::ENDPOINT_IRQ, epindex);
 
@@ -253,8 +333,8 @@ void STM32::DCD::handle_IRQ()
 
   if ((wIstr & USB_ISTR_WKUP) == USB_ISTR_WKUP)
   {
-    hpcd.Instance->CNTR &= ~(USB_CNTR_SUSPRDY);
-    hpcd.Instance->CNTR &= ~(USB_CNTR_SUSPEN);
+    pcd->CNTR &= ~(USB_CNTR_SUSPRDY);
+    pcd->CNTR &= ~(USB_CNTR_SUSPEN);
 
     if (hpcd.LPM_State == LPM_L1)
     {
@@ -275,12 +355,12 @@ void STM32::DCD::handle_IRQ()
   if ((wIstr & USB_ISTR_SUSP) == USB_ISTR_SUSP)
   {
     /* Force low-power mode in the macrocell */
-    hpcd.Instance->CNTR |= USB_CNTR_SUSPEN;
+    pcd->CNTR |= USB_CNTR_SUSPEN;
 
     /* clear of the ISTR bit must be done after setting of CNTR_FSUSP */
     __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_SUSP);
 
-    hpcd.Instance->CNTR |= USB_CNTR_SUSPRDY;
+    pcd->CNTR |= USB_CNTR_SUSPRDY;
 
     STM32::gDCD->suspend();
 
@@ -296,11 +376,11 @@ void STM32::DCD::handle_IRQ()
     if (hpcd.LPM_State == LPM_L0)
     {
       /* Force suspend and low-power mode before going to L1 state*/
-      hpcd.Instance->CNTR |= USB_CNTR_SUSPRDY;
-      hpcd.Instance->CNTR |= USB_CNTR_SUSPEN;
+      pcd->CNTR |= USB_CNTR_SUSPRDY;
+      pcd->CNTR |= USB_CNTR_SUSPEN;
 
       hpcd.LPM_State = LPM_L1;
-      hpcd.BESL = ((uint32_t)hpcd.Instance->LPMCSR & USB_LPMCSR_BESL) >> 2;
+      hpcd.BESL = ((uint32_t)pcd->LPMCSR & USB_LPMCSR_BESL) >> 2;
       HAL_PCDEx_LPM_Callback(&hpcd, PCD_LPM_L1_ACTIVE);
     }
     else
@@ -317,6 +397,8 @@ void STM32::DCD::handle_IRQ()
   {
     __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_SOF);
 
+    event_log.set_frame(pcd->FNR & 0x7FF);
+
     STM32::gDCD->on_sof();
 
     //event_log.push_event(UsbEvent::END_IRQ);
@@ -326,10 +408,9 @@ void STM32::DCD::handle_IRQ()
 
   if ((wIstr & USB_ISTR_ESOF) == USB_ISTR_ESOF)
   {
-    /* clear ESOF flag in ISTR */
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ESOF);
+    event_log.push_event(UsbEvent::ESOF, (pcd->FNR >> 11) & 3);
 
-    //event_log.push_event(UsbEvent::END_IRQ);
+    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ESOF);
 
     return;
   }

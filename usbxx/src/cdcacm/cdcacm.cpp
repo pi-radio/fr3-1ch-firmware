@@ -8,6 +8,7 @@
 #include <threadxx/dbgstream.hpp>
 #include <usbxx/cdcacm.hpp>
 #include <usbxx/ux_api.h>
+#include <usbxx/event_log.hpp>
 
 #include <cassert>
 
@@ -262,86 +263,88 @@ uint32_t USBXX::CDCACMDevice::class_deactivate()
 
 uint32_t USBXX::CDCACMDevice::class_command_request()
 {
-  //USBClass                          *class_ptr;
-  Transfer                       *xfer;
-  ULONG                                   request;
-  ULONG                                   value;
-  ULONG                                   request_length;
-  ULONG                                   transmit_length;
+  Transfer *xfer;
+  ULONG    request;
+  ULONG    value;
+  ULONG    request_length;
+  ULONG    transmit_length;
 
-    /* Get the pointer to the transfer request associated with the control endpoint.  */
-    xfer = get_control_transfer();
 
-    /* Extract all necessary fields of the request.  */
-    request =  *(xfer -> setup + UX_SETUP_REQUEST);
+  /* Get the pointer to the transfer request associated with the control endpoint.  */
+  xfer = get_control_transfer();
 
-    /* Extract all necessary fields of the value.  */
-    value =  usb_get_short(xfer -> setup + UX_SETUP_VALUE);
+  /* Extract all necessary fields of the request.  */
+  request =  *(xfer -> setup + UX_SETUP_REQUEST);
 
-    /* Pickup the request length.  */
-    request_length =   usb_get_short(xfer -> setup + UX_SETUP_LENGTH);
+  event_log.push_event(UsbEvent::CDCACM_COMMAND, request);
 
-    transmit_length = request_length ;
+  /* Extract all necessary fields of the value.  */
+  value =  usb_get_short(xfer -> setup + UX_SETUP_VALUE);
 
-    /* Here we proceed only the standard request we know of at the device level.  */
-    switch (request)
-    {
+  /* Pickup the request length.  */
+  request_length =   usb_get_short(xfer -> setup + UX_SETUP_LENGTH);
 
-        case USBClass_CDC_ACM_SET_CONTROL_LINE_STATE:
-            dtr_state = 0;
-            rts_state = 0;
+  transmit_length = request_length ;
 
-            /* Get the line state parameters from the host.  DTR signal. */
-            if (value & USBClass_CDC_ACM_LINE_STATE_DTR)
-                dtr_state = UX_TRUE;
+  /* Here we proceed only the standard request we know of at the device level.  */
+  switch (request)
+  {
 
-            /* Get the line state parameters from the host.  RTS signal. */
-            if (value & USBClass_CDC_ACM_LINE_STATE_RTS)
-                rts_state = UX_TRUE;
+      case USBClass_CDC_ACM_SET_CONTROL_LINE_STATE:
+          dtr_state = 0;
+          rts_state = 0;
 
-            break ;
+          /* Get the line state parameters from the host.  DTR signal. */
+          if (value & USBClass_CDC_ACM_LINE_STATE_DTR)
+              dtr_state = UX_TRUE;
 
-        case USBClass_CDC_ACM_GET_LINE_CODING:
+          /* Get the line state parameters from the host.  RTS signal. */
+          if (value & USBClass_CDC_ACM_LINE_STATE_RTS)
+              rts_state = UX_TRUE;
 
-            /* Setup the length appropriately.  */
-            if (request_length >  USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
-                transmit_length = USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
+          break ;
 
-            /* Send the line coding default parameters back to the host.  */
-            usb_put_long(xfer->data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
-                                 baudrate);
-            *(xfer->data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
-            *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
-            *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
+      case USBClass_CDC_ACM_GET_LINE_CODING:
 
-            /* Set the phase of the transfer to data out.  */
-            xfer -> phase =  TransferPhase::DATA_OUT;
+          /* Setup the length appropriately.  */
+          if (request_length >  USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
+              transmit_length = USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
 
-            /* Perform the data transfer.  */
-            transfer_request(xfer, transmit_length, request_length);
-            break;
+          /* Send the line coding default parameters back to the host.  */
+          usb_put_long(xfer->data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
+                               baudrate);
+          *(xfer->data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
+          *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
+          *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
 
-        case USBClass_CDC_ACM_SET_LINE_CODING:
+          /* Set the phase of the transfer to data out.  */
+          xfer -> phase =  TransferPhase::DATA_OUT;
 
-            /* Get the line coding parameters from the host.  */
-            baudrate  = usb_get_long(xfer -> data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
-            stop_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
-            parity    = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT);
-            data_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
+          /* Perform the data transfer.  */
+          transfer_request(xfer, transmit_length, request_length);
+          break;
 
-            break ;
+      case USBClass_CDC_ACM_SET_LINE_CODING:
 
-        default:
+          /* Get the line coding parameters from the host.  */
+          baudrate  = usb_get_long(xfer -> data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
+          stop_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
+          parity    = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT);
+          data_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
 
-            /* Unknown function. It's not handled.  */
-            return(UX_ERROR);
-    }
+          break ;
 
-    set_dtr(dtr_state);
-    set_rts(rts_state);
+      default:
 
-    /* It's handled.  */
-    return 0;
+          /* Unknown function. It's not handled.  */
+          return(UX_ERROR);
+  }
+
+  set_dtr(dtr_state);
+  set_rts(rts_state);
+
+  /* It's handled.  */
+  return 0;
 }
 
 UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)

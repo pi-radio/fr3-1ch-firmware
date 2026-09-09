@@ -37,14 +37,12 @@ namespace USBXX
       bool task_pending;
       STM32::Transfer transfer;
 
-      EndpointState           state;
-      UCHAR           index;
-      UCHAR           direction;
-      DCD      *dcd;
+      EndpointState  state;
+      uint8_t        epaddr;
+      uint8_t        direction;
+      DCD            *dcd;
 
-      Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index);
-
-
+      Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
       void reset_flags() override {
         USBXX::Endpoint::reset_flags();
@@ -63,6 +61,8 @@ namespace USBXX
 
       void abort_transfer();
 
+      void start_transfer(PCD_EPTypeDef *);
+
       UINT create() override;
       UINT destroy() override;
       bool is_stalled() override;
@@ -71,9 +71,12 @@ namespace USBXX
       void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
       void ack_ctrl() override { throw std::runtime_error("Incorrect endpoint for control acknowledgement"); };
 
+      bool is_in() { return (descriptor.bEndpointAddress & 0x80) ? true : false; }
       uint32_t epindex() { return descriptor.bEndpointAddress & 0xF; }
       virtual HAL_StatusTypeDef transmit(PCD_EPTypeDef *ep, uint16_t wEPVal);
       virtual uint16_t receive(PCD_EPTypeDef *ep, uint16_t wEPVal);
+
+      virtual void ll_transmit(uint8_t *buf, uint32_t sz);
 
       virtual void on_data_out();
       virtual void on_data_in();
@@ -94,11 +97,7 @@ namespace USBXX
       using ptr = std::shared_ptr<ControlEndpoint>;
 
 
-      ControlEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
-        STM32::Endpoint(_device, _dcd, _index),
-        ack_mode(AckMode::NONE)
-      {
-      }
+      ControlEndpoint(DeviceBase *_device, DCD *_dcd);
 
       void on_setup();
       void on_data_out() override;

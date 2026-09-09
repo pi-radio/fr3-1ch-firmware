@@ -38,98 +38,6 @@ extern "C" {
 #define PCD_MAX(a, b)  (((a) > (b)) ? (a) : (b))
 
 /**
-  * @brief  Initializes the PCD according to the specified
-  *         parameters in the PCD_InitTypeDef and initialize the associated handle.
-  * @param  hpcd PCD handle
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
-{
-  uint8_t i;
-
-  /* Check the PCD handle allocation */
-  if (hpcd == NULL)
-  {
-    return HAL_ERROR;
-  }
-
-  /* Check the parameters */
-  assert_param(IS_PCD_ALL_INSTANCE(hpcd->Instance));
-
-  if (hpcd->State == HAL_PCD_STATE_RESET)
-  {
-    /* Allocate lock resource and initialize it */
-    hpcd->Lock = HAL_UNLOCKED;
-
-    /* Init the low level hardware : GPIO, CLOCK, NVIC... */
-    HAL_PCD_MspInit(hpcd);
-  }
-
-  hpcd->State = HAL_PCD_STATE_BUSY;
-
-  /* Disable the Interrupts */
-  __HAL_PCD_DISABLE(hpcd);
-
-  /*Init the Core (common init.) */
-  if (USB_CoreInit(hpcd->Instance, hpcd->Init) != HAL_OK)
-  {
-    hpcd->State = HAL_PCD_STATE_ERROR;
-    return HAL_ERROR;
-  }
-
-  /* Force Device Mode */
-  if (USB_SetCurrentMode(hpcd->Instance, USB_DEVICE_MODE) != HAL_OK)
-  {
-    hpcd->State = HAL_PCD_STATE_ERROR;
-    return HAL_ERROR;
-  }
-
-  /* Init endpoints structures */
-  for (i = 0U; i < hpcd->Init.dev_endpoints; i++)
-  {
-    /* Init ep structure */
-    hpcd->IN_ep[i].is_in = 1U;
-    hpcd->IN_ep[i].num = i;
-    /* Control until ep is activated */
-    hpcd->IN_ep[i].type = EP_TYPE_CTRL;
-    hpcd->IN_ep[i].maxpacket = 0U;
-    hpcd->IN_ep[i].xfer_buff = 0U;
-    hpcd->IN_ep[i].xfer_len = 0U;
-  }
-
-  for (i = 0U; i < hpcd->Init.dev_endpoints; i++)
-  {
-    hpcd->OUT_ep[i].is_in = 0U;
-    hpcd->OUT_ep[i].num = i;
-    /* Control until ep is activated */
-    hpcd->OUT_ep[i].type = EP_TYPE_CTRL;
-    hpcd->OUT_ep[i].maxpacket = 0U;
-    hpcd->OUT_ep[i].xfer_buff = 0U;
-    hpcd->OUT_ep[i].xfer_len = 0U;
-  }
-
-  /* Init Device */
-  if (USB_DevInit(hpcd->Instance, hpcd->Init) != HAL_OK)
-  {
-    hpcd->State = HAL_PCD_STATE_ERROR;
-    return HAL_ERROR;
-  }
-
-  hpcd->USB_Address = 0U;
-  hpcd->State = HAL_PCD_STATE_READY;
-
-  /* Activate LPM */
-  if (hpcd->Init.lpm_enable == 1U)
-  {
-    (void)HAL_PCDEx_ActivateLPM(hpcd);
-  }
-
-  (void)USB_DevDisconnect(hpcd->Instance);
-
-  return HAL_OK;
-}
-
-/**
   * @brief  DeInitializes the PCD peripheral.
   * @param  hpcd PCD handle
   * @retval HAL status
@@ -418,33 +326,7 @@ uint32_t HAL_PCD_EP_GetRxCount(PCD_HandleTypeDef const *hpcd, uint8_t ep_addr)
 {
   return hpcd->OUT_ep[ep_addr & EP_ADDR_MSK].xfer_count;
 }
-/**
-  * @brief  Send an amount of data
-  * @param  hpcd PCD handle
-  * @param  ep_addr endpoint address
-  * @param  pBuf pointer to the transmission buffer
-  * @param  len amount of data to be sent
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint8_t *pBuf, uint32_t len)
-{
-  PCD_EPTypeDef *ep;
 
-  ep = &hpcd->IN_ep[ep_addr & EP_ADDR_MSK];
-
-  /*setup and start the Xfer */
-  ep->xfer_buff = pBuf;
-  ep->xfer_len = len;
-  ep->xfer_fill_db = 1U;
-  ep->xfer_len_db = len;
-  ep->xfer_count = 0U;
-  ep->is_in = 1U;
-  ep->num = ep_addr & EP_ADDR_MSK;
-
-  (void)USB_EPStartXfer(hpcd->Instance, ep);
-
-  return HAL_OK;
-}
 
 /**
   * @brief  Set a STALL condition over an endpoint

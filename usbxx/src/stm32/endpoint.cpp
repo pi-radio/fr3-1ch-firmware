@@ -11,19 +11,24 @@
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/stm32/endpoint.hpp>
 #include <usbxx/device.hpp>
+#include <usbxx/event_log.hpp>
 #include <usbxx/ux_device_stack.h>
 
 using namespace USBXX;
 
-STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
+STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
   USBXX::Endpoint(_device),
   transfer(),
   state(EndpointState::IDLE),
-  index(_index),
+  epaddr(_epaddr),
   direction(0),
   dcd(_dcd)
 {
-  if (index != 0) {
+  uint32_t pmaaddr = 0x40 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00);
+
+  HAL_PCDEx_PMAConfig(dcd->get_hpcd(), epaddr, PCD_SNG_BUF, pmaaddr);
+
+  if (epaddr != 0) {
     int a = 0;
   }
   reset_flags();
@@ -33,6 +38,8 @@ STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
 UINT STM32::Endpoint::create()
 {
   assert(descriptor.wMaxPacketSize != 0);
+
+
 
   /* Calculate endpoint transfer payload max size.  */
   auto max_transfer_length =
@@ -61,12 +68,6 @@ UINT STM32::Endpoint::create()
 
   /* By default the timeout is infinite on request.  */
   transfer.timeout = UX_WAIT_FOREVER;
-
-  /* Attach the interface to the endpoint.  */
-
-
-  /* Attach the device to the endpoint.  */
-
 
   direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
 
@@ -177,7 +178,7 @@ void STM32::Endpoint::on_data_in()
       transfer.in_transfer_length = 0;
 
       /* Arm a ZLP packet on IN.  */
-      HAL_PCD_EP_Transmit(hpcd, epindex(), 0, 0);
+      ll_transmit(0, 0);
     }
     else
     {
@@ -494,4 +495,76 @@ HAL_StatusTypeDef STM32::Endpoint::transmit(PCD_EPTypeDef *ep, uint16_t wEPVal)
   return HAL_OK;
 }
 
+void STM32::Endpoint::ll_transmit(uint8_t *buf, uint32_t len)
+{
+  PCD_EPTypeDef *ep;
+
+  ep = &dcd->get_hpcd()->IN_ep[epindex()];
+
+  ep->xfer_buff = buf;
+  ep->xfer_len = len;
+  ep->xfer_fill_db = 1U;
+  ep->xfer_len_db = len;
+  ep->xfer_count = 0U;
+  ep->is_in = 1U;
+  ep->num = epindex();
+
+  start_transfer(ep);
+
+  event_log.push_event(UsbEvent::ENDPOINT_XMIT, epaddr);
+}
+
+void STM32::Endpoint::start_transfer(PCD_EPTypeDef *ep)
+{
+  auto PCD = dcd->get_PCD();
+  uint32_t len;
+
+  /* IN endpoint */
+  if (ep->is_in == 1U)
+  {
+    /* Multi packet transfer */
+    if (ep->xfer_len > ep->maxpacket)
+    {
+      len = ep->maxpacket;
+    }
+    else
+    {
+      len = ep->xfer_len;
+    }
+
+    if (ep->num) {
+      int a = 0;
+    }
+
+    USB_WritePMA(PCD, ep->xfer_buff, ep->pmaadress, (uint16_t)len);
+
+    (USB_DRD_PMA_BUFF + (ep->num))->TXBD &= 0xFFFF;
+    (USB_DRD_PMA_BUFF + (ep->num))->TXBD |= (uint32_t)((uint32_t)(len) << 16U);
+
+    PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_VALID);
+  }
+  else /* OUT endpoint */
+  {
+    if ((ep->xfer_len == 0U) && (ep->type == EP_TYPE_CTRL))
+    {
+      PCD_SET_OUT_STATUS(PCD, ep->num);
+    }
+    else
+    {
+      PCD_CLEAR_OUT_STATUS(PCD, ep->num);
+    }
+
+    /* Multi packet transfer */
+    if (ep->xfer_len > ep->maxpacket)
+    {
+      ep->xfer_len -= ep->maxpacket;
+    }
+    else
+    {
+      ep->xfer_len = 0U;
+    }
+
+    PCD_SET_EP_RX_STATUS(PCD, ep->num, USB_EP_RX_VALID);
+  }
+}
 

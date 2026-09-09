@@ -14,6 +14,15 @@
 
 using namespace USBXX;
 
+STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
+  STM32::Endpoint(_device, _dcd, 0),
+  ack_mode(AckMode::NONE)
+{
+  HAL_PCDEx_PMAConfig(dcd->get_hpcd(), 0x00, PCD_SNG_BUF, 0x40);
+  HAL_PCDEx_PMAConfig(dcd->get_hpcd(), 0x80, PCD_SNG_BUF, 0x80);
+}
+
+
 void STM32::ControlEndpoint::ack_ctrl()
 {
   switch(ack_mode)
@@ -35,7 +44,7 @@ void STM32::ControlEndpoint::ack_ctrl()
     return;
   }
 
-  HAL_PCD_EP_Transmit(dcd->get_hpcd(), 0x00U, nullptr, 0U);
+  ll_transmit(nullptr, 0U);
 
   ack_mode = AckMode::NONE;
 }
@@ -45,7 +54,7 @@ void STM32::ControlEndpoint::on_setup()
   auto hpcd = dcd->get_hpcd();
 
   /* Clear the length of the data received.  */
-  transfer.actual_length =  0;
+  transfer.actual_length = 0;
 
   /* Mark the phase as SETUP.  */
   transfer.type =  TransferType::SETUP;
@@ -129,8 +138,7 @@ void STM32::ControlEndpoint::on_data_in()
         {
 
             /* Arm a ZLP packet on IN.  */
-            HAL_PCD_EP_Transmit(hpcd,
-                    descriptor.bEndpointAddress, 0, 0);
+            ll_transmit(0, 0);
 
             /* Reset the ZLP condition.  */
             transfer. force_zlp =  UX_FALSE;
@@ -168,9 +176,7 @@ void STM32::ControlEndpoint::on_data_in()
         transfer. in_transfer_length -= transfer_length;
 
         /* Transmit data.  */
-        HAL_PCD_EP_Transmit(hpcd,
-                    descriptor.bEndpointAddress,
-                    transfer.current_data_pointer,
+        ll_transmit(transfer.current_data_pointer,
                     transfer_length);
     }
   }

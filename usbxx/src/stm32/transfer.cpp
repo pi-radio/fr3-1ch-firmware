@@ -83,10 +83,7 @@ uint32_t STM32::Transfer::transfer_out()
   auto stm32ep = static_pointer_cast<STM32::Endpoint>(endpoint);
 
 /* Transmit data.  */
-  HAL_PCD_EP_Transmit(stm32ep->dcd->get_hpcd(),
-                      endpoint->descriptor.bEndpointAddress,
-                      data,
-                      requested_length);
+  stm32ep->ll_transmit(data, requested_length);
 
   if (endpoint->is_control())
     return 0;

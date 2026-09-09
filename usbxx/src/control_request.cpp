@@ -76,10 +76,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
         break;
     }
 
-    if (status != UX_SUCCESS)
-      get_control_endpoint()->stall();
-
-    return;
+    goto exit;
   }
 
   switch (req.code)
@@ -138,6 +135,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
     break;
   }
 
+exit:
   if (status == UX_SUCCESS) {
     get_control_endpoint()->ack_ctrl();
   } else {
@@ -166,9 +164,10 @@ void DeviceBase::control_thread_main()
       if (!xfer->is_valid())
         continue;
 
-      event_log.push_event(UsbEvent::START_CONTROL_REQUEST);
 
       ControlRequest req(xfer->setup);
+
+      event_log.push_event(UsbEvent::START_CONTROL_REQUEST, req.code);
 
       /* Filter for GET_DESCRIPTOR/SET_DESCRIPTOR commands. If the descriptor to be returned is not a standard descriptor,
          treat the command as a CLASS command.  */
