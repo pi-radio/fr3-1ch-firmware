@@ -1,7 +1,3 @@
-
-#define UX_SOURCE_CODE
-#define UX_DCD_STM32_SOURCE_CODE
-
 #include <stdexcept>
 #include <cassert>
 
@@ -16,6 +12,8 @@
 
 using namespace USBXX;
 
+
+
 STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
   USBXX::Endpoint(_device),
   transfer(),
@@ -24,21 +22,57 @@ STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
   direction(0),
   dcd(_dcd)
 {
-  uint32_t pmaaddr = 0x40 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00);
-
-  HAL_PCDEx_PMAConfig(dcd->get_hpcd(), epaddr, PCD_SNG_BUF, pmaaddr);
-
   if (epaddr != 0) {
     int a = 0;
   }
   reset_flags();
 }
 
+void STM32::Endpoint::init()
+{
+  transfer.endpoint = shared_from_this();
+  device = device;
+  direction = (epaddr & 0x80) ? true : false;
+}
+
+
+PCD_EPTypeDef *STM32::Endpoint::get_epdata()
+{
+  auto hpcd = dcd->get_hpcd();
+
+  /* initialize ep structure*/
+  if (is_in())
+    return &hpcd->IN_ep[epindex()];
+
+  return &hpcd->OUT_ep[epindex()];
+}
+
+
 void STM32::Endpoint::open()
 {
-  HAL_PCD_EP_Open(dcd->get_pcd_handle(), descriptor.bEndpointAddress,
-      descriptor.wMaxPacketSize,
-      descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE);
+  uint32_t pmaaddr = 0xC0 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00);
+
+  auto ep = get_epdata();
+
+  ep->doublebuffer = 0;
+  ep->pmaadress = pmaaddr;
+  ep->is_in = is_in();
+  ep->num = epindex();
+  ep->maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
+  ep->type = descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE;
+
+  /* Set initial data PID. */
+  if (ep->type == EP_TYPE_BULK)
+  {
+    ep->data_pid_start = 0U;
+  }
+
+  {
+    auto g = dcd->guard();
+
+    activate();
+    //USB_ActivateEndpoint(dcd->get_PCD(), ep);
+  }
 }
 
 UINT STM32::Endpoint::create()
@@ -515,54 +549,6 @@ void STM32::Endpoint::read_pma(uint8_t *buf, uint32_t pmaaddr, uint32_t len)
     v >>= 8;
     len--;
   }
-
-#if 0
-  UNUSED(USBx);
-  uint32_t count;
-  uint32_t RdVal;
-  __IO uint32_t *pdwVal;
-  uint32_t NbWords = ((uint32_t)wNBytes + 3U) >> 2U;
-  /*Due to the PMA access 32bit only so the last non word data should be processed alone */
-  uint16_t remaining_bytes = wNBytes % 4U;
-  uint8_t *pBuf = pbUsrBuf;
-
-  assert(wPMABufAddr != 0);
-
-  /* Get the PMA Buffer pointer */
-  pdwVal = (__IO uint32_t *)(USB_DRD_PMAADDR + (uint32_t)wPMABufAddr);
-
-  /* if nbre of byte is not word aligned decrement the nbre of word*/
-  if (remaining_bytes != 0U)
-  {
-    NbWords--;
-  }
-
-  /*Read the Calculated Word From the PMA related Buffer*/
-  for (count = NbWords; count != 0U; count--)
-  {
-    __UNALIGNED_UINT32_WRITE(pBuf, *pdwVal);
-
-    pdwVal++;
-    pBuf++;
-    pBuf++;
-    pBuf++;
-    pBuf++;
-  }
-
-  /*When Number of data is not word aligned, read the remaining byte*/
-  if (remaining_bytes != 0U)
-  {
-    RdVal = *(__IO uint32_t *)pdwVal;
-
-    do
-    {
-      *(uint8_t *)pBuf = (uint8_t)(RdVal >> (8U * (uint8_t)(count)));
-      count++;
-      pBuf++;
-      remaining_bytes--;
-    } while (remaining_bytes != 0U);
-  }
-#endif
 }
 
 void STM32::Endpoint::write_pma(uint32_t pmaaddr, const uint8_t *buf, uint32_t len)
@@ -588,57 +574,6 @@ void STM32::Endpoint::write_pma(uint32_t pmaaddr, const uint8_t *buf, uint32_t l
   }
 
   *pout = v;
-
-
-#if 0
-  UNUSED(USBx);
-  uint32_t WrVal;
-  uint32_t count;
-  __IO uint32_t *pdwVal;
-  uint32_t NbWords = ((uint32_t)wNBytes + 3U) >> 2U;
-  /* Due to the PMA access 32bit only so the last non word data should be processed alone */
-  uint16_t remaining_bytes = wNBytes % 4U;
-  uint8_t *pBuf = pbUsrBuf;
-
-  assert(wPMABufAddr != 0);
-
-  /* Check if there is a remaining byte */
-  if (remaining_bytes != 0U)
-  {
-    NbWords--;
-  }
-
-  /* Get the PMA Buffer pointer */
-  pdwVal = (__IO uint32_t *)(USB_DRD_PMAADDR + (uint32_t)wPMABufAddr);
-
-  /* Write the Calculated Word into the PMA related Buffer */
-  for (count = NbWords; count != 0U; count--)
-  {
-    *pdwVal = __UNALIGNED_UINT32_READ(pBuf);
-    pdwVal++;
-    /* Increment pBuf 4 Time as Word Increment */
-    pBuf++;
-    pBuf++;
-    pBuf++;
-    pBuf++;
-  }
-
-  /* When Number of data is not word aligned, write the remaining Byte */
-  if (remaining_bytes != 0U)
-  {
-    WrVal = 0U;
-
-    do
-    {
-      WrVal |= (uint32_t)(*(uint8_t *)pBuf) << (8U * count);
-      count++;
-      pBuf++;
-      remaining_bytes--;
-    } while (remaining_bytes != 0U);
-
-    *pdwVal = WrVal;
-  }
-#endif
 }
 
 

@@ -27,6 +27,8 @@ namespace USBXX
     public:
       using ptr = std::shared_ptr<Endpoint>;
 
+    protected:
+
       bool in_transfer;
       bool stalled;
       bool done;
@@ -41,6 +43,8 @@ namespace USBXX
       uint8_t        epaddr;
       uint8_t        direction;
       DCD            *dcd;
+
+      PCD_EPTypeDef *get_epdata();
 
       Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
@@ -57,7 +61,16 @@ namespace USBXX
         task_pending = false;
       }
 
+      virtual void activate() = 0;
+
+public:
       Transfer *get_transfer() override { return &transfer; };
+
+      void set_descriptor(const EndpointDescriptor &_desc) { descriptor = _desc; }
+      void set_interface(std::shared_ptr<Interface> _iface) { interface = _iface; }
+
+      virtual void init();
+
 
       void abort_transfer();
 
@@ -89,8 +102,28 @@ namespace USBXX
       virtual void on_interrupt();
     };
 
+    class InEndpoint : public Endpoint
+    {
+    protected:
+      void activate() override;
+
+    public:
+      InEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
+    };
+
+    class OutEndpoint : public Endpoint
+    {
+    protected:
+      void activate() override;
+
+    public:
+      OutEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
+    };
+
+
     class ControlEndpoint : public Endpoint
     {
+    protected:
       enum class AckMode {
         NONE,
         DATA_IN,
@@ -99,11 +132,16 @@ namespace USBXX
       };
 
       AckMode ack_mode;
+
+      void activate() override;
+
     public:
       using ptr = std::shared_ptr<ControlEndpoint>;
 
 
       ControlEndpoint(DeviceBase *_device, DCD *_dcd);
+
+      void init() override;
 
       void open() override;
       UINT create() override;

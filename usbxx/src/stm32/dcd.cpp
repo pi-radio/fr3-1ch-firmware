@@ -140,20 +140,17 @@ uint32_t STM32::DCD::initialize()
 
   control_endpoint = std::make_shared<STM32::ControlEndpoint>(device, this);
 
+  control_endpoint->init();
+
   endpoints[0x00] = control_endpoint;
   endpoints[0x80] = control_endpoint;
 
-  control_endpoint->transfer.endpoint = control_endpoint;
-  control_endpoint->transfer.timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
 
-  /* Adjust the current data pointer as well.  */
-  control_endpoint->transfer.current_data_pointer = control_endpoint->transfer.data;
-
-
-
+#if 0
   HAL_PCDEx_PMAConfig(&hpcd, 0x81, PCD_SNG_BUF, 0x100);
   HAL_PCDEx_PMAConfig(&hpcd, 0x82, PCD_SNG_BUF, 0x140);
   HAL_PCDEx_PMAConfig(&hpcd, 0x03, PCD_SNG_BUF, 0xC0);
+#endif
 
   status =  UX_DCD_STATUS_OPERATIONAL;
 
@@ -172,14 +169,17 @@ USBXX::Endpoint::ptr STM32::DCD::allocate_endpoint(Interface::ptr iface, const E
 {
 
   uint8_t epaddr = desc.bEndpointAddress;
+  STM32::Endpoint::ptr retval;
 
-  STM32::Endpoint::ptr retval = std::make_shared<STM32::Endpoint>(device, this, epaddr);
+  if (epaddr & 0x80)
+    retval = std::make_shared<STM32::InEndpoint>(device, this, epaddr);
+  else
+    retval = std::make_shared<STM32::OutEndpoint>(device, this, epaddr);
 
-  retval->transfer.endpoint = retval;
-  retval->descriptor = desc;
-  retval->device = device;
-  retval->interface = iface;
-  retval->direction = (epaddr & 0x80) ? true : false;
+  retval->set_interface(iface);
+  retval->set_descriptor(desc);
+
+  retval->init();
 
   endpoints[epaddr] = retval;
 
@@ -193,27 +193,15 @@ UINT  STM32::DCD::complete_initialization()
   control_endpoint->descriptor.wMaxPacketSize =
       device->descriptor.bMaxPacketSize0;
 
-  control_endpoint->transfer.requested_length = device->descriptor.bMaxPacketSize0;
+  auto transfer = control_endpoint->get_transfer();
+
+  transfer->requested_length = device->descriptor.bMaxPacketSize0;
 
   control_endpoint->create();
 
   control_endpoint->open();
 
-  /* Ensure the control endpoint is properly reset.  */
-  control_endpoint->state = EndpointState::RESET;
 
-  /* Mark the phase as SETUP.  */
-  control_endpoint->transfer.type =  TransferType::SETUP;
-
-  /* Mark this transfer request as pending.  */
-  control_endpoint->transfer.set_pending();
-
-  /* Ask for 8 bytes of the SETUP packet.  */
-  control_endpoint->transfer.requested_length =    UX_SETUP_SIZE;
-  control_endpoint->transfer. in_transfer_length =  UX_SETUP_SIZE;
-
-  /* Reset the number of bytes sent/received.  */
-  control_endpoint->transfer.actual_length =  0;
 
   /* Check the status change callback.  */
   device->on_attached();

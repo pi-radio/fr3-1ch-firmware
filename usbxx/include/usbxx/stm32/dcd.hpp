@@ -79,8 +79,27 @@ namespace USBXX
       // for use in endpoint
       bool address_set;
 
-
       DCD(PCD_TypeDef *_pcd);
+
+      class HALLock
+      {
+        DCD &dcd;
+      public:
+        HALLock(DCD &_dcd) : dcd(_dcd) {
+          assert(dcd.hpcd.Lock == HAL_UNLOCKED);
+          dcd.hpcd.Lock = HAL_LOCKED;
+        }
+
+        ~HALLock() {
+          dcd.hpcd.Lock = HAL_UNLOCKED;
+        }
+      };
+
+      HALLock guard() {
+        return HALLock(*this);
+      }
+
+
 
       PCD_TypeDef *get_PCD() { return pcd; }
       PCD_HandleTypeDef *get_hpcd() { return pcd_handle; }

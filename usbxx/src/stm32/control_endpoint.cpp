@@ -18,8 +18,16 @@ STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
   STM32::Endpoint(_device, _dcd, 0),
   ack_mode(AckMode::NONE)
 {
-  HAL_PCDEx_PMAConfig(dcd->get_hpcd(), 0x00, PCD_SNG_BUF, 0x40);
-  HAL_PCDEx_PMAConfig(dcd->get_hpcd(), 0x80, PCD_SNG_BUF, 0x80);
+
+}
+
+void STM32::ControlEndpoint::init()
+{
+  transfer.endpoint = shared_from_this();
+  transfer.timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
+
+  /* Adjust the current data pointer as well.  */
+  transfer.current_data_pointer = transfer.data;
 }
 
 
@@ -49,15 +57,81 @@ void STM32::ControlEndpoint::ack_ctrl()
   ack_mode = AckMode::NONE;
 }
 
+void STM32::ControlEndpoint::activate()
+{
+  auto hpcd = dcd->get_hpcd();
+
+  auto PCD = dcd->get_PCD();
+
+  auto ep = get_epdata();
+
+  uint32_t wEpRegVal;
+
+  wEpRegVal = PCD_GET_ENDPOINT(PCD, epindex()) & USB_EP_T_MASK;
+
+  wEpRegVal |= USB_EP_CONTROL;
+
+  PCD_SET_ENDPOINT(PCD, 0, (wEpRegVal | USB_EP_VTRX | USB_EP_VTTX));
+  PCD_SET_EP_ADDRESS(PCD, 0, 0);
+
+  auto pma_out = hpcd->OUT_ep[0].pmaadress;
+  auto pma_in = hpcd->IN_ep[0].pmaadress;
+
+  assert(ep->pmaadress != 0);
+
+  /* Set the endpoint Receive buffer address */
+  pcd_set_rx_address(0, pma_out);
+  pcd_set_tx_address(0, pma_in);
+  PCD_CLEAR_TX_DTOG(PCD, ep->num);
+
+  /* Set the endpoint Receive buffer counter */
+  pcd_set_rx_cnt(0, ep->maxpacket);
+  PCD_CLEAR_RX_DTOG(PCD, ep->num);
+
+  PCD_SET_EP_RX_STATUS(PCD, ep->num, USB_EP_RX_VALID);
+  PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_NAK);
+}
+
 void STM32::ControlEndpoint::open()
 {
-  HAL_PCD_EP_Open(dcd->get_pcd_handle(), 0x00,
-      descriptor.wMaxPacketSize,
-      UX_CONTROL_ENDPOINT);
+  auto hpcd = dcd->get_hpcd();
 
-  HAL_PCD_EP_Open(dcd->get_pcd_handle(), 0x80,
-      descriptor.wMaxPacketSize,
-      UX_CONTROL_ENDPOINT);
+  hpcd->IN_ep[0].doublebuffer = 0;
+  hpcd->IN_ep[0].pmaadress = 0x80;
+  hpcd->IN_ep[0].is_in = true;
+  hpcd->IN_ep[0].num = epindex();
+  hpcd->IN_ep[0].maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
+  hpcd->IN_ep[0].type = UX_CONTROL_ENDPOINT;
+
+  hpcd->OUT_ep[0].doublebuffer = 0;
+  hpcd->OUT_ep[0].pmaadress = 0x40;
+  hpcd->OUT_ep[0].is_in = false;
+  hpcd->OUT_ep[0].num = epindex();
+  hpcd->OUT_ep[0].maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
+  hpcd->OUT_ep[0].type = UX_CONTROL_ENDPOINT;
+
+  {
+    auto g = dcd->guard();
+
+    activate();
+  }
+
+  state = EndpointState::RESET;
+
+  /* Ensure the control endpoint is properly reset.  */
+
+  /* Mark the phase as SETUP.  */
+  transfer.type =  TransferType::SETUP;
+
+  /* Mark this transfer request as pending.  */
+  transfer.set_pending();
+
+  /* Ask for 8 bytes of the SETUP packet.  */
+  transfer.requested_length =    UX_SETUP_SIZE;
+  transfer.in_transfer_length =  UX_SETUP_SIZE;
+
+  /* Reset the number of bytes sent/received.  */
+  transfer.actual_length =  0;
 }
 
 UINT STM32::ControlEndpoint::create()
@@ -102,12 +176,7 @@ UINT STM32::ControlEndpoint::create()
 
 void STM32::ControlEndpoint::on_setup()
 {
-  auto hpcd = dcd->get_hpcd();
-
-  /* Clear the length of the data received.  */
   transfer.actual_length = 0;
-
-  /* Mark the phase as SETUP.  */
   transfer.type =  TransferType::SETUP;
 
   /* Mark the transfer as successful.  */
@@ -168,8 +237,6 @@ void STM32::ControlEndpoint::on_setup()
 
 void STM32::ControlEndpoint::on_data_in()
 {
-  auto hpcd = dcd->get_hpcd();
-
   ULONG             transfer_length;
 
    /* Check if we need to send data again on control endpoint. */
