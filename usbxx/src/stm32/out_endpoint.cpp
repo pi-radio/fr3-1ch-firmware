@@ -16,26 +16,19 @@ STM32::OutEndpoint::OutEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr)
     STM32::Endpoint(_device, _dcd, _epaddr)
 {
   assert(!(epaddr & 0x80));
-}
 
-PCD_EPTypeDef *STM32::OutEndpoint::get_epdata()
-{
-  return &ep;
+  ep.pmaaddress = pmaaddr();
 }
-
 
 void STM32::OutEndpoint::activate()
 {
   auto PCD = dcd->get_PCD();
 
-  auto ep = get_epdata();
-
   uint32_t wEpRegVal;
 
   wEpRegVal = PCD_GET_ENDPOINT(PCD, epindex()) & USB_EP_T_MASK;
 
-  /* initialize Endpoint */
-  switch (ep->type)
+  switch (get_type())
   {
     case EP_TYPE_CTRL:
       wEpRegVal |= USB_EP_CONTROL;
@@ -61,17 +54,17 @@ void STM32::OutEndpoint::activate()
 
   PCD_SET_EP_ADDRESS(PCD, epindex(), epindex()); // ??
 
-  assert(ep->pmaaddress != 0);
+  assert(ep.pmaaddress != 0);
 
   /* Set the endpoint Receive buffer address */
-  pcd_set_rx_address(ep->num, ep->pmaaddress);
+  pcd_set_rx_address(epindex(), ep.pmaaddress);
 
   /* Set the endpoint Receive buffer counter */
-  pcd_set_rx_cnt(ep->num, ep->maxpacket);
-  PCD_CLEAR_RX_DTOG(PCD, ep->num);
+  pcd_set_rx_cnt(epindex(), max_packet_size());
+  PCD_CLEAR_RX_DTOG(PCD, epindex());
 
 
-  PCD_SET_EP_RX_STATUS(PCD, ep->num, USB_EP_RX_NAK);
+  PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_NAK);
 }
 
 void STM32::OutEndpoint::deactivate()
@@ -95,22 +88,19 @@ void STM32::OutEndpoint::clear_stall()
 
 void STM32::OutEndpoint::stall()
 {
+  auto PCD = dcd->get_PCD();
   auto g = dcd->guard();
 
   stalled = true;
 
-  PCD_SET_EP_TX_STATUS(dcd->get_PCD(), epindex(), USB_EP_TX_STALL);
+  PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_STALL);
 }
 
 void STM32::OutEndpoint::on_data_out()
 {
   auto PCD = dcd->get_PCD();
-  auto hpcd = dcd->get_hpcd();
 
   PCD_CLEAR_RX_EP_CTR(PCD, epindex());
-
-  /* OUT Single Buffering */
-  assert(ep.doublebuffer == 0U);
 
   auto count = (uint16_t)PCD_GET_EP_RX_CNT(PCD, epindex());
 
@@ -122,7 +112,7 @@ void STM32::OutEndpoint::on_data_out()
   /* multi-packet on the NON control OUT endpoint */
   ep.xfer_count += count;
 
-  if ((ep.xfer_len == 0U) || (count < ep.maxpacket))
+  if ((ep.xfer_len == 0U) || (count < max_packet_size()))
   {
     transfer.actual_length = ep.xfer_count;
 
@@ -131,7 +121,7 @@ void STM32::OutEndpoint::on_data_out()
   else
   {
      ep.xfer_buff += count;
-     start_transfer(&ep);
+     start_transfer_out(&ep);
   }
 }
 
@@ -141,19 +131,15 @@ void STM32::OutEndpoint::ll_receive(uint8_t *buf, uint32_t len)
   ep.xfer_buff = buf;
   ep.xfer_len = len;
   ep.xfer_count = 0U;
-  ep.is_in = 0U;
-  ep.num = epindex();
 
-  start_transfer(&ep);
+  start_transfer_out(&ep);
 }
 
 void STM32::OutEndpoint::abort_transfer()
 {
   auto PCD = dcd->get_PCD();
 
-  PCD_EPTypeDef *ep = get_epdata();
-
-  if (ep->type != EP_TYPE_ISOC)
+  if (get_type() != EP_TYPE_ISOC)
   {
     /* Configure NAK status for the Endpoint */
     PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_NAK);

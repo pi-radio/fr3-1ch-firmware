@@ -12,6 +12,21 @@ namespace USBXX
   {
     class DCD;
 
+    struct EPTypeDef
+    {
+      uint16_t  pmaaddress;            /*!< PMA Address
+                                           This parameter can be any value between Min_addr = 0 and Max_addr = 1K   */
+
+      uint8_t   *xfer_buff;           /*!< Pointer to transfer buffer                                               */
+
+      uint32_t  xfer_len;             /*!< Current transfer length                                                  */
+
+      uint32_t  xfer_count;           /*!< Partial transfer length in case of multi packet transfer                 */
+
+      uint32_t  xfer_len_db;          /*!< double buffer transfer length used with bulk double buffer in            */
+
+      uint8_t   xfer_fill_db;         /*!< double buffer Need to Fill new buffer  used with bulk_in                 */
+    } ;
 
     class Endpoint : public USBXX::Endpoint
     {
@@ -34,8 +49,6 @@ namespace USBXX
       uint8_t        direction;
       DCD            *dcd;
 
-      virtual PCD_EPTypeDef *get_epdata() = 0;
-
       Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
       void reset_flags() override {
@@ -56,8 +69,13 @@ namespace USBXX
 
       virtual void clear_stall() = 0;
 
+      uint32_t pmaaddr() { return 0x40 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00); }
+
 public:
+      uint8_t get_type() { return descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE; }
+      uint32_t max_packet_size() { return descriptor.wMaxPacketSize & 0x7FF; }
       uint8_t get_addr() { return descriptor.bEndpointAddress; }
+
 
       Transfer *get_transfer() override { return &transfer; };
 
@@ -69,7 +87,8 @@ public:
       virtual void abort_transfer() = 0;
 
 
-      void start_transfer(PCD_EPTypeDef *);
+      void start_transfer_in(EPTypeDef *);
+      void start_transfer_out(EPTypeDef *);
 
       virtual void open();
 
@@ -99,11 +118,9 @@ public:
 
     class InEndpoint : public Endpoint
     {
-      PCD_EPTypeDef ep;
+      EPTypeDef ep;
 
     protected:
-      PCD_EPTypeDef *get_epdata() override;
-
       void activate() override;
       void deactivate() override;
 
@@ -122,11 +139,9 @@ public:
 
     class OutEndpoint : public Endpoint
     {
-      PCD_EPTypeDef ep;
+      EPTypeDef ep;
 
     protected:
-      PCD_EPTypeDef *get_epdata() override;
-
       void activate() override;
       void deactivate() override;
 
@@ -167,8 +182,6 @@ public:
       ControlEndpointState state;
       AckMode ack_mode;
 
-      PCD_EPTypeDef *get_epdata() override;
-
       void activate() override;
       void deactivate() override;
 
@@ -177,8 +190,8 @@ public:
       void ll_receive(uint8_t *buf, uint32_t sz) override;
       void ll_transmit(uint8_t *buf, uint32_t sz) override;
 
-      PCD_EPTypeDef in_ep;
-      PCD_EPTypeDef out_ep;
+      EPTypeDef in_ep;
+      EPTypeDef out_ep;
 
 
     public:

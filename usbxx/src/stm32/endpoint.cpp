@@ -37,29 +37,9 @@ void STM32::Endpoint::init()
 
 void STM32::Endpoint::open()
 {
-  uint32_t pmaaddr = 0xC0 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00);
+  auto g = dcd->guard();
 
-  auto ep = get_epdata();
-
-  ep->doublebuffer = 0;
-  ep->pmaaddress = pmaaddr;
-  ep->is_in = is_in();
-  ep->num = epindex();
-  ep->maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
-  ep->type = descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE;
-
-  /* Set initial data PID. */
-  if (ep->type == EP_TYPE_BULK)
-  {
-    ep->data_pid_start = 0U;
-  }
-
-  {
-    auto g = dcd->guard();
-
-    activate();
-    //USB_ActivateEndpoint(dcd->get_PCD(), ep);
-  }
+  activate();
 }
 
 UINT STM32::Endpoint::create()
@@ -476,57 +456,54 @@ void STM32::Endpoint::ll_transmit(uint8_t *buf, uint32_t len)
   throw USBXX::runtime_error("Invalid transfer mode (TX)");
 }
 
-void STM32::Endpoint::start_transfer(PCD_EPTypeDef *ep)
+void STM32::Endpoint::start_transfer_in(EPTypeDef *ep)
 {
   auto PCD = dcd->get_PCD();
   uint32_t len;
 
-  /* IN endpoint */
-  if (ep->is_in == 1U)
+  if (ep->xfer_len > max_packet_size())
   {
-    /* Multi packet transfer */
-    if (ep->xfer_len > ep->maxpacket)
-    {
-      len = ep->maxpacket;
-    }
-    else
-    {
-      len = ep->xfer_len;
-    }
-
-    if (ep->num) {
-      int a = 0;
-    }
-
-    write_pma(ep->pmaaddress, ep->xfer_buff,(uint16_t)len);
-
-    (USB_DRD_PMA_BUFF + (ep->num))->TXBD &= 0xFFFF;
-    (USB_DRD_PMA_BUFF + (ep->num))->TXBD |= (uint32_t)((uint32_t)(len) << 16U);
-
-    PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_VALID);
+    len = max_packet_size();
   }
-  else /* OUT endpoint */
+  else
   {
-    if ((ep->xfer_len == 0U) && (ep->type == EP_TYPE_CTRL))
-    {
-      PCD_SET_OUT_STATUS(PCD, ep->num);
-    }
-    else
-    {
-      PCD_CLEAR_OUT_STATUS(PCD, ep->num);
-    }
-
-    /* Multi packet transfer */
-    if (ep->xfer_len > ep->maxpacket)
-    {
-      ep->xfer_len -= ep->maxpacket;
-    }
-    else
-    {
-      ep->xfer_len = 0U;
-    }
-
-    PCD_SET_EP_RX_STATUS(PCD, ep->num, USB_EP_RX_VALID);
+    len = ep->xfer_len;
   }
+
+  if (epindex()) {
+    int a = 0;
+  }
+
+  write_pma(ep->pmaaddress, ep->xfer_buff,(uint16_t)len);
+
+  (USB_DRD_PMA_BUFF + epindex())->TXBD &= 0xFFFF;
+  (USB_DRD_PMA_BUFF + epindex())->TXBD |= (uint32_t)((uint32_t)(len) << 16U);
+
+  PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_VALID);
 }
 
+void STM32::Endpoint::start_transfer_out(EPTypeDef *ep)
+{
+  auto PCD = dcd->get_PCD();
+
+  if ((ep->xfer_len == 0U) && (get_type() == EP_TYPE_CTRL))
+  {
+    PCD_SET_OUT_STATUS(PCD, epindex());
+  }
+  else
+  {
+    PCD_CLEAR_OUT_STATUS(PCD, epindex());
+  }
+
+  /* Multi packet transfer */
+  if (ep->xfer_len > max_packet_size())
+  {
+    ep->xfer_len -= max_packet_size();
+  }
+  else
+  {
+    ep->xfer_len = 0U;
+  }
+
+  PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_VALID);
+}

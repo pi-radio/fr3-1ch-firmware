@@ -16,32 +16,21 @@ STM32::InEndpoint::InEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
     STM32::Endpoint(_device, _dcd, _epaddr)
 {
   assert((epaddr & 0x80));
-  ep.is_in = 1U;
-  ep.num = 0;
-  ep.type = EP_TYPE_CTRL;
-  ep.maxpacket = 0U;
   ep.xfer_buff = 0U;
   ep.xfer_len = 0U;
-  ep.pmaaddress = 0x80;}
-
-PCD_EPTypeDef *STM32::InEndpoint::get_epdata()
-{
-  return &ep;
+  ep.pmaaddress = 0x80;
 }
-
 
 void STM32::InEndpoint::activate()
 {
   auto PCD = dcd->get_PCD();
-
-  auto ep = get_epdata();
 
   uint32_t wEpRegVal;
 
   wEpRegVal = PCD_GET_ENDPOINT(PCD, epindex()) & USB_EP_T_MASK;
 
   /* initialize Endpoint */
-  switch (ep->type)
+  switch (get_type())
   {
     case EP_TYPE_CTRL:
       wEpRegVal |= USB_EP_CONTROL;
@@ -67,21 +56,21 @@ void STM32::InEndpoint::activate()
 
   PCD_SET_EP_ADDRESS(PCD, epindex(), epindex()); // ??
 
-  assert(ep->pmaaddress != 0);
+  assert(ep.pmaaddress != 0);
 
   /*Set the endpoint Transmit buffer address */
-  pcd_set_tx_address(ep->num, ep->pmaaddress);
-  PCD_CLEAR_TX_DTOG(PCD, ep->num);
+  pcd_set_tx_address(epindex(), ep.pmaaddress);
+  PCD_CLEAR_TX_DTOG(PCD, epindex());
 
-  if (ep->type != EP_TYPE_ISOC)
+  if (get_type() != EP_TYPE_ISOC)
   {
     /* Configure NAK status for the Endpoint */
-    PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_NAK);
+    PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_NAK);
   }
   else
   {
     /* Configure TX Endpoint to disabled state */
-    PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_DIS);
+    PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_DIS);
   }
 }
 
@@ -96,12 +85,11 @@ void STM32::InEndpoint::deactivate()
 void STM32::InEndpoint::clear_stall()
 {
   auto PCD = dcd->get_PCD();
-  auto ep = get_epdata();
   auto g = dcd->guard();
 
   PCD_CLEAR_TX_DTOG(PCD, epindex());
 
-  if (ep->type != EP_TYPE_ISOC)
+  if (get_type() != EP_TYPE_ISOC)
   {
     /* Configure NAK status for the Endpoint */
     PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_NAK);
@@ -111,9 +99,8 @@ void STM32::InEndpoint::clear_stall()
 void STM32::InEndpoint::abort_transfer()
 {
   auto PCD = dcd->get_PCD();
-  PCD_EPTypeDef *ep = get_epdata();
 
-  if (ep->type != EP_TYPE_ISOC)
+  if (get_type() != EP_TYPE_ISOC)
   {
     /* Configure NAK status for the Endpoint */
     PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_NAK);
@@ -128,10 +115,8 @@ void STM32::InEndpoint::abort_transfer()
 void STM32::InEndpoint::stall()
 {
   auto PCD = dcd->get_PCD();
-  auto ep = get_epdata();
 
   stalled = true;
-  ep->num = epindex();
 
   {
     auto g = dcd->guard();
@@ -143,7 +128,6 @@ void STM32::InEndpoint::stall()
 void STM32::InEndpoint::on_data_in()
 {
   auto PCD = dcd->get_PCD();
-  auto hpcd = dcd->get_hpcd();
 
   /* clear int flag */
   PCD_CLEAR_TX_EP_CTR(PCD, epindex());
@@ -186,7 +170,7 @@ void STM32::InEndpoint::on_data_in()
     /* Transfer is not yet Done */
     ep.xfer_buff += TxPctSize;
     ep.xfer_count += TxPctSize;
-    start_transfer(&ep);
+    start_transfer_in(&ep);
   }
 }
 
@@ -197,10 +181,8 @@ void STM32::InEndpoint::ll_transmit(uint8_t *buf, uint32_t len)
   ep.xfer_fill_db = 1U;
   ep.xfer_len_db = len;
   ep.xfer_count = 0U;
-  ep.is_in = 1U;
-  ep.num = epindex();
 
-  start_transfer(&ep);
+  start_transfer_in(&ep);
 
   event_log.push_event(UsbEvent::ENDPOINT_XMIT, epaddr);
 }

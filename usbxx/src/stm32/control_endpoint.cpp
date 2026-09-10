@@ -20,28 +20,14 @@ STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
   state(ControlEndpointState::IDLE),
   ack_mode(AckMode::NONE)
 {
-  in_ep.is_in = 1U;
-  in_ep.num = 0;
-  in_ep.type = EP_TYPE_CTRL;
-  in_ep.maxpacket = 0U;
   in_ep.xfer_buff = 0U;
   in_ep.xfer_len = 0U;
   in_ep.pmaaddress = 0x80;
 
-  out_ep.is_in = 0;
-  out_ep.num = 0;
-  out_ep.type = EP_TYPE_CTRL;
-  out_ep.maxpacket = 0U;
   out_ep.xfer_buff = 0U;
   out_ep.xfer_len = 0U;
   out_ep.pmaaddress = 0x40;
 }
-
-PCD_EPTypeDef *STM32::ControlEndpoint::get_epdata()
-{
-  return &in_ep;
-}
-
 
 void STM32::ControlEndpoint::init()
 {
@@ -96,11 +82,7 @@ void STM32::ControlEndpoint::ack_ctrl()
 
 void STM32::ControlEndpoint::activate()
 {
-  auto hpcd = dcd->get_hpcd();
-
   auto PCD = dcd->get_PCD();
-
-  auto ep = get_epdata();
 
   uint32_t wEpRegVal;
 
@@ -114,19 +96,17 @@ void STM32::ControlEndpoint::activate()
   auto pma_out = out_ep.pmaaddress;
   auto pma_in = in_ep.pmaaddress;
 
-  assert(ep->pmaaddress != 0);
-
   /* Set the endpoint Receive buffer address */
   pcd_set_rx_address(0, pma_out);
   pcd_set_tx_address(0, pma_in);
-  PCD_CLEAR_TX_DTOG(PCD, ep->num);
+  PCD_CLEAR_TX_DTOG(PCD, epindex());
 
   /* Set the endpoint Receive buffer counter */
-  pcd_set_rx_cnt(0, ep->maxpacket);
-  PCD_CLEAR_RX_DTOG(PCD, ep->num);
+  pcd_set_rx_cnt(0, max_packet_size());
+  PCD_CLEAR_RX_DTOG(PCD, epindex());
 
-  PCD_SET_EP_RX_STATUS(PCD, ep->num, USB_EP_RX_VALID);
-  PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_NAK);
+  PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_VALID);
+  PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_NAK);
 }
 
 void STM32::ControlEndpoint::deactivate()
@@ -139,21 +119,8 @@ void STM32::ControlEndpoint::deactivate()
 
 void STM32::ControlEndpoint::open()
 {
-  auto hpcd = dcd->get_hpcd();
-
-  in_ep.doublebuffer = 0;
   in_ep.pmaaddress = 0x80;
-  in_ep.is_in = true;
-  in_ep.num = epindex();
-  in_ep.maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
-  in_ep.type = UX_CONTROL_ENDPOINT;
-
-  out_ep.doublebuffer = 0;
   out_ep.pmaaddress = 0x40;
-  out_ep.is_in = false;
-  out_ep.num = epindex();
-  out_ep.maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
-  out_ep.type = UX_CONTROL_ENDPOINT;
 
   {
     auto g = dcd->guard();
@@ -243,35 +210,23 @@ void STM32::ControlEndpoint::stall()
 
 void STM32::ControlEndpoint::ll_receive(uint8_t *buf, uint32_t len)
 {
-  PCD_EPTypeDef *ep;
-
-  ep = &out_ep;
-
   /*setup and start the Xfer */
-  ep->xfer_buff = buf;
-  ep->xfer_len = len;
-  ep->xfer_count = 0U;
-  ep->is_in = 0U;
-  ep->num = epindex();
+  out_ep.xfer_buff = buf;
+  out_ep.xfer_len = len;
+  out_ep.xfer_count = 0U;
 
-  start_transfer(ep);
+  start_transfer_out(&out_ep);
 }
 
 void STM32::ControlEndpoint::ll_transmit(uint8_t *buf, uint32_t len)
 {
-  PCD_EPTypeDef *ep;
+  in_ep.xfer_buff = buf;
+  in_ep.xfer_len = len;
+  in_ep.xfer_fill_db = 1U;
+  in_ep.xfer_len_db = len;
+  in_ep.xfer_count = 0U;
 
-  ep = &in_ep;
-
-  ep->xfer_buff = buf;
-  ep->xfer_len = len;
-  ep->xfer_fill_db = 1U;
-  ep->xfer_len_db = len;
-  ep->xfer_count = 0U;
-  ep->is_in = 1U;
-  ep->num = epindex();
-
-  start_transfer(ep);
+  start_transfer_in(&in_ep);
 
   event_log.push_event(UsbEvent::ENDPOINT_XMIT, epaddr);
 }
@@ -443,24 +398,21 @@ void STM32::ControlEndpoint::on_data_out()
 void STM32::ControlEndpoint::on_interrupt()
 {
   auto PCD = dcd->get_PCD();
-  auto hpcd = dcd->get_hpcd();
 
-  PCD_EPTypeDef *ep;
   auto wIstr = (uint16_t)PCD->ISTR;
   uint16_t wEPVal;
 
   if ((wIstr & USB_ISTR_DIR) == 0U)
   {
     PCD_CLEAR_TX_EP_CTR(PCD, PCD_ENDP0);
-    ep = &in_ep;
 
-    ep->xfer_count = PCD_GET_EP_TX_CNT(PCD, ep->num);
-    ep->xfer_buff += ep->xfer_count;
+    in_ep.xfer_count = PCD_GET_EP_TX_CNT(PCD, epindex());
+    in_ep.xfer_buff += in_ep.xfer_count;
 
     /* TX COMPLETE */
     on_data_in();
 
-    if ((ep->xfer_len == 0U) && !dcd->address_set)
+    if ((in_ep.xfer_len == 0U) && !dcd->address_set)
     {
       PCD->DADDR = ((uint16_t)dcd->get_device_address() | USB_DADDR_EF);
       dcd->address_set = true;
@@ -469,19 +421,14 @@ void STM32::ControlEndpoint::on_interrupt()
     return;
   }
 
-  /* DIR = 1 */
-
-  /* DIR = 1 & CTR_RX => SETUP or OUT int */
-  /* DIR = 1 & (CTR_TX | CTR_RX) => 2 int pending */
-  ep = &out_ep;
   wEPVal = (uint16_t)PCD_GET_ENDPOINT(PCD, PCD_ENDP0);
 
   if ((wEPVal & USB_EP_SETUP) != 0U)
   {
     /* Get SETUP Packet */
-    ep->xfer_count = PCD_GET_EP_RX_CNT(PCD, ep->num);
+    out_ep.xfer_count = PCD_GET_EP_RX_CNT(PCD, epindex());
 
-    if (ep->xfer_count != 8U)
+    if (out_ep.xfer_count != 8U)
     {
       /* Set Stall condition for EP0 IN/OUT */
       PCD_SET_EP_RX_STATUS(PCD, PCD_ENDP0, USB_EP_RX_STALL);
@@ -493,8 +440,7 @@ void STM32::ControlEndpoint::on_interrupt()
       return;
     }
 
-    read_pma(transfer.setup,
-                ep->pmaaddress, (uint16_t)ep->xfer_count);
+    read_pma(transfer.setup, out_ep.pmaaddress, out_ep.xfer_count);
 
     /* SETUP bit kept frozen while CTR_RX = 1 */
     PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
@@ -511,21 +457,20 @@ void STM32::ControlEndpoint::on_interrupt()
     PCD_CLEAR_RX_EP_CTR(PCD, PCD_ENDP0);
 
     /* Get Control Data OUT Packet */
-    ep->xfer_count = PCD_GET_EP_RX_CNT(PCD, ep->num);
+    out_ep.xfer_count = PCD_GET_EP_RX_CNT(PCD, epindex());
 
-    if (ep->xfer_count == 0U)
+    if (out_ep.xfer_count == 0U)
     {
       /* Status phase re-arm for next setup */
       PCD_SET_EP_RX_STATUS(PCD, PCD_ENDP0, USB_EP_RX_VALID);
     }
     else
     {
-      if (ep->xfer_buff != 0U)
+      if (out_ep.xfer_buff != 0U)
       {
-        read_pma(ep->xfer_buff,
-                    ep->pmaaddress, (uint16_t)ep->xfer_count);  /* max 64bytes */
+        read_pma(out_ep.xfer_buff, out_ep.pmaaddress, out_ep.xfer_count);  /* max 64bytes */
 
-        ep->xfer_buff += ep->xfer_count;
+        out_ep.xfer_buff += out_ep.xfer_count;
 
         /* Process Control Data OUT Packet */
         on_data_out();
