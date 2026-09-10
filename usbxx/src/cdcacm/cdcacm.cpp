@@ -350,7 +350,7 @@ uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, u
   uint32_t                       local_requested_length;
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (state != UX_DEVICE_CONFIGURED)
+  if (!is_configured())
     return UX_TRANSFER_NO_ANSWER;
 
   /* Locate the endpoints.  */
@@ -396,7 +396,7 @@ uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, u
     }
   }
 
-  if (state != UX_DEVICE_CONFIGURED)
+  if (!is_configured())
     return UX_TRANSFER_NO_ANSWER;
 
   return status;
@@ -415,7 +415,7 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
   /* Get the pointer to the device.  */
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (state != UX_DEVICE_CONFIGURED)
+  if (!is_configured())
   {
     return UX_CONFIGURATION_HANDLE_UNKNOWN;
   }
@@ -436,14 +436,14 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
     *actual_length =  0;
 
     /* Check if the application forces a 0 length packet.  */
-    if (state == UX_DEVICE_CONFIGURED && requested_length == 0)
+    if (state == DeviceState::CONFIGURED && requested_length == 0)
       return transfer_request(xfer, 0, 0);
 
 
     /* Check if we need more transactions.  */
     local_host_length = xfer->buffer_size;
 
-    while (state == UX_DEVICE_CONFIGURED && requested_length != 0)
+    while (state == DeviceState::CONFIGURED && requested_length != 0)
     {
       wait_activated();
 
@@ -484,7 +484,7 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
   }
 
   /* Check why we got here, either completion or device was extracted.  */
-  if (state != UX_DEVICE_CONFIGURED)
+  if (!is_configured())
       return UX_TRANSFER_NO_ANSWER;
 
   /* Simply return the last transaction result.  */

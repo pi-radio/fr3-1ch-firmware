@@ -89,7 +89,7 @@ void DeviceBase::start()
 
 void DeviceBase::disconnect()
 {
-  if (state == UX_DEVICE_CONFIGURED)
+  if (state == DeviceState::CONFIGURED)
   {
         /* Get the pointer to the first interface.  */
     for (auto iface : interfaces) {
@@ -101,18 +101,18 @@ void DeviceBase::disconnect()
       iface->stop();
     }
 
-    state =  UX_DEVICE_ATTACHED;
+    state = DeviceState::ATTACHED;
   }
 
   /* If the device was attached, we need to destroy the control endpoint.  */
-  if (state == UX_DEVICE_ATTACHED)
+  if (state == DeviceState::ATTACHED)
     get_control_endpoint()->destroy();
 
   /* We are reverting to configuration 0.  */
   configuration_selected =  0;
 
   /* Set the device to be non attached.  */
-  state =  UX_DEVICE_RESET;
+  state =  DeviceState::RESET;
 
   on_removed();
 }
@@ -151,7 +151,7 @@ uint32_t                    retval;
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */
-    if (state == UX_DEVICE_CONFIGURED)
+    if (state == DeviceState::CONFIGURED)
     {
       for (auto iface : interfaces) {
         if (iface -> descriptor.bInterfaceNumber == interface_value)

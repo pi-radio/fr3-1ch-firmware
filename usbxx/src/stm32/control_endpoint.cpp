@@ -153,21 +153,15 @@ uint32_t STM32::ControlEndpoint::create()
 
 
   /* Calculate endpoint transfer payload max size.  */
-  auto max_transfer_length =
-          descriptor.wMaxPacketSize &
-                                              UX_MAX_PACKET_SIZE_MASK;
+  auto max_transfer_length = max_packet_size();
 
   if ((dcd->get_speed() == DeviceSpeed::HS) &&
       (descriptor.bmAttributes & 0x1u))
   {
-      auto n_trans = descriptor.wMaxPacketSize &
-                                  UX_MAX_NUMBER_OF_TRANSACTIONS_MASK;
-      if (n_trans)
-      {
-          n_trans >>= UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT;
-          n_trans ++;
-          max_transfer_length *= n_trans;
-      }
+    if (descriptor.wMaxPacketSize > MAX_PACKET_SIZE) {
+      auto n_trans  = descriptor.wMaxPacketSize / MAX_PACKET_SIZE + 1;
+      max_transfer_length *= n_trans;
+    }
   }
 
   /* Validate max transfer size and save it.  */
@@ -251,8 +245,10 @@ void STM32::ControlEndpoint::on_setup()
   stalled = false;
   done = false;
 
+  ControlRequest req(transfer.setup);
+
   /* Check if the transaction is IN.  */
-  if (*transfer.setup & UX_REQUEST_IN)
+  if (req.is_in)
   {
     direction = Direction::IN;
     state = ControlEndpointState::DATA_TX;
@@ -263,8 +259,7 @@ void STM32::ControlEndpoint::on_setup()
     return;
   }
 
-  if (*(transfer.setup + 6) == 0 &&
-      *(transfer.setup + 7) == 0)
+  if (req.length == 0)
   {
     direction = Direction::IN;
 

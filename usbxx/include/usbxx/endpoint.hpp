@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <usbxx/constants.hpp>
 #include <usbxx/transfer.hpp>
 #include <usbxx/descriptor.hpp>
 
@@ -103,15 +104,23 @@ namespace USBXX
 
   struct Endpoint : public std::enable_shared_from_this<Endpoint>
   {
+    static constexpr uint32_t MAX_PACKET_SIZE = 0x800;
+
     using ptr = std::shared_ptr<Endpoint>;
 
     EndpointDescriptor         descriptor;
     USBXX::DeviceBase          *device;
     std::shared_ptr<Interface> interface;
 
+
     Endpoint(USBXX::DeviceBase *_device);
 
     virtual ~Endpoint();
+
+    uint8_t get_type() { return descriptor.bmAttributes & EndpointType::MASK; }
+    uint32_t max_packet_size() { return descriptor.wMaxPacketSize & (MAX_PACKET_SIZE - 1); }
+    uint8_t get_addr() { return descriptor.bEndpointAddress; }
+
 
     virtual void reset_flags()
     {

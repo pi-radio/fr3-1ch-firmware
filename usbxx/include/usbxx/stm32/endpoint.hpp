@@ -25,6 +25,9 @@ namespace USBXX
     public:
       using ptr = std::shared_ptr<Endpoint>;
 
+#define UX_MAX_NUMBER_OF_TRANSACTIONS_MASK                              0x1800u
+#define UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT                             11
+
     protected:
 
       bool in_transfer;
@@ -62,9 +65,6 @@ namespace USBXX
       uint32_t pmaaddr() { return 0x40 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00); }
 
 public:
-      uint8_t get_type() { return descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE; }
-      uint32_t max_packet_size() { return descriptor.wMaxPacketSize & 0x7FF; }
-      uint8_t get_addr() { return descriptor.bEndpointAddress; }
 
 
       Transfer *get_transfer() override { return &transfer; };

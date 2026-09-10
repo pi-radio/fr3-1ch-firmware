@@ -28,65 +28,13 @@ extern   "C" {
 
 /* Define basic USBX constants.  */
 
-
-#define UX_MAX_BYTES_PER_FRAME_FS                                       1157u
-#define UX_MAX_BYTES_PER_MICROFRAME_HS                                  5785u
-
-/* Define USBX command request constants.  */
-
 #if 0
-#define UX_SETUP_REQUEST_TYPE                                           0u
-#define UX_SETUP_REQUEST                                                1u
-#define UX_SETUP_VALUE                                                  2u
-#define UX_SETUP_INDEX                                                  4u
-#define UX_SETUP_LENGTH                                                 6u
-#define UX_SETUP_SIZE                                                   8u
-
-
-
-#define UX_MAX_USB_DEVICES                                              127
-
-#define UX_ENDPOINT_DIRECTION                                           0x80u
-#define UX_ENDPOINT_IN                                                  0x80u
-#define UX_ENDPOINT_OUT                                                 0x00u
+#define UX_FEEDBACK_SIZE_FULL_SPEED                                     3   /* 10.10 format fits into 3 bytes.  */
+#define UX_FEEDBACK_SIZE_HIGH_SPEED                                     4   /* 12.13 format fits into 4 bytes.  */
 #endif
 
 
-#define UX_MASK_ENDPOINT_TYPE                                           3u
-#define UX_CONTROL_ENDPOINT                                             0u
-#define UX_ISOCHRONOUS_ENDPOINT                                         1u
-#define UX_BULK_ENDPOINT                                                2u
-#define UX_INTERRUPT_ENDPOINT                                           3u
-
-#define UX_ISOCHRONOUS_ENDPOINT_IN                                      0x81u
-#define UX_ISOCHRONOUS_ENDPOINT_OUT                                     0x01u
-#define UX_BULK_ENDPOINT_IN                                             0x82u
-#define UX_BULK_ENDPOINT_OUT                                            0x02u
-#define UX_INTERRUPT_ENDPOINT_IN                                        0x83u
-#define UX_INTERRUPT_ENDPOINT_OUT                                       0x03u
-
-#define UX_MAX_PACKET_SIZE_MASK                                         0x7ffu
-#define UX_MAX_NUMBER_OF_TRANSACTIONS_MASK                              0x1800u
-#define UX_MAX_NUMBER_OF_TRANSACTIONS_SHIFT                             11
-
-#define UX_FEEDBACK_SIZE_FULL_SPEED                                     3   /* 10.10 format fits into 3 bytes.  */
-#define UX_FEEDBACK_SIZE_HIGH_SPEED                                     4   /* 12.13 format fits into 4 bytes.  */
-
-#define UX_REQUEST_DIRECTION                                            0x80u
-#define UX_REQUEST_IN                                                   0x80u
-#define UX_REQUEST_OUT                                                  0x00u
-
-#define UX_REQUEST_TYPE                                                 0x60u
-#define UX_REQUEST_TYPE_STANDARD                                        0x00u
-#define UX_REQUEST_TYPE_CLASS                                           0x20u
-#define UX_REQUEST_TYPE_VENDOR                                          0x40u
-
-#define UX_REQUEST_TARGET                                               0x03u
-#define UX_REQUEST_TARGET_DEVICE                                        0x00u
-#define UX_REQUEST_TARGET_INTERFACE                                     0x01u
-#define UX_REQUEST_TARGET_ENDPOINT                                      0x02u
-#define UX_REQUEST_TARGET_OTHER                                         0x03u
-
+#if 0
 #define UX_DEVICE_RESET                                                 0
 #define UX_DEVICE_ATTACHED                                              1
 #define UX_DEVICE_ADDRESSED                                             2
@@ -117,6 +65,7 @@ extern   "C" {
 #define UX_DEVICE_CAPABILITY_DESCRIPTOR_ITEM                            16u
 #define UX_DFU_FUNCTIONAL_DESCRIPTOR_ITEM                               0x21u
 #define UX_HUB_DESCRIPTOR_ITEM                                          0x29u
+#endif
 
 #define UX_CAPABILITY_WIRELESS_USB                                      0x01u
 #define UX_CAPABILITY_USB_2_0_EXTENSION                                 0x02u

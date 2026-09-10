@@ -44,7 +44,7 @@ void STM32::DCD::reset()
   complete_initialization();
 
   /* Mark the device as attached now.  */
-  device->state =  UX_DEVICE_ATTACHED;
+  device->set_state(DeviceState::ATTACHED);
 }
 
 void STM32::DCD::connect()
@@ -54,7 +54,7 @@ void STM32::DCD::connect()
 
 void STM32::DCD::disconnect()
 {
-  if (device->state == UX_DEVICE_RESET)
+  if (device->get_state() == DeviceState::RESET)
     return;
 
   for (auto t : endpoints) {
@@ -87,9 +87,9 @@ void STM32::DCD::on_sof()
 
 
 
-void STM32::DCD::on_state_change(uint32_t state)
+void STM32::DCD::on_state_change(DeviceState state)
 {
-  if ((uint32_t) state == UX_DEVICE_FORCE_DISCONNECT)
+  if (state == DeviceState::FORCE_DISCONNECT)
   {
     stop();
   }

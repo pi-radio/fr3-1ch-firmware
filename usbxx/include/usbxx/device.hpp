@@ -53,6 +53,22 @@ namespace USBXX
     L1
   };
 
+  enum class DeviceState
+  {
+    RESET,
+    ATTACHED,
+    ADDRESSED,
+    CONFIGURED,
+    SUSPENDED,
+    RESUMED,
+    SELF_POWERED_STATE,
+    BUS_POWERED_STATE,
+    REMOTE_WAKEUP,
+    BUS_RESET_COMPLETED,
+    REMOVED,
+    FORCE_DISCONNECT
+  };
+
   static constexpr uint32_t PERIODIC_RATE = 100;
 
   static inline uint32_t ms_to_ticks(uint32_t ms)
@@ -62,6 +78,7 @@ namespace USBXX
 
   class DeviceBase
   {
+  protected:
     friend class ControlThread;
 
     static uint32_t _usbxx_change_notification(uint32_t);
@@ -75,6 +92,8 @@ namespace USBXX
     Descriptor  hs_desc;
     Strings     strings;
     LanguageIDs lang_ids;
+
+    DeviceState state;
 
     DCD *dcd;
 
@@ -104,7 +123,6 @@ namespace USBXX
 
   public:
 
-    uint32_t            state;
     DeviceDescriptor descriptor;
     uint32_t            configuration_selected;
     ConfigurationDescriptor
@@ -197,8 +215,10 @@ namespace USBXX
     Transfer *get_control_transfer() { return dcd->get_control_transfer(); };
     USBXX::Endpoint::ptr get_control_endpoint() { return dcd->get_control_endpoint(); }
 
-    void set_state(uint32_t state) { state = state; }
-    uint32_t get_state() { return state; }
+    void set_state(DeviceState _state) { state = _state; }
+    DeviceState get_state() { return state; }
+
+    bool is_configured() { return state == DeviceState::CONFIGURED; }
 
     const Descriptor &get_current_descriptor() { return fs_desc; }
 

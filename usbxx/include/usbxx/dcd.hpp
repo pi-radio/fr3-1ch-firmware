@@ -8,6 +8,7 @@
 namespace USBXX
 {
   class DeviceBase;
+  enum class DeviceState;
 
   class DCD
   {
@@ -42,7 +43,7 @@ namespace USBXX
     virtual void suspend() = 0;
     virtual void resume() = 0;
     virtual void on_sof() = 0;
-    virtual void on_state_change(uint32_t state) = 0;
+    virtual void on_state_change(DeviceState state) = 0;
     virtual void set_device_address(uint8_t) = 0;
   };
 };

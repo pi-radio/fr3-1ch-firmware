@@ -35,6 +35,16 @@ namespace USBXX
   {
     static constexpr uint32_t MASK = 0x60;
     static constexpr uint32_t STANDARD = 0;
+  };
 
+
+  struct EndpointType
+  {
+    static constexpr uint32_t MASK = 0x03;
+
+    static constexpr uint32_t CONTROL = 0;
+    static constexpr uint32_t ISOCHRONOUS = 1;
+    static constexpr uint32_t BULK = 2;
+    static constexpr uint32_t INTERRUPT = 3;
   };
 }

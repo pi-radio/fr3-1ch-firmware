@@ -13,7 +13,7 @@ uint32_t DeviceBase::on_get_alternate_setting(uint32_t interface_value)
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */
-    if (state != UX_DEVICE_CONFIGURED)
+    if (!is_configured())
     {
       return UX_ERROR;
     }
@@ -48,7 +48,7 @@ uint32_t  DeviceBase::on_set_alternate_setting(uint32_t interface_value, uint32_
   uint32_t                            status;
 
     /* Protocol error must be reported when it's unconfigured */
-    if (state != UX_DEVICE_CONFIGURED)
+    if (!is_configured())
         return(UX_FUNCTION_NOT_SUPPORTED);
 
     auto iface = find_interface(interface_value);
@@ -302,9 +302,9 @@ uint32_t  DeviceBase::on_set_configuration(uint32_t configuration_value)
 
   configuration_selected =  0;
 
-  state =  UX_DEVICE_ATTACHED;
+  state = DeviceState::ATTACHED;
 
-  dcd->on_state_change(UX_DEVICE_ATTACHED);
+  dcd->on_state_change(DeviceState::ATTACHED);
 
   if (configuration_value == 0)
       return 0;
@@ -391,10 +391,10 @@ uint32_t  DeviceBase::on_set_configuration(uint32_t configuration_value)
   }
 
   /* Mark the device as configured now. */
-  state =  UX_DEVICE_CONFIGURED;
+  state = DeviceState::CONFIGURED;
 
   /* The DCD needs to update the device state too.  */
-  dcd->on_state_change(UX_DEVICE_CONFIGURED);
+  dcd->on_state_change(DeviceState::CONFIGURED);
 
   /* Configuration mounted. */
   return 0;

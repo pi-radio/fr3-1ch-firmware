@@ -50,9 +50,9 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
   {
     TXX::lock_intr l;
     /* We can only transfer when the device is ATTACHED, ADDRESSED OR CONFIGURED.  */
-    if ((state == UX_DEVICE_ATTACHED) ||
-        (state == UX_DEVICE_ADDRESSED) ||
-        (state == UX_DEVICE_CONFIGURED))
+    if ((state == DeviceState::ATTACHED) ||
+        (state == DeviceState::ADDRESSED) ||
+        (state == DeviceState::CONFIGURED))
       xfer->set_pending();
 
     else
@@ -65,7 +65,7 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
     auto endpoint =  xfer -> endpoint;
     
     /* If the endpoint is non Control, check the endpoint direction and set the data phase direction.  */
-    if ((endpoint -> descriptor.bmAttributes & UX_MASK_ENDPOINT_TYPE) != UX_CONTROL_ENDPOINT)
+    if (endpoint->get_type() != EndpointType::CONTROL)
     {
 
         /* Check if the endpoint is STALLED. In this case, we must refuse the transaction until the endpoint

@@ -188,7 +188,7 @@ namespace USBXX
       void suspend() override;
       void resume() override;
       void on_sof() override;
-      void on_state_change(uint32_t) override;
+      void on_state_change(DeviceState) override;
       void set_device_address(uint8_t) override;
     };
 
