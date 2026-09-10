@@ -63,7 +63,7 @@ uint32_t STM32::Endpoint::create()
   }
 
   /* Validate max transfer size and save it.  */
-  UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
+  assert(max_transfer_length <= transfer.buffer_size);
   transfer.transfer_length = max_transfer_length;
   transfer.endpoint = shared_from_this();
   transfer.timeout = TX_WAIT_FOREVER;

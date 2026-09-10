@@ -219,8 +219,8 @@ namespace USBXX
     uint8_t stop_bit;
     uint8_t parity;
     uint8_t data_bit;
-    uint8_t dtr_state;
-    uint8_t rts_state;
+    bool dtr_state;
+    bool rts_state;
 
     USBXX::Endpoint::ptr in_endpoint;
     USBXX::Endpoint::ptr out_endpoint;

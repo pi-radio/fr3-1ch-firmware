@@ -116,7 +116,7 @@ void STM32::OutEndpoint::on_data_out()
   {
     transfer.actual_length = ep.xfer_count;
 
-    transfer.complete(UX_SUCCESS);
+    transfer.complete(0);
   }
   else
   {

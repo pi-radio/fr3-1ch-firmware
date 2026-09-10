@@ -150,7 +150,7 @@ void STM32::InEndpoint::on_data_in()
     if (transfer.force_zlp &&
         transfer.requested_length)
     {
-      transfer.force_zlp = UX_FALSE;
+      transfer.force_zlp = false;
       transfer.in_transfer_length = 0;
 
       /* Arm a ZLP packet on IN.  */
@@ -161,7 +161,7 @@ void STM32::InEndpoint::on_data_in()
       transfer.actual_length = transfer.requested_length;
 
     /* Non control endpoint operation, use semaphore.  */
-      transfer.complete(UX_SUCCESS);
+      transfer.complete(0);
     }
   }
   else

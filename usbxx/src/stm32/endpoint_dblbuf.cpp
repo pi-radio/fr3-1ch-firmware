@@ -292,7 +292,7 @@ void STM32::Endpoint::on_data_in()
     transfer.actual_length = transfer.requested_length;
 
   /* Non control endpoint operation, use semaphore.  */
-    transfer.complete(UX_SUCCESS);
+    transfer.complete 0;
   }
 
 }
@@ -303,7 +303,7 @@ void STM32::Endpoint::on_data_out()
 
   transfer.actual_length = HAL_PCD_EP_GetRxCount(hpcd, epindex());
 
-  transfer.complete(UX_SUCCESS);
+  transfer.complete 0;
 }
 
 

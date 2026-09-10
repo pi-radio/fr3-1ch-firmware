@@ -212,8 +212,8 @@ uint32_t DeviceBase::set_feature(const ControlRequest &req)
     {
       if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
       {
-        _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_TRUE;
-        return (UX_SUCCESS);
+        _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = true;
+        return  0;
       }
       else
         return (UX_FUNCTION_NOT_SUPPORTED);
@@ -335,7 +335,7 @@ uint32_t  DeviceBase::clear_feature(const ControlRequest &req)
     {
       if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
       {
-        _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_FALSE;
+        _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = false;
       }
       else
         return (UX_FUNCTION_NOT_SUPPORTED);

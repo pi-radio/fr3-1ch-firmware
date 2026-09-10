@@ -42,7 +42,7 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
   uint32_t                    status;
 
   /* Do we have to skip this transfer?  */
-  if (xfer -> status_phase_ignore == UX_TRUE)
+  if (xfer->status_phase_ignore == true)
     return 0;
 
   /* Disable interrupts to prevent the disconnection ISR from preempting us
@@ -99,13 +99,13 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
     {
 
         /* If so force Zero Length Packet.  */
-        xfer -> force_zlp =  UX_TRUE;
+        xfer->force_zlp = true;
     }
     else
     {
 
         /* Condition is not met, do not force a Zero Length Packet.  */
-        xfer -> force_zlp =  UX_FALSE;
+        xfer->force_zlp = false;
     }
 
     /* Reset the number of bytes sent/received.  */

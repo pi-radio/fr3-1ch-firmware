@@ -257,7 +257,7 @@ uint32_t USBXX::CDCACMDevice::class_deactivate()
   out_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
 
   /* Terminate transmission and free resources.  */
-  ioctl(USBClass_CDC_ACM_IOCTL_TRANSMISSION_STOP, UX_NULL);
+  ioctl(USBClass_CDC_ACM_IOCTL_TRANSMISSION_STOP, nullptr);
 
   /* We need to reset the DTR and RTS values so they do not carry over to the
      next connection.  */
@@ -293,11 +293,11 @@ uint32_t USBXX::CDCACMDevice::class_command_request(const ControlRequest &req)
 
           /* Get the line state parameters from the host.  DTR signal. */
           if (req.value & USBClass_CDC_ACM_LINE_STATE_DTR)
-              dtr_state = UX_TRUE;
+              dtr_state = true;
 
           /* Get the line state parameters from the host.  RTS signal. */
           if (req.value & USBClass_CDC_ACM_LINE_STATE_RTS)
-              rts_state = UX_TRUE;
+              rts_state = true;
 
           break ;
 

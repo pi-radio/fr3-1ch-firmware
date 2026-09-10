@@ -57,9 +57,9 @@ namespace USBXX
     TransferPhase   phase;
     VOID            (*completion_function) (Transfer *);
     uint32_t           timeout;
-    uint32_t           force_zlp;
+    bool           force_zlp;
     uint8_t           setup[8];
-    uint32_t           status_phase_ignore;
+    bool           status_phase_ignore;
     uint32_t        end_magic;
 
     Transfer();

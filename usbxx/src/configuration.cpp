@@ -315,7 +315,7 @@ uint32_t  DeviceBase::on_set_configuration(uint32_t configuration_value)
   _ux_system_slave -> ux_system_slave_power_state = (config_desc.bmAttributes & 0x40) ? UX_DEVICE_SELF_POWERED : UX_DEVICE_BUS_POWERED;
 
   /* Configuration character D5 is for Remote Wakeup */
-  _ux_system_slave -> ux_system_slave_remote_wakeup_capability = (config_desc.bmAttributes & 0x20) ? UX_TRUE : UX_FALSE;
+  _ux_system_slave -> ux_system_slave_remote_wakeup_capability = (config_desc.bmAttributes & 0x20) ? true : false;
 
   di.trim(config_desc.wTotalLength);
 

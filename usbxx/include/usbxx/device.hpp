@@ -32,8 +32,8 @@ struct UX_SYSTEM_SLAVE
     uint8_t           *ux_system_slave_dfu_framework;
     uint32_t           ux_system_slave_dfu_framework_length;
     uint32_t           ux_system_slave_power_state;
-    uint32_t           ux_system_slave_remote_wakeup_capability;
-    uint32_t           ux_system_slave_remote_wakeup_enabled;
+    bool           ux_system_slave_remote_wakeup_capability;
+    bool           ux_system_slave_remote_wakeup_enabled;
     uint32_t           ux_system_slave_device_dfu_capabilities;
     uint32_t           ux_system_slave_device_dfu_detach_timeout;
     uint32_t           ux_system_slave_device_dfu_transfer_size;

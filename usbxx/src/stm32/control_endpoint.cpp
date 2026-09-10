@@ -171,7 +171,7 @@ uint32_t STM32::ControlEndpoint::create()
   }
 
   /* Validate max transfer size and save it.  */
-  UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
+  assert(max_transfer_length <= transfer.buffer_size);
   transfer.transfer_length = max_transfer_length;
 
   /* We store the endpoint in the transfer request as well.  */
@@ -245,7 +245,7 @@ void STM32::ControlEndpoint::on_setup()
   transfer.type =  TransferType::SETUP;
 
   /* Mark the transfer as successful.  */
-  transfer.complete(UX_SUCCESS);
+  transfer.complete(0);
 
   in_transfer = false;
   stalled = false;
@@ -313,15 +313,11 @@ void STM32::ControlEndpoint::on_data_in()
     {
 
         /* There is no data to send but we may need to send a Zero Length Packet.  */
-        if (transfer. force_zlp ==  UX_TRUE)
+        if (transfer.force_zlp == true)
         {
-
-            /* Arm a ZLP packet on IN.  */
             ll_transmit(0, 0);
 
-            /* Reset the ZLP condition.  */
-            transfer. force_zlp =  UX_FALSE;
-
+            transfer.force_zlp = false;
         }
         else
         {
@@ -369,7 +365,7 @@ void STM32::ControlEndpoint::on_data_out()
           if ((transfer.actual_length == transfer.requested_length) ||
               (transfer_length != descriptor.wMaxPacketSize))
           {
-            transfer.complete(UX_SUCCESS);
+            transfer.complete(0);
             direction = Direction::IN;
             ack_mode = AckMode::DATA_OUT;
 
