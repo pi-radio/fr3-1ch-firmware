@@ -31,7 +31,6 @@ struct UX_SYSTEM_SLAVE
 {
     UCHAR           *ux_system_slave_dfu_framework;
     ULONG           ux_system_slave_dfu_framework_length;
-    ULONG           ux_system_slave_speed;
     ULONG           ux_system_slave_power_state;
     ULONG           ux_system_slave_remote_wakeup_capability;
     ULONG           ux_system_slave_remote_wakeup_enabled;

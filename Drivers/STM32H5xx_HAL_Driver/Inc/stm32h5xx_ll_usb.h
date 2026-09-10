@@ -92,6 +92,7 @@ typedef enum
   */
 typedef struct
 {
+#if 0
   uint8_t dev_endpoints;            /*!< Device Endpoints number.
                                          This parameter depends on the used USB core.
                                          This parameter must be a number between Min_Data = 1 and Max_Data = 15 */
@@ -132,6 +133,9 @@ typedef struct
 
   uint8_t iso_singlebuffer_enable;   /*!< Enable or disable the Single buffer mode on Isochronous  EP          */
 #endif /* defined (USB_DRD_FS) */
+
+#endif
+
 } USB_CfgTypeDef;
 
 typedef struct

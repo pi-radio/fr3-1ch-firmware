@@ -24,6 +24,8 @@ USBXX::STM32::DCD *USBXX::STM32::gDCD;
 STM32::DCD::DCD(PCD_TypeDef *_pcd) : pcd(_pcd)
 {
   STM32::gDCD = this;
+  desired_speed = DeviceSpeed::FS;
+  lpm_enable = false;
 };
 
 void STM32::DCD::low_level_init()
@@ -35,8 +37,8 @@ uint32_t STM32::DCD::initialize()
 {
   pcd_handle = &hpcd;
 
+#if 0
   hpcd.Init.dev_endpoints = 8;
-  hpcd.Init.speed = USBD_FS_SPEED;
   hpcd.Init.phy_itface = PCD_PHY_EMBEDDED;
   hpcd.Init.Sof_enable = DISABLE;
   hpcd.Init.low_power_enable = DISABLE;
@@ -45,6 +47,7 @@ uint32_t STM32::DCD::initialize()
   hpcd.Init.vbus_sensing_enable = DISABLE;
   hpcd.Init.bulk_doublebuffer_enable = DISABLE;
   hpcd.Init.iso_singlebuffer_enable = DISABLE;
+#endif
 
   for (int i = 0; i < 8; i++) {
     (USB_DRD_PMA_BUFF + i)->TXBD = 0;
@@ -82,7 +85,7 @@ uint32_t STM32::DCD::initialize()
   int i;
 
   /* Init endpoints structures */
-  for (i = 0U; i < hpcd.Init.dev_endpoints; i++)
+  for (i = 0U; i < NUM_ENDPOINTS; i++)
   {
     /* Init ep structure */
     hpcd.IN_ep[i].is_in = 1U;
@@ -94,7 +97,7 @@ uint32_t STM32::DCD::initialize()
     hpcd.IN_ep[i].xfer_len = 0U;
   }
 
-  for (i = 0U; i < hpcd.Init.dev_endpoints; i++)
+  for (i = 0U; i < NUM_ENDPOINTS; i++)
   {
     hpcd.OUT_ep[i].is_in = 0U;
     hpcd.OUT_ep[i].num = i;
@@ -119,7 +122,7 @@ uint32_t STM32::DCD::initialize()
   hpcd.State = HAL_PCD_STATE_READY;
 
   /* Activate LPM */
-  if (hpcd.Init.lpm_enable == 1U)
+  if (lpm_enable)
   {
     activate_lpm(true);
   }

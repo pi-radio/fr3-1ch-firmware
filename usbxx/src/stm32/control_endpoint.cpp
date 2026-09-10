@@ -175,7 +175,7 @@ UINT STM32::ControlEndpoint::create()
           descriptor.wMaxPacketSize &
                                               UX_MAX_PACKET_SIZE_MASK;
 
-  if ((_ux_system_slave -> ux_system_slave_speed == UX_HIGH_SPEED_DEVICE) &&
+  if ((dcd->get_speed() == DeviceSpeed::HS) &&
       (descriptor.bmAttributes & 0x1u))
   {
       auto n_trans = descriptor.wMaxPacketSize &

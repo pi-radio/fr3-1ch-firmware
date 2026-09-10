@@ -40,19 +40,7 @@ void STM32::DCD::reset()
 {
   disconnect();
 
-  /* Set USB Current Speed */
-  switch(hpcd.Init.speed)
-  {
-  case PCD_SPEED_HIGH:
-      _ux_system_slave -> ux_system_slave_speed =  UX_HIGH_SPEED_DEVICE;
-      break;
-  case PCD_SPEED_FULL:
-      _ux_system_slave -> ux_system_slave_speed =  UX_FULL_SPEED_DEVICE;
-      break;
-  default:
-      _ux_system_slave -> ux_system_slave_speed =  UX_FULL_SPEED_DEVICE;
-      break;
-  }
+  current_speed = desired_speed;
 
   /* Complete the device initialization.  */
   complete_initialization();

@@ -54,11 +54,16 @@ namespace USBXX
 {
   namespace STM32
   {
-
     class DCD : public USBXX::DCD
     {
       PCD_TypeDef *pcd;
       PCD_HandleTypeDef hpcd;
+
+      static constexpr uint32_t NUM_ENDPOINTS = 8;
+
+      DeviceSpeed desired_speed;
+      DeviceSpeed current_speed;
+      bool        lpm_enable;
 
 #if 0
       PCD_InitTypeDef         Init;        /*!< PCD required parameters           */
@@ -125,6 +130,8 @@ namespace USBXX
       HALLock guard() {
         return HALLock(*this);
       }
+
+      DeviceSpeed get_speed() { return current_speed; }
 
 
 

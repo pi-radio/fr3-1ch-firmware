@@ -101,7 +101,7 @@ typedef struct
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   //PCD_TypeDef             *Instance;   /*!< Register base address             */
-  PCD_InitTypeDef         Init;        /*!< PCD required parameters           */
+  //PCD_InitTypeDef         Init;        /*!< PCD required parameters           */
   //__IO uint8_t            USB_Address; /*!< USB Address                       */
 #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
   PCD_EPTypeDef           IN_ep[16];   /*!< IN endpoint parameters            */

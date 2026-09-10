@@ -78,14 +78,11 @@ UINT STM32::Endpoint::create()
 {
   assert(descriptor.wMaxPacketSize != 0);
 
-
-
   /* Calculate endpoint transfer payload max size.  */
   auto max_transfer_length =
-          descriptor.wMaxPacketSize &
-                                              UX_MAX_PACKET_SIZE_MASK;
+          descriptor.wMaxPacketSize & UX_MAX_PACKET_SIZE_MASK;
 
-  if ((_ux_system_slave -> ux_system_slave_speed == UX_HIGH_SPEED_DEVICE) &&
+  if ((dcd->get_speed() == DeviceSpeed::HS) &&
       (descriptor.bmAttributes & 0x1u))
   {
       auto n_trans = descriptor.wMaxPacketSize &
@@ -101,11 +98,7 @@ UINT STM32::Endpoint::create()
   /* Validate max transfer size and save it.  */
   UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
   transfer.transfer_length = max_transfer_length;
-
-  /* We store the endpoint in the transfer request as well.  */
   transfer.endpoint = shared_from_this();
-
-  /* By default the timeout is infinite on request.  */
   transfer.timeout = UX_WAIT_FOREVER;
 
   direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
