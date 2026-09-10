@@ -31,7 +31,6 @@ void DeviceBase::thread_entry()
 {
   dbg::dbgout << "Initializing USB Hardware" << std::endl;
 
-  dcd->initialize();
 
   // Call app thread, if desired
 
@@ -74,6 +73,9 @@ void DeviceBase::start()
     start_system();
     setup_device();
     class_init();
+
+    dcd->initialize();
+
     start_app();
   } catch(USBXX::runtime_error &e) {
     what = e.what();

@@ -285,19 +285,11 @@ namespace USBXX
   template <size_t system_stack_size, size_t app_stack_size>
   class Device : public DeviceBase
   {
-    class AppThread : public TXX::Thread<app_stack_size> {
-      Device *_dev;
-    public:
-      AppThread(Device *dev) : TXX::Thread<app_stack_size>("USB Device Thread"), _dev(dev) {}
-      void main() override { _dev->thread_entry(); }
-    };
-
     System<system_stack_size> system;
-    AppThread app_thread;
 
 
   public:
-    Device() : app_thread(this) {}
+    Device() {}
 
     void start_system() override {
       system.start();
