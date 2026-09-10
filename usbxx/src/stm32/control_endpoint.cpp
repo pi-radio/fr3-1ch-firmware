@@ -98,6 +98,14 @@ void STM32::ControlEndpoint::activate()
   PCD_SET_EP_TX_STATUS(PCD, ep->num, USB_EP_TX_NAK);
 }
 
+void STM32::ControlEndpoint::deactivate()
+{
+  auto PCD = dcd->get_PCD();
+
+  PCD_CLEAR_RX_DTOG(PCD, epindex());
+  PCD_SET_EP_RX_STATUS(PCD, epindex(), USB_EP_RX_DIS);
+}
+
 void STM32::ControlEndpoint::open()
 {
   auto hpcd = dcd->get_hpcd();

@@ -4,6 +4,8 @@
 
 #include <threadxx/semaphore.hpp>
 
+#include <usbxx/exceptions.hpp>
+
 namespace USBXX {
 struct Endpoint;
 }

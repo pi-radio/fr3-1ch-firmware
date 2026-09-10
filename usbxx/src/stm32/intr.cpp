@@ -211,7 +211,7 @@ extern "C" void USB_DRD_FS_IRQHandler(void)
     STM32::gDCD->handle_IRQ();
 
     return;
-  } catch (const std::runtime_error &e) {
+  } catch (const USBXX::runtime_error &e) {
     what = e.what();
     __asm volatile ("BKPT     %0" : : "i"(0));
   } catch (const std::exception &e) {

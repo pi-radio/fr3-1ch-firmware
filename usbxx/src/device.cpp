@@ -76,7 +76,7 @@ void DeviceBase::start()
     setup_device();
     class_init();
     start_app();
-  } catch(std::runtime_error &e) {
+  } catch(USBXX::runtime_error &e) {
     what = e.what();
     dbg::dbgout << "Exception in starting USB device: " << e.what() << std::endl;
     __asm volatile ("BKPT     %0" : : "i"(0));

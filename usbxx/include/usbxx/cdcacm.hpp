@@ -225,7 +225,7 @@ namespace USBXX
     USBXX::Endpoint::ptr in_endpoint;
     USBXX::Endpoint::ptr out_endpoint;
 
-    static constexpr uint32_t FLAG_STARTED = 0x00000001;
+    static constexpr uint32_t FLAG_ACTIVATED = 0x00000001;
     static constexpr uint32_t FLAG_CONNECTED = 0x00000002;
     static constexpr uint32_t FLAG_ATTACHED = 0x00000004;
     static constexpr uint32_t FLAG_DTR = 0x00000008;
@@ -280,7 +280,7 @@ namespace USBXX
     
     CDCACMDevice();
 
-    void wait_started();
+    void wait_activated();
     
     void flush();
     void putc(int c);

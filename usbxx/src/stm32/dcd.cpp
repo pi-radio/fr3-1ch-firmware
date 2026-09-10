@@ -65,7 +65,7 @@ uint32_t STM32::DCD::initialize()
     PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
-      throw std::runtime_error("Unable to setup USB clock");
+      throw USBXX::runtime_error("Unable to setup USB clock");
     }
 
     HAL_PWREx_EnableVddUSB();

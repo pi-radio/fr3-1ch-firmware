@@ -71,7 +71,7 @@ namespace USBXX
         break;
 
       default:
-        throw std::runtime_error("Invalid request recipient");
+        throw USBXX::runtime_error("Invalid request recipient");
       }
 
 
@@ -90,7 +90,7 @@ namespace USBXX
         break;
 
       case 3:
-        throw std::runtime_error("Invalid request type");
+        throw USBXX::runtime_error("Invalid request type");
       }
 
       code = buffer[REQUEST_CODE];

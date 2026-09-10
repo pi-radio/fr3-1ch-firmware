@@ -58,7 +58,7 @@ uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alte
        requested by the caller.  */
     if (iface == nullptr)
     {
-      throw std::runtime_error("Unable to find interface");
+      throw USBXX::runtime_error("Unable to find interface");
     }
 
     /* If the host is requesting a change of alternate setting to the current one,

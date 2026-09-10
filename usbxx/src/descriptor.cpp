@@ -289,7 +289,7 @@ uint16_t USBXX::Descriptor::get_interface_number(uint8_t cls, uint8_t iface_type
     }
   }
 
-  throw std::runtime_error("Unable to find requested interface");
+  throw USBXX::runtime_error("Unable to find requested interface");
 }
 
 void USBXX::Strings::add_string(uint8_t idx, const std::string &s, uint16_t lang_id)
@@ -385,7 +385,7 @@ UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descripto
   if (length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
   {
     get_control_endpoint()->stall();
-    throw std::runtime_error("Control request length too long");
+    throw USBXX::runtime_error("Control request length too long");
   }
 
   auto xfer = get_control_transfer();
@@ -446,7 +446,7 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)
             if (lang_ids.get_buffer_len() + 2 > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
             {
               get_control_endpoint()->stall();
-              throw std::runtime_error("Invalid language id framework length");
+              throw USBXX::runtime_error("Invalid language id framework length");
             }
 
             xfer->data[0] = (UCHAR)(lang_ids.get_buffer_len() + 2);
@@ -485,7 +485,7 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)
                         if (((*(string_framework + 3)*2) + 2) > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
                         {
                             get_control_endpoint()->stall();
-                            throw std::runtime_error("String request invalid");
+                            throw USBXX::runtime_error("String request invalid");
                         }
 
                         /* We have a request to send back a string. Use the transfer request buffer.  */

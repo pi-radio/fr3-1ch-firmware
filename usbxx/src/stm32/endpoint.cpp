@@ -124,8 +124,10 @@ UINT STM32::Endpoint::destroy()
  if ((get_addr() & 0x7F) != 0)
    int a = 0;
 
-  /* Deactivate the endpoint.  */
- HAL_PCD_EP_Close(dcd->get_pcd_handle(), get_addr());
+ {
+   auto g = dcd->guard();
+   deactivate();
+ }
 
   /* This function never fails.  */
  return 0;

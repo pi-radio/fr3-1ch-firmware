@@ -20,7 +20,7 @@ namespace consolexx
   public:
     usb_io(USBXX::CDCACMDevice &_acm) : acm(_acm) {};
 
-    virtual void wait_started() { acm.wait_started(); };
+    virtual void wait_started() { acm.wait_activated(); };
 
     virtual void flush() { acm.flush(); };
     virtual void putc(int c) { acm.putc(c); };

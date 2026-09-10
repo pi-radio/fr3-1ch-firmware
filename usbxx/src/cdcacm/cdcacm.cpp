@@ -37,11 +37,11 @@ CDCACMDevice::CDCACMDevice() :
   stupid_global = this;
 }
 
-void CDCACMDevice::wait_started()
+void CDCACMDevice::wait_activated()
 {
   ULONG actual;
 
-  tx_event_flags_get(&flags, FLAG_STARTED, TX_AND, &actual, TX_WAIT_FOREVER);
+  tx_event_flags_get(&flags, FLAG_ACTIVATED, TX_AND, &actual, TX_WAIT_FOREVER);
 }
 
 
@@ -86,7 +86,7 @@ void CDCACMDevice::class_init()
                      cdc_acm_interface_number,
                      NULL) != UX_SUCCESS)
   {
-    throw std::runtime_error("Failed to register CDC ACM class");
+    throw USBXX::runtime_error("Failed to register CDC ACM class");
   }
 
   tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
@@ -108,7 +108,7 @@ int CDCACMDevice::getc()
 {
   ULONG status;
 
-  wait_started();
+  wait_activated();
   
   TXX::Mutex::guard g(rx_mutex);
   
@@ -117,7 +117,7 @@ int CDCACMDevice::getc()
     status = read(rx_buf, 64, &rx_len);
     
     while(status == UX_TRANSFER_BUS_RESET) {      
-      tx_thread_sleep(10);
+      wait_activated();
 
       status = read(rx_buf, 64, &rx_len);
     } 
@@ -155,7 +155,12 @@ void CDCACMDevice::flush_buffer()
       result = write(p, l, &tx_len);
       
       while (result != TX_SUCCESS) {
-        tx_thread_sleep(10);
+        uint32_t _flags;
+        if (tx_event_flags_get(&flags, FLAG_ACTIVATED, TX_AND, &_flags, TX_WAIT_FOREVER) != 0) {
+          tx_thread_sleep(10);
+          // Maybe clear tx_buf??
+        }
+
         result = write(p, l, &tx_len);
       }
       
@@ -170,7 +175,7 @@ void CDCACMDevice::_tx_thread()
   ULONG c;
   ULONG wait;
 
-  wait_started();
+  wait_activated();
 
   dbgprint("tx usb started\n");
 
@@ -239,13 +244,15 @@ uint32_t USBXX::CDCACMDevice::class_activate(std::shared_ptr<Interface> iface)
       in_endpoint = endpoint;
   }
 
-  tx_event_flags_set(&flags, FLAG_STARTED, TX_OR);
+  tx_event_flags_set(&flags, FLAG_ACTIVATED, TX_OR);
 
   return 0;
 }
 
 uint32_t USBXX::CDCACMDevice::class_deactivate()
 {
+  tx_event_flags_set(&flags, ~FLAG_ACTIVATED, TX_AND);
+
   /* Terminate the transactions pending on the endpoints.  */
   in_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
   out_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
@@ -354,7 +361,7 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
 
   /* As long as the device is in the CONFIGURED state.  */
   if (state != UX_DEVICE_CONFIGURED)
-    throw std::runtime_error("CDCACM read on unconfigured device");
+    return UX_TRANSFER_NO_ANSWER;
 
   /* Locate the endpoints.  */
   auto endpoint = out_endpoint;
@@ -366,8 +373,10 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
 
     *actual_length =  0;
 
-    while (state == UX_DEVICE_CONFIGURED && requested_length)
+    while (requested_length)
     {
+      wait_activated();
+
       /* Check if we have enough in the local buffer.  */
       if (requested_length > endpoint->descriptor.wMaxPacketSize)
           local_requested_length = endpoint->descriptor.wMaxPacketSize;
@@ -377,24 +386,21 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
       /* Send the request to the device controller.  */
       status = transfer_request(xfer, local_requested_length, local_requested_length);
 
+      if (status == UX_TRANSFER_BUS_RESET) {
+        continue;
+      }
+
       if (status != UX_SUCCESS) {
-        throw std::runtime_error("read transfer failed");
+        throw USBXX::runtime_error("read transfer failed");
       }
 
       /* We need to copy the buffer locally.  */
       ::memcpy(buffer, xfer->data, xfer->actual_length); /* Use case of memcpy is verified. */
 
-      /* Next buffer address.  */
       buffer += xfer->actual_length;
-
-      /* Set the length actually received. */
       *actual_length += xfer->actual_length;
-
-      /* Decrement what left has to be done.  */
       requested_length -= xfer -> actual_length;
 
-
-      /* Is this a short packet or a ZLP indicating we are done with this transfer ?  */
       if (xfer->actual_length < endpoint->descriptor.wMaxPacketSize)
           return 0;
     }
@@ -449,6 +455,7 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
 
     while (state == UX_DEVICE_CONFIGURED && requested_length != 0)
     {
+      wait_activated();
 
       /* Check if we have enough in the local buffer.  */
       if (requested_length > UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE)
@@ -468,8 +475,12 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
       /* Send the request to the device controller.  */
       status = transfer_request(xfer, local_requested_length, local_host_length);
 
+      if (status == UX_TRANSFER_BUS_RESET) {
+        return UX_TRANSFER_NO_ANSWER;
+      }
+
       if (status != UX_SUCCESS) {
-        throw std::runtime_error("Unable to complete transfer on CDCACM write");
+        throw USBXX::runtime_error("Unable to complete transfer on CDCACM write");
       }
           /* Next buffer address.  */
       buffer += xfer -> actual_length;
@@ -571,7 +582,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
       break;
 
     default:
-      throw std::runtime_error("Unknown endpoint handle");
+      throw USBXX::runtime_error("Unknown endpoint handle");
     }
 
     /* Get the transfer request associated with the endpoint.  */

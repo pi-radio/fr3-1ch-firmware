@@ -18,6 +18,7 @@
 #include <iterator>
 
 #include <usbxx/endian.hpp>
+#include <usbxx/exceptions.hpp>
 
 #define USBD_MAX_NUM_CONFIGURATION                     1U
 #define USBD_MAX_SUPPORTED_CLASS                       3U
@@ -315,7 +316,7 @@ namespace USBXX
     T retval;
 
     if (buffer[1] != T::desc_type) {
-      throw std::runtime_error("Invalid descriptor type");
+      throw USBXX::runtime_error("Invalid descriptor type");
     }
 
     parse_descriptor_in(T::structure, buffer, (uint8_t *)&retval);
@@ -415,7 +416,7 @@ namespace USBXX
 
     void trim(uint32_t new_len) {
       if (new_len > buf.len) {
-        throw std::runtime_error("Trim value larger than original buffer");
+        throw USBXX::runtime_error("Trim value larger than original buffer");
       }
 
       buf.len = new_len;

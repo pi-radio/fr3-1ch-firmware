@@ -95,6 +95,56 @@ void STM32::Endpoint::abort_transfer()
   USB_EPStopXfer(PCD, ep);
 }
 
+HAL_StatusTypeDef USB_DeactivateEndpoint(USB_DRD_TypeDef *USBx, USB_DRD_EPTypeDef *ep)
+{
+  if (ep->doublebuffer == 0U)
+  {
+    if (ep->is_in != 0U)
+    {
+      PCD_CLEAR_TX_DTOG(USBx, ep->num);
+
+      /* Configure DISABLE status for the Endpoint */
+      PCD_SET_EP_TX_STATUS(USBx, ep->num, USB_EP_TX_DIS);
+    }
+
+    else
+    {
+      PCD_CLEAR_RX_DTOG(USBx, ep->num);
+
+      /* Configure DISABLE status for the Endpoint */
+      PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
+    }
+  }
+  else
+  {
+    if (ep->is_in == 0U)
+    {
+      /* Clear the data toggle bits for the endpoint IN/OUT*/
+      PCD_CLEAR_RX_DTOG(USBx, ep->num);
+      PCD_CLEAR_TX_DTOG(USBx, ep->num);
+
+      /* Reset value of the data toggle bits for the endpoint out*/
+      PCD_TX_DTOG(USBx, ep->num);
+
+      PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
+      PCD_SET_EP_TX_STATUS(USBx, ep->num, USB_EP_TX_DIS);
+    }
+    else
+    {
+      /* Clear the data toggle bits for the endpoint IN/OUT*/
+      PCD_CLEAR_RX_DTOG(USBx, ep->num);
+      PCD_CLEAR_TX_DTOG(USBx, ep->num);
+      PCD_RX_DTOG(USBx, ep->num);
+
+      /* Configure DISABLE status for the Endpoint*/
+      PCD_SET_EP_TX_STATUS(USBx, ep->num, USB_EP_TX_DIS);
+      PCD_SET_EP_RX_STATUS(USBx, ep->num, USB_EP_RX_DIS);
+    }
+  }
+
+  return HAL_OK;
+}
+
 STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
   USBXX::Endpoint(_device),
   transfer(),

@@ -62,6 +62,7 @@ namespace USBXX
       }
 
       virtual void activate() = 0;
+      virtual void deactivate() = 0;
 
       virtual void clear_stall() = 0;
 
@@ -88,7 +89,7 @@ public:
       UINT reset() override;
       //void stall() override;
       void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
-      void ack_ctrl() override { throw std::runtime_error("Incorrect endpoint for control acknowledgement"); };
+      void ack_ctrl() override { throw USBXX::runtime_error("Incorrect endpoint for control acknowledgement"); };
 
       bool is_in() { return (descriptor.bEndpointAddress & 0x80) ? true : false; }
       uint32_t epindex() { return descriptor.bEndpointAddress & 0xF; }
@@ -112,6 +113,8 @@ public:
       PCD_EPTypeDef *get_epdata() override;
 
       void activate() override;
+      void deactivate() override;
+
       void clear_stall() override;
 
     public:
@@ -127,6 +130,8 @@ public:
       PCD_EPTypeDef *get_epdata() override;
 
       void activate() override;
+      void deactivate() override;
+
       void clear_stall() override;
 
     public:
@@ -152,6 +157,8 @@ public:
       PCD_EPTypeDef *get_epdata() override;
 
       void activate() override;
+      void deactivate() override;
+
       void clear_stall() override;
 
     public:
