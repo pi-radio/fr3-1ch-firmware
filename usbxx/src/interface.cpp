@@ -28,7 +28,7 @@ uint32_t Interface::start()
     {
         status = /*class_ptr -> */ device->class_activate(shared_from_this());
 
-        if(status == UX_SUCCESS)
+        if(status == 0)
             usb_class =  class_ptr;
 
         return(status);

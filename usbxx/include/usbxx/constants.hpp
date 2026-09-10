@@ -47,4 +47,36 @@ namespace USBXX
     static constexpr uint32_t BULK = 2;
     static constexpr uint32_t INTERRUPT = 3;
   };
+
+#if 0
+#define UX_CAPABILITY_WIRELESS_USB                                      0x01u
+#define UX_CAPABILITY_USB_2_0_EXTENSION                                 0x02u
+#define UX_CAPABILITY_SUPERSPEED_USB                                    0x03u
+#define UX_CAPABILITY_CONTAINER_ID                                      0x04u
+#define UX_CAPABILITY_PLATFORM                                          0x05u
+#define UX_CAPABILITY_POWER_DELIVERY                                    0x06u
+#define UX_CAPABILITY_BATTERY_INFO                                      0x07u
+#define UX_CAPABILITY_PD_CONSUMER_PORT                                  0x08u
+#define UX_CAPABILITY_PD_PROVIDER_PORT                                  0x09u
+#define UX_CAPABILITY_SUPERSPEED_PLUS                                   0x0Au
+#define UX_CAPABILITY_PRECISION_TIME_MEASUREMENT                        0x0Bu
+#define UX_CAPABILITY_WIRELESS_USB_EXT                                  0x0Cu
+#define UX_CAPABILITY_BILLBOARD                                         0x0Du
+#define UX_CAPABILITY_AUTHENTICATION                                    0x0Eu
+#define UX_CAPABILITY_BILLBOARD_EX                                      0x0Fu
+#define UX_CAPABILITY_CONFIGURATION_SUMMARY                             0x10u
+#endif
+
+#define UX_DEVICE_BUS_POWERED                                           1u
+#define UX_DEVICE_SELF_POWERED                                          2u
+#define UX_MAX_SELF_POWER                                               (500u/2)
+#define UX_MAX_BUS_POWER                                                (100u/2)
+#define UX_CONFIGURATION_DEVICE_BUS_POWERED                             0x80u
+#define UX_CONFIGURATION_DEVICE_SELF_POWERED                            0x40u
+#define UX_STATUS_DEVICE_SELF_POWERED                                   1u
+
+#define UX_OTG_STATUS_SELECTOR                                          0xF000u
+#define UX_OTG_HOST_REQUEST_FLAG                                        0x01u
+
+
 }

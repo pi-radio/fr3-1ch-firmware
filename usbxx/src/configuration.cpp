@@ -158,14 +158,14 @@ uint32_t  DeviceBase::on_set_alternate_setting(uint32_t interface_value, uint32_
                                     /* Create the endpoint at the DCD level.  */
                                     status = endpoint->create();
 
-                                    /* Do a sanity check on endpoint creation.  */
-                                    if (status != UX_SUCCESS)
-                                    {
+                                    assert(status == 0);
 
-                                        /* Error was returned, endpoint cannot be created.  */
-                                        // TODO -- Add free endpoint
-                                        assert(0);
-                                        return(status);
+                                    /* Do a sanity check on endpoint creation.  */
+                                    if (status)
+                                    {
+                                      /* Error was returned, endpoint cannot be created.  */
+                                      // TODO -- Add free endpoint
+                                      return(status);
                                     }
 
                                     iface->endpoints.push_back(endpoint);

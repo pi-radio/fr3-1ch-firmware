@@ -173,6 +173,8 @@ public:
         IN
       };
 
+      static constexpr uint32_t CONTROL_TRANSFER_TIMEOUT = 10000;
+
       ControlEndpointState state;
       AckMode ack_mode;
       Direction direction;

@@ -84,7 +84,7 @@ void CDCACMDevice::class_init()
   if (register_class(cdcacm,
                      cdc_acm_configuration_number,
                      cdc_acm_interface_number,
-                     NULL) != UX_SUCCESS)
+                     NULL))
   {
     throw USBXX::runtime_error("Failed to register CDC ACM class");
   }
@@ -346,8 +346,8 @@ uint32_t USBXX::CDCACMDevice::class_command_request(const ControlRequest &req)
 
 uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length)
 {
-  uint32_t                        status= UX_SUCCESS;
-  uint32_t                       local_requested_length;
+  uint32_t status = 0;
+  uint32_t local_requested_length;
 
   /* As long as the device is in the CONFIGURED state.  */
   if (!is_configured())
@@ -380,7 +380,7 @@ uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, u
         continue;
       }
 
-      if (status != UX_SUCCESS) {
+      if (status) {
         throw USBXX::runtime_error("read transfer failed");
       }
 
@@ -468,7 +468,7 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
         return UX_TRANSFER_NO_ANSWER;
       }
 
-      if (status != UX_SUCCESS) {
+      if (status) {
         throw USBXX::runtime_error("Unable to complete transfer on CDCACM write");
       }
           /* Next buffer address.  */
@@ -501,7 +501,7 @@ uint32_t USBXX::CDCACMDevice::ioctl(uint32_t ioctl_function,
   Transfer *xfer;
 
   /* Let's be optimist ! */
-  status = UX_SUCCESS;
+  status = 0;
 
   /* The command request will tell us what we need to do here.  */
   switch (ioctl_function)

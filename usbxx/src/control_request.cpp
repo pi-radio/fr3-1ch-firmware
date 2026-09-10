@@ -71,7 +71,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
       /* The status simply tells us if the registered class handled the
            command - if there was an issue processing the command, it would've
            stalled the control endpoint, notifying the host (and not us).  */
-      if (status == UX_SUCCESS)
+      if (status == 0)
         break;
     }
 
@@ -93,7 +93,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
     break;
 
   case StdControlRequest::SET_ADDRESS:
-    status = UX_SUCCESS;
+    status = 0;
     dcd->set_device_address(req.value);
     break;
 
@@ -126,7 +126,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
     break;
 
   case StdControlRequest::SYNCH_FRAME:
-    status = UX_SUCCESS;
+    status = 0;
     break;
 
   default:
@@ -135,7 +135,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
   }
 
 exit:
-  if (status == UX_SUCCESS) {
+  if (!status) {
     get_control_endpoint()->ack_ctrl();
   } else {
     get_control_endpoint()->stall();

@@ -35,54 +35,7 @@ extern   "C" {
 
 
 #if 0
-#define UX_DEVICE_RESET                                                 0
-#define UX_DEVICE_ATTACHED                                              1
-#define UX_DEVICE_ADDRESSED                                             2
-#define UX_DEVICE_CONFIGURED                                            3
-#define UX_DEVICE_SUSPENDED                                             4
-#define UX_DEVICE_RESUMED                                               5
-#define UX_DEVICE_SELF_POWERED_STATE                                    6
-#define UX_DEVICE_BUS_POWERED_STATE                                     7
-#define UX_DEVICE_REMOTE_WAKEUP                                         8
-#define UX_DEVICE_BUS_RESET_COMPLETED                                   9
-#define UX_DEVICE_REMOVED                                               10
-#define UX_DEVICE_FORCE_DISCONNECT                                      11
 
-#define UX_ENDPOINT_RESET                                               0
-#define UX_ENDPOINT_RUNNING                                             1
-#define UX_ENDPOINT_HALTED                                              2
-
-#define UX_DEVICE_DESCRIPTOR_ITEM                                       1u
-#define UX_CONFIGURATION_DESCRIPTOR_ITEM                                2u
-#define UX_STRING_DESCRIPTOR_ITEM                                       3u
-#define UX_INTERFACE_DESCRIPTOR_ITEM                                    4u
-#define UX_ENDPOINT_DESCRIPTOR_ITEM                                     5u
-#define UX_DEVICE_QUALIFIER_DESCRIPTOR_ITEM                             6u
-#define UX_OTHER_SPEED_DESCRIPTOR_ITEM                                  7u
-#define UX_OTG_DESCRIPTOR_ITEM                                          9u
-#define UX_INTERFACE_ASSOCIATION_DESCRIPTOR_ITEM                        11u
-#define UX_BOS_DESCRIPTOR_ITEM                                          15u
-#define UX_DEVICE_CAPABILITY_DESCRIPTOR_ITEM                            16u
-#define UX_DFU_FUNCTIONAL_DESCRIPTOR_ITEM                               0x21u
-#define UX_HUB_DESCRIPTOR_ITEM                                          0x29u
-#endif
-
-#define UX_CAPABILITY_WIRELESS_USB                                      0x01u
-#define UX_CAPABILITY_USB_2_0_EXTENSION                                 0x02u
-#define UX_CAPABILITY_SUPERSPEED_USB                                    0x03u
-#define UX_CAPABILITY_CONTAINER_ID                                      0x04u
-#define UX_CAPABILITY_PLATFORM                                          0x05u
-#define UX_CAPABILITY_POWER_DELIVERY                                    0x06u
-#define UX_CAPABILITY_BATTERY_INFO                                      0x07u
-#define UX_CAPABILITY_PD_CONSUMER_PORT                                  0x08u
-#define UX_CAPABILITY_PD_PROVIDER_PORT                                  0x09u
-#define UX_CAPABILITY_SUPERSPEED_PLUS                                   0x0Au
-#define UX_CAPABILITY_PRECISION_TIME_MEASUREMENT                        0x0Bu
-#define UX_CAPABILITY_WIRELESS_USB_EXT                                  0x0Cu
-#define UX_CAPABILITY_BILLBOARD                                         0x0Du
-#define UX_CAPABILITY_AUTHENTICATION                                    0x0Eu
-#define UX_CAPABILITY_BILLBOARD_EX                                      0x0Fu
-#define UX_CAPABILITY_CONFIGURATION_SUMMARY                             0x10u
 
 
 #ifndef UX_CONTROL_TRANSFER_TIMEOUT
@@ -97,7 +50,9 @@ extern   "C" {
 #define UX_HIGH_SPEED_DETECTION_HANDSHAKE_SUSPEND_WAIT                  200
 #define UX_ENUMERATION_THREAD_WAIT                                      200
 
+#endif
 
+#if 0
 /* USB Billboard constants.  */
 
 #define UX_CLASS_BILLBOARD_CLASS                                        0x11
@@ -160,13 +115,7 @@ extern   "C" {
 
 /* Define USBX device power constants.  */
 
-#define UX_DEVICE_BUS_POWERED                                           1u
-#define UX_DEVICE_SELF_POWERED                                          2u
-#define UX_MAX_SELF_POWER                                               (500u/2)
-#define UX_MAX_BUS_POWER                                                (100u/2)
-#define UX_CONFIGURATION_DEVICE_BUS_POWERED                             0x80u
-#define UX_CONFIGURATION_DEVICE_SELF_POWERED                            0x40u
-#define UX_STATUS_DEVICE_SELF_POWERED                                   1u
+
 
 /* Define USBX OTG constants.  */
 
@@ -179,8 +128,6 @@ extern   "C" {
 #define UX_OTG_FEATURE_B_HNP_ENABLE                                     3u
 #define UX_OTG_FEATURE_A_HNP_SUPPORT                                    4u
 #define UX_OTG_FEATURE_A_ALT_HNP_SUPPORT                                5u
-#define UX_OTG_STATUS_SELECTOR                                          0xF000u
-#define UX_OTG_HOST_REQUEST_FLAG                                        0x01u
 
 #define UX_OTG_IDLE                                                     0u
 #define UX_OTG_IDLE_TO_HOST                                             1u
@@ -254,6 +201,7 @@ extern   "C" {
 #define UX_STATE_IS_BUSY(s)                             ((s) >= UX_STATE_WAIT)          /* Locked or pending  */
 #define UX_STATE_IS_LOCKED(s)                           ((s) >= UX_STATE_LOCK)          /* Locked but not pendint  */
 
+#endif
 
 /* Define USBX Error Code constants. The following format describes
    their meaning:
@@ -273,7 +221,7 @@ extern   "C" {
         0xfx    : General errors
 */
 
-#define UX_SUCCESS                                                      0
+//#define UX_SUCCESS                                                      0
 
 #define UX_ERROR                                                        0xff
 #define UX_BUSY                                                         0xfe

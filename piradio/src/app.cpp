@@ -399,25 +399,25 @@ USBSerial::USBSerial()
 uint32_t USBSerial::on_attached()
 {
   dbg::dbgout << "USB Attached" << std::endl;
-  return UX_SUCCESS;
+  return 0;
 }
 
 uint32_t USBSerial::on_removed()
 {
   dbg::dbgout << "USB Removed" << std::endl;
-  return UX_SUCCESS;
+  return 0;
 }
 
 uint32_t USBSerial::on_connected()
 {
   dbg::dbgout << "USB Connected" << std::endl;
-  return UX_SUCCESS;
+  return 0;
 }
 
 uint32_t USBSerial::on_disconnected()
 {
   dbg::dbgout << "USB Disconnected" << std::endl;
-  return UX_SUCCESS;
+  return 0;
 }
 
 EXTERN_C int _write(int file, char *ptr, int len)

@@ -32,7 +32,7 @@ STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
 void STM32::ControlEndpoint::init()
 {
   transfer.endpoint = shared_from_this();
-  transfer.timeout =  ms_to_ticks(UX_CONTROL_TRANSFER_TIMEOUT);
+  transfer.timeout =  ms_to_ticks(CONTROL_TRANSFER_TIMEOUT);
 
   /* Adjust the current data pointer as well.  */
   transfer.current_data_pointer = transfer.data;
@@ -316,7 +316,7 @@ void STM32::ControlEndpoint::on_data_in()
         }
         else
         {
-            transfer.completion_code =  UX_SUCCESS;
+            transfer.completion_code = 0;
             transfer.status =  TransferStatus::COMPLETED;
             transfer.actual_length = transfer.requested_length;
             if (transfer.completion_function)

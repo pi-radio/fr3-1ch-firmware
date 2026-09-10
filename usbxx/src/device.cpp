@@ -131,14 +131,7 @@ uint32_t DeviceBase::register_class(USBClass::ptr p_class,
   classes.push_back(p_class);
 
   /* Call the class initialization routine.  */
-  status = /* class_inst-> */ class_initialize();
-
-  /* Check the status.  */
-  if (status != UX_SUCCESS)
-      return(status);
-
-  /* Return successful completion.  */
-  return 0;
+  return /* class_inst-> */ class_initialize();
 }
 
 uint32_t DeviceBase::get_interface(uint8_t interface_value)
@@ -297,7 +290,7 @@ uint32_t DeviceBase::set_interface(DescriptorIterator &di,
         status = endpoint->create();
 
           /* Do a sanity check on endpoint creation.  */
-        if (status != UX_SUCCESS)
+        if (status != 0)
         {
           assert(0);
           return(status);
