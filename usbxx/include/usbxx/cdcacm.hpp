@@ -4,6 +4,7 @@
 #include <threadxx/thread.hpp>
 #include <threadxx/ring_buffer.hpp>
 #include <threadxx/mutex.hpp>
+#include <threadxx/eventflags.hpp>
 #include <threadxx/queue.hpp>
 
 #include <usbxx/class.hpp>
@@ -191,26 +192,23 @@ namespace USBXX
   class CDCACMClass : public USBClass
   {
   public:
+    static constexpr uint32_t FLAG_ACTIVATED = 0x00000001;
+    static constexpr uint32_t FLAG_CONNECTED = 0x00000002;
+    static constexpr uint32_t FLAG_ATTACHED = 0x00000004;
+    static constexpr uint32_t FLAG_DTR = 0x00000008;
+    static constexpr uint32_t FLAG_RTS = 0x00000010;
+
+    static constexpr int RX_QUEUE_LEN = 64;
+    static constexpr int TX_QUEUE_LEN = 64;
+
+    static constexpr uint32_t FLUSH = 0xFFFF0000;
+
     using ptr = std::shared_ptr<CDCACMClass>;
 
-    CDCACMClass(DeviceBase *_dev) : USBClass("CDC ACM", _dev)
-    {
-
-    }
-  };
-
-  // Make app stack paramaterizable
-  class CDCACMDevice :
-      public Device<8192, 2048>
-  {
-    CDCACMClass::ptr cdcacm;
-
-    uint32_t cdc_acm_interface_number;
-    uint32_t cdc_acm_configuration_number;
     USBClass_CDC_ACM_PARAMETER cdc_acm_parameter;
     //USBClass_CDC_ACM cdc_acm;
     TX_EVENT_FLAGS_GROUP flags;
-    
+
     // replace cdc_acm soon enough
     std::shared_ptr<Interface> cdc_acm_interface;
     TXX::Mutex ep_in_mutex;
@@ -225,27 +223,10 @@ namespace USBXX
     USBXX::Endpoint::ptr in_endpoint;
     USBXX::Endpoint::ptr out_endpoint;
 
-    static constexpr uint32_t FLAG_ACTIVATED = 0x00000001;
-    static constexpr uint32_t FLAG_CONNECTED = 0x00000002;
-    static constexpr uint32_t FLAG_ATTACHED = 0x00000004;
-    static constexpr uint32_t FLAG_DTR = 0x00000008;
-    static constexpr uint32_t FLAG_RTS = 0x00000010;
-    
-    static CDCACMDevice *stupid_global;
 
-    uint32_t ioctl(uint32_t ioctl_function, VOID *parameter);
-
-    uint32_t read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length);
-    uint32_t write(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length);
-
-    static constexpr int RX_QUEUE_LEN = 64;
-    static constexpr int TX_QUEUE_LEN = 64;
-    
     TXX::Queue<1, TX_QUEUE_LEN> tx_queue;
 
-    TXX::MemberThread<CDCACMDevice, 4096> tx_thread;
-
-    void _tx_thread();
+    TXX::MemberThread<CDCACMClass, 4096> tx_thread;
 
     TXX::Mutex rx_mutex;
     uint8_t rx_buf[64];
@@ -256,36 +237,58 @@ namespace USBXX
 
     TX_SEMAPHORE flush_sema;
 
-    void flush_buffer();
-    
-    void class_init() override;
-
     uint32_t tx_count;
     uint32_t rx_count;
+
+
+    CDCACMClass(DeviceBase *_dev);
+
+    uint32_t ioctl(uint32_t ioctl_function, void *parameter);
+
+    uint32_t read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length);
+    uint32_t write(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length);
 
     void set_dtr(bool);
     void set_rts(bool);
 
-    // MOVE THESE HORRIBLE FUNCTIONS
-    uint32_t class_initialize() override;
-    uint32_t class_uninitialize() override;
-    uint32_t class_activate(std::shared_ptr<Interface>) override;
-    uint32_t class_deactivate() override;
-    bool class_query(Interface::ptr) override;
-    uint32_t class_command_request(const ControlRequest &) override;
-    
-  public:
 
-    static constexpr uint32_t FLUSH = 0xFFFF0000;
-    
-    CDCACMDevice();
+    void _tx_thread();
+    void flush_buffer();
+
+
+    virtual uint32_t initialize();
+    virtual uint32_t uninitialize() override;
+    virtual uint32_t activate(std::shared_ptr<Interface>) override;
+    virtual uint32_t deactivate() override;
+    virtual bool query(std::shared_ptr<Interface>) override;
+    virtual uint32_t command_request(const ControlRequest &) override;
+    virtual uint32_t on_change() override { return 0; }
 
     void wait_activated();
-    
+
     void flush();
     void putc(int c);
     int getc();
 
     bool get_dtr();
+  };
+
+  // Make app stack paramaterizable
+  class CDCACMDevice : public Device<8192, 2048>
+  {
+    CDCACMClass::ptr cdcacm;
+
+    uint32_t cdc_acm_interface_number;
+    uint32_t cdc_acm_configuration_number;
+
+    void class_init() override;
+
+  public:
+    CDCACMDevice();
+    
+    CDCACMClass::ptr get_cdcacm()
+    {
+      return cdcacm;
+    }
   };  
 }

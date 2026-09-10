@@ -14,6 +14,7 @@ namespace USBXX
   class Interface;
   class DeviceClass;
   class DeviceBase;
+  class ControlRequest;
 
   enum CompositeClass
   {
@@ -53,5 +54,13 @@ namespace USBXX
     {
 
     }
+
+    virtual uint32_t initialize() = 0;
+    virtual uint32_t uninitialize() = 0;
+    virtual uint32_t activate(std::shared_ptr<Interface>) = 0;
+    virtual uint32_t deactivate() = 0;
+    virtual bool query(std::shared_ptr<Interface>) = 0;
+    virtual uint32_t command_request(const ControlRequest &) = 0;
+    virtual uint32_t on_change() { return 0; }
   };
 }

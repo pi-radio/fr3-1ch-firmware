@@ -10,15 +10,9 @@
 
 using namespace TXX;
 
-EventFlagsGroup::EventFlagsGroup(const std::string &name,
-    bool create_immediate) : _name(name)
+EventFlagsGroup::EventFlagsGroup(const std::string &_name) : object(_name)
 {
-  if (create_immediate) create();
-}
-
-void EventFlagsGroup::create()
-{
-  tx_event_flags_create(&_flags, (char *)_name.c_str());
+  tx_event_flags_create(&_flags, (char *)name.c_str());
 }
 
 EventFlag EventFlagsGroup::operator[](int n)
@@ -71,7 +65,7 @@ Events::Events() : cur_n(32)
 
 void Events::alloc_group()
 {
-  _evt_flag_grps.push_back(new EventFlagsGroup(std::format("Event Flag Group {}", _evt_flag_grps.size()), true));
+  _evt_flag_grps.push_back(new EventFlagsGroup(std::format("Event Flag Group {}", _evt_flag_grps.size())));
 }
 
 TXX::EventFlag TXX::Events::alloc()

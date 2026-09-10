@@ -15,19 +15,18 @@
 
 #include <tx_api.h>
 
+#include <threadxx/object.hpp>
+
 namespace TXX {
   class EventFlag;
 
-  class EventFlagsGroup
+  class EventFlagsGroup : public object
   {
     friend class EventFlag;
     TX_EVENT_FLAGS_GROUP _flags;
-    const std::string &_name;
 
   public:
-    EventFlagsGroup(const std::string &, bool create_immediate=false);
-
-    void create();
+    EventFlagsGroup(const std::string &);
 
     EventFlag operator[](int n);
   };

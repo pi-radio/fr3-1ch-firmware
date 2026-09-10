@@ -49,7 +49,12 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
       if ((req.index & 0xFF) != iface->descriptor.bInterfaceNumber)
         continue;
 
-      status = /*class_ptr ->*/ this->class_command_request(req);
+      auto usb_class = iface->usb_class;
+
+      if (usb_class == nullptr)
+        goto exit;
+
+      status = usb_class->command_request(req);
 
       /* The status simply tells us if the registered class handled the
            command - if there was an issue processing the command, it would've

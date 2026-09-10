@@ -13,30 +13,29 @@
 
 using namespace USBXX;
 
-CDCACMDevice *CDCACMDevice::stupid_global = NULL;
-
-
-
-CDCACMDevice::CDCACMDevice() :
+CDCACMClass::CDCACMClass(DeviceBase *_dev) :
+    USBClass("CDC ACM", _dev),
     ep_in_mutex("CDC ACM EP In Mutex"),
     ep_out_mutex("CDC ACM EP Out Mutex"),
     tx_queue("CDC ACM TX Queue"),
-    tx_thread("CDC ACM TX Thread", this, &CDCACMDevice::_tx_thread),
+    tx_thread("CDC ACM TX Thread", this, &CDCACMClass::_tx_thread),
     rx_mutex("CDC ACM RX Mutex"),
-    tx_mutex("CDC ACM TX Mutex")
+    rx_cur(0), rx_len(0),
+    tx_mutex("CDC ACM TX Mutex"),
+    tx_count(0), rx_count(0)
 {
-  add_class(USBXX::CLASS_TYPE_CDC_ACM);
-
   tx_event_flags_create(&flags, (char *)"CDCACM flags");
-  
-  if (stupid_global != NULL) {
-    dbgprint("Multiple CDCACM instances");
-  };
-  
-  stupid_global = this;
+
+  tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
+
+  tx_queue.create();
+
 }
 
-void CDCACMDevice::wait_activated()
+
+
+
+void CDCACMClass::wait_activated()
 {
   uint32_t actual;
 
@@ -44,13 +43,13 @@ void CDCACMDevice::wait_activated()
 }
 
 
-bool CDCACMDevice::get_dtr()
+bool CDCACMClass::get_dtr()
 {
   return dtr_state;
 }
 
 
-void CDCACMDevice::set_dtr(bool dtr)
+void CDCACMClass::set_dtr(bool dtr)
 {
   dtr_state = dtr;
   if (dtr) {
@@ -60,7 +59,7 @@ void CDCACMDevice::set_dtr(bool dtr)
   }
 }
 
-void CDCACMDevice::set_rts(bool rts)
+void CDCACMClass::set_rts(bool rts)
 {
   rts_state = rts;
   if (rts) {
@@ -71,39 +70,21 @@ void CDCACMDevice::set_rts(bool rts)
 }
 
 
-void CDCACMDevice::class_init()
+
+
+bool CDCACMClass::query(Interface::ptr iface)
 {
-  cdc_acm_configuration_number = get_configuration_number(CLASS_TYPE_CDC_ACM, 0);
-
-  cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
-
-  cdcacm = std::make_shared<CDCACMClass>(this);
-
-  /* Initialize the device cdc acm class */
-  if (register_class(cdcacm,
-                     cdc_acm_configuration_number,
-                     cdc_acm_interface_number,
-                     NULL))
-  {
-    throw USBXX::runtime_error("Failed to register CDC ACM class");
-  }
-
-  tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
-  tx_queue.create();
+  return iface->descriptor.bInterfaceClass == 2 ||
+      iface->descriptor.bInterfaceClass == 10; // TODO -- Make a constant
 }
 
-bool CDCACMDevice::class_query(Interface::ptr iface)
-{
-  return iface->descriptor.bInterfaceClass == 10; // TODO -- Make a constant
-}
-
-void CDCACMDevice::flush()
+void CDCACMClass::flush()
 {
   putc(FLUSH);
   tx_semaphore_get(&flush_sema, TX_WAIT_FOREVER);
 }
 
-int CDCACMDevice::getc()
+int CDCACMClass::getc()
 {
   uint32_t status;
 
@@ -133,12 +114,12 @@ int CDCACMDevice::getc()
   return rx_buf[rx_cur++];
 }
 
-void CDCACMDevice::putc(int c)
+void CDCACMClass::putc(int c)
 {
   tx_queue.send(c);
 }
 
-void CDCACMDevice::flush_buffer()
+void CDCACMClass::flush_buffer()
 {
   TXX::Mutex::guard g(tx_mutex);
   
@@ -169,7 +150,7 @@ void CDCACMDevice::flush_buffer()
   }  
 }
 
-void CDCACMDevice::_tx_thread()
+void CDCACMClass::_tx_thread()
 {
   uint32_t c;
   uint32_t wait;
@@ -212,7 +193,7 @@ void CDCACMDevice::_tx_thread()
 #include <usb.h>
 
 
-uint32_t USBXX::CDCACMDevice::class_initialize()
+uint32_t CDCACMClass::initialize()
 {
   /* Update the line coding fields with default values.  */
   baudrate  =  USBClass_CDC_ACM_LINE_CODING_BAUDRATE;
@@ -223,15 +204,19 @@ uint32_t USBXX::CDCACMDevice::class_initialize()
   return 0;
 }
 
-uint32_t USBXX::CDCACMDevice::class_uninitialize()
+uint32_t CDCACMClass::uninitialize()
 {
   return 0;
 }
 
 
-uint32_t USBXX::CDCACMDevice::class_activate(std::shared_ptr<Interface> iface)
+uint32_t CDCACMClass::activate(std::shared_ptr<Interface> iface)
 {
   iface->class_instance = (VOID *)this;
+
+  if (iface->descriptor.bInterfaceClass == 2)
+    return 0;
+
 
   cdc_acm_interface = iface;
 
@@ -247,7 +232,7 @@ uint32_t USBXX::CDCACMDevice::class_activate(std::shared_ptr<Interface> iface)
   return 0;
 }
 
-uint32_t USBXX::CDCACMDevice::class_deactivate()
+uint32_t CDCACMClass::deactivate()
 {
   tx_event_flags_set(&flags, ~FLAG_ACTIVATED, TX_AND);
 
@@ -266,14 +251,14 @@ uint32_t USBXX::CDCACMDevice::class_deactivate()
   return 0;
 }
 
-uint32_t USBXX::CDCACMDevice::class_command_request(const ControlRequest &req)
+uint32_t CDCACMClass::command_request(const ControlRequest &req)
 {
   Transfer *xfer;
   uint32_t    transmit_length;
 
 
   /* Get the pointer to the transfer request associated with the control endpoint.  */
-  xfer = get_control_transfer();
+  xfer = device->get_control_transfer();
 
   event_log.push_event(UsbEvent::CDCACM_COMMAND, req.code);
 
@@ -317,7 +302,7 @@ uint32_t USBXX::CDCACMDevice::class_command_request(const ControlRequest &req)
           xfer -> phase =  TransferPhase::DATA_OUT;
 
           /* Perform the data transfer.  */
-          transfer_request(xfer, transmit_length, req.length);
+          device->transfer_request(xfer, transmit_length, req.length);
           break;
 
       case USBClass_CDC_ACM_SET_LINE_CODING:
@@ -343,13 +328,13 @@ uint32_t USBXX::CDCACMDevice::class_command_request(const ControlRequest &req)
   return 0;
 }
 
-uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length)
+uint32_t CDCACMClass::read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length)
 {
   uint32_t status = 0;
   uint32_t local_requested_length;
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (!is_configured())
+  if (!device->is_configured())
     return UX_TRANSFER_NO_ANSWER;
 
   /* Locate the endpoints.  */
@@ -373,7 +358,7 @@ uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, u
           local_requested_length = requested_length;
 
       /* Send the request to the device controller.  */
-      status = transfer_request(xfer, local_requested_length, local_requested_length);
+      status = device->transfer_request(xfer, local_requested_length, local_requested_length);
 
       if (status == UX_TRANSFER_BUS_RESET) {
         continue;
@@ -395,14 +380,14 @@ uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, u
     }
   }
 
-  if (!is_configured())
+  if (!device->is_configured())
     return UX_TRANSFER_NO_ANSWER;
 
   return status;
 }
 
 
-uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
+uint32_t CDCACMClass::write(uint8_t *buffer,
                           uint32_t requested_length,
                           uint32_t *actual_length)
 {
@@ -414,7 +399,7 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
   /* Get the pointer to the device.  */
 
   /* As long as the device is in the CONFIGURED state.  */
-  if (!is_configured())
+  if (!device->is_configured())
   {
     return UX_CONFIGURATION_HANDLE_UNKNOWN;
   }
@@ -435,14 +420,14 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
     *actual_length =  0;
 
     /* Check if the application forces a 0 length packet.  */
-    if (state == DeviceState::CONFIGURED && requested_length == 0)
-      return transfer_request(xfer, 0, 0);
+    if (device->is_configured() && requested_length == 0)
+      return device->transfer_request(xfer, 0, 0);
 
 
     /* Check if we need more transactions.  */
     local_host_length = xfer->buffer_size;
 
-    while (state == DeviceState::CONFIGURED && requested_length != 0)
+    while (device->is_configured() && requested_length != 0)
     {
       wait_activated();
 
@@ -461,7 +446,7 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
       ::memcpy(xfer->data, buffer, local_requested_length); /* Use case of memcpy is verified. */
 
       /* Send the request to the device controller.  */
-      status = transfer_request(xfer, local_requested_length, local_host_length);
+      status = device->transfer_request(xfer, local_requested_length, local_host_length);
 
       if (status == UX_TRANSFER_BUS_RESET) {
         return UX_TRANSFER_NO_ANSWER;
@@ -483,15 +468,15 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
   }
 
   /* Check why we got here, either completion or device was extracted.  */
-  if (!is_configured())
+  if (!device->is_configured())
       return UX_TRANSFER_NO_ANSWER;
 
   /* Simply return the last transaction result.  */
   return status;
 }
 
-uint32_t USBXX::CDCACMDevice::ioctl(uint32_t ioctl_function,
-                          VOID *parameter)
+uint32_t CDCACMClass::ioctl(uint32_t ioctl_function,
+                          void *parameter)
 {
   uint32_t status;
   USBClass_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
@@ -620,4 +605,29 @@ uint32_t USBXX::CDCACMDevice::ioctl(uint32_t ioctl_function,
 
   /* Return status to caller.  */
   return status;
+}
+
+
+CDCACMDevice::CDCACMDevice()
+{
+  add_class(USBXX::CLASS_TYPE_CDC_ACM);
+
+  cdcacm = std::make_shared<CDCACMClass>(this);
+}
+
+void CDCACMDevice::class_init()
+{
+  cdc_acm_configuration_number = get_configuration_number(CLASS_TYPE_CDC_ACM, 0);
+
+  cdc_acm_interface_number = get_interface_number(CLASS_TYPE_CDC_ACM, 0);
+
+
+  /* Initialize the device cdc acm class */
+  if (register_class(cdcacm,
+                     cdc_acm_configuration_number,
+                     cdc_acm_interface_number,
+                     NULL))
+  {
+    throw USBXX::runtime_error("Failed to register CDC ACM class");
+  }
 }

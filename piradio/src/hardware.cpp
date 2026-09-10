@@ -138,8 +138,6 @@ void FR31CHHardware::restore_settings()
   _do_set_i_voltage();
   _do_set_q_voltage();
 
-
-  printf("Programming LMX...\r\n");
   lmx.setup();
 
   lmx.program();

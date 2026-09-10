@@ -208,7 +208,7 @@ uint32_t  DeviceBase::on_set_alternate_setting(uint32_t interface_value, uint32_
                             class_ptr -> interface = iface;
 
                             /* We have found a potential candidate. Call this registered class entry function to change the alternate setting.  */
-                            status = /* class_ptr -> */ class_on_change();
+                            status = class_ptr->on_change();
 
                             /* We are done here.  */
                             return(status);
@@ -290,7 +290,7 @@ uint32_t  DeviceBase::on_set_configuration(uint32_t configuration_value)
         auto class_inst =  iface -> usb_class;
 
         if (class_inst != nullptr)
-            /*class_inst -> */ class_deactivate();
+            class_inst->deactivate();
 
         iface->stop();
     }

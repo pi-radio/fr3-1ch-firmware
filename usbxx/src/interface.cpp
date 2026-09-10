@@ -15,8 +15,6 @@ uint32_t Interface::start()
 
     /* Check if class driver is available. */
     if (class_ptr == nullptr)
-
-        /* There is no class driver supported. */
         return (UX_NO_CLASS_MATCH);
 
 
@@ -24,9 +22,9 @@ uint32_t Interface::start()
     class_ptr->interface = shared_from_this();
 
     /* We have found a potential candidate. Call this registered class entry function.  */
-    if (/* class_ptr-> */ device->class_query(shared_from_this()))
+    if (class_ptr->query(shared_from_this()))
     {
-        status = /*class_ptr -> */ device->class_activate(shared_from_this());
+        status = class_ptr->activate(shared_from_this());
 
         if(status == 0)
             usb_class =  class_ptr;

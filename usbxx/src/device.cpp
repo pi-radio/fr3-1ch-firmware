@@ -97,7 +97,7 @@ void DeviceBase::disconnect()
       auto class_ptr =  iface -> usb_class;
 
       if (class_ptr != nullptr)
-        /*class_ptr ->*/ class_deactivate();
+        class_ptr->deactivate();
 
       iface->stop();
     }
@@ -123,8 +123,6 @@ uint32_t DeviceBase::register_class(USBClass::ptr p_class,
                         uint32_t interface_number,
                         void *parameter)
 {
-  uint32_t     status;
-
   p_class->interface_parameter =  parameter;
   p_class->configuration_number =  configuration_number;
   p_class->interface_number =  interface_number;
@@ -132,7 +130,7 @@ uint32_t DeviceBase::register_class(USBClass::ptr p_class,
   classes.push_back(p_class);
 
   /* Call the class initialization routine.  */
-  return /* class_inst-> */ class_initialize();
+  return p_class->initialize();
 }
 
 uint32_t DeviceBase::get_interface(uint8_t interface_value)
