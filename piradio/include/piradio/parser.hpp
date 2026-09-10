@@ -69,13 +69,13 @@ namespace parser
 
     token_type t;
     const std::string s;
-    const int i;
+    const int64_t i;
     const double d;
 
     token(token_type _t)  : t(_t), s(""), i(0), d(0.0) {}
     token(token_type _t, const std::string &_s)  : t(_t), s(_s), i(0), d(0.0) {}
-    token(token_type _t, const int &_i)  : t(_t), s(""), i(_i), d(0.0) {}
-    token(token_type _t, const double &_d)  : t(_t), s(""), i(0), d(_d) {}
+    token(token_type _t, const int64_t &_i, const std::string &_s = "")  : t(_t), s(_s), i(_i), d(0.0) {}
+    token(token_type _t, const double &_d, const std::string &_s = "")  : t(_t), s(_s), i(0), d(_d) {}
 
     bool isint() const { return t == token_type::INT; }
     bool isfloat() const { return t == token_type::FLOAT; }
@@ -106,11 +106,11 @@ namespace parser
 
 
   struct _INT : public token {
-    _INT(int _i) : token(token_type::INT, _i) {}
+    _INT(int64_t _i, const std::string &_s = "") : token(token_type::INT, _i, _s) {}
   };
 
   struct FLOAT : public token {
-    FLOAT(double _d) : token(token_type::FLOAT, _d) {}
+    FLOAT(double _d, const std::string &_s = "") : token(token_type::FLOAT, _d, _s) {}
   };
 
   struct _EOL : public token {

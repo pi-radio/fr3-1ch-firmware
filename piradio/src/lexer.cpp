@@ -80,9 +80,9 @@ void _tokenizer::push_token(token_t tok)
   tq.push(tok);
 }
 
-int get_octal_str(std::string::const_iterator &cur)
+int64_t get_octal_str(std::string::const_iterator &cur)
 {
-  int i = 0;
+  int64_t i = 0;
 
   while (*cur >= '0' && *cur <= '7') {
     i = i * 8 + (*cur++ - '0');
@@ -91,9 +91,9 @@ int get_octal_str(std::string::const_iterator &cur)
   return i;
 }
 
-int get_decimal_str(std::string::const_iterator &cur)
+int64_t get_decimal_str(std::string::const_iterator &cur)
 {
-  int i = 0;
+  int64_t i = 0;
 
   while (*cur >= '0' && *cur <= '9') {
     i = i * 10 + (*cur++ - '0');
@@ -102,9 +102,9 @@ int get_decimal_str(std::string::const_iterator &cur)
   return i;
 }
 
-int get_hexadecimal_str(std::string::const_iterator &cur)
+int64_t get_hexadecimal_str(std::string::const_iterator &cur)
 {
-  int i = 0;
+  int64_t i = 0;
 
   while (true) {
     auto c = std::tolower(*cur);
@@ -130,8 +130,10 @@ token_t get_number_core(std::string::const_iterator &cur)
 {
   int neg = 1;
   bool isfloat = false;
-  int i;
+  int64_t i;
   double d;
+
+  auto start = cur;
 
   if (*cur == '-') {
     neg = -1;
@@ -182,11 +184,22 @@ token_t get_number_core(std::string::const_iterator &cur)
     d *= std::pow(10, e);
   }
 
-  if (isfloat) {
-    return token_t(new FLOAT(d));
+  std::shared_ptr<token> retval;
+  std::string s;
+
+  while (start < cur) {
+    s.push_back(*start);
+    start++;
   }
 
-  return token_t(new _INT(i));
+
+  if (isfloat) {
+    retval = std::make_shared<FLOAT>(d, s);
+  } else {
+    retval = std::make_shared<_INT>(i, s);
+  }
+
+  return retval;
 }
 
 token_t get_number(std::string::const_iterator &cur)
