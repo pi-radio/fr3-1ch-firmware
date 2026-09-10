@@ -60,6 +60,33 @@ namespace USBXX
       PCD_TypeDef *pcd;
       PCD_HandleTypeDef hpcd;
 
+#if 0
+      PCD_InitTypeDef         Init;        /*!< PCD required parameters           */
+      //__IO uint8_t            USB_Address; /*!< USB Address                       */
+    #if defined (USB_OTG_FS) || defined (USB_OTG_HS)
+      PCD_EPTypeDef           IN_ep[16];   /*!< IN endpoint parameters            */
+      PCD_EPTypeDef           OUT_ep[16];  /*!< OUT endpoint parameters           */
+    #endif /* defined (USB_OTG_FS) || defined (USB_OTG_HS) */
+    #if defined (USB_DRD_FS)
+      PCD_EPTypeDef           IN_ep[8];    /*!< IN endpoint parameters            */
+      PCD_EPTypeDef           OUT_ep[8];   /*!< OUT endpoint parameters           */
+    #endif /* defined (USB_DRD_FS) */
+      HAL_LockTypeDef         Lock;        /*!< PCD peripheral status             */
+      __IO PCD_StateTypeDef   State;       /*!< PCD communication state           */
+      __IO  uint32_t          ErrorCode;   /*!< PCD Error code                    */
+      uint32_t                Setup[12];   /*!< Setup packet buffer               */
+      PCD_LPM_StateTypeDef    LPM_State;   /*!< LPM State                         */
+      uint32_t                BESL;
+      uint32_t                FrameNumber; /*!< Store Current Frame number        */
+
+
+      uint32_t lpm_active;                 /*!< Enable or disable the Link Power Management .
+                                           This parameter can be set to ENABLE or DISABLE        */
+
+      uint32_t battery_charging_active;    /*!< Enable or disable Battery charging.
+                                           This parameter can be set to ENABLE or DISABLE        */
+      void                    *pData;      /*!< Pointer to upper stack Handler */
+#endif
 
       //STM32::Endpoint ep_out[UX_DCD_STM32_MAX_ED];
       //STM32::Endpoint ep_in[UX_DCD_STM32_MAX_ED];

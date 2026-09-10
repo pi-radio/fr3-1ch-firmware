@@ -38,32 +38,27 @@ using namespace USBXX;
 
 void STM32::DCD::reset()
 {
+  disconnect();
 
-    /* If the device is attached or configured, we need to disconnect it.  */
-    if (device->state !=  UX_DEVICE_RESET)
-    {
-      device->disconnect();
-    }
+  /* Set USB Current Speed */
+  switch(hpcd.Init.speed)
+  {
+  case PCD_SPEED_HIGH:
+      _ux_system_slave -> ux_system_slave_speed =  UX_HIGH_SPEED_DEVICE;
+      break;
+  case PCD_SPEED_FULL:
+      _ux_system_slave -> ux_system_slave_speed =  UX_FULL_SPEED_DEVICE;
+      break;
+  default:
+      _ux_system_slave -> ux_system_slave_speed =  UX_FULL_SPEED_DEVICE;
+      break;
+  }
 
-    /* Set USB Current Speed */
-    switch(hpcd.Init.speed)
-    {
-    case PCD_SPEED_HIGH:
-        _ux_system_slave -> ux_system_slave_speed =  UX_HIGH_SPEED_DEVICE;
-        break;
-    case PCD_SPEED_FULL:
-        _ux_system_slave -> ux_system_slave_speed =  UX_FULL_SPEED_DEVICE;
-        break;
-    default:
-        _ux_system_slave -> ux_system_slave_speed =  UX_FULL_SPEED_DEVICE;
-        break;
-    }
+  /* Complete the device initialization.  */
+  complete_initialization();
 
-    /* Complete the device initialization.  */
-    complete_initialization();
-
-    /* Mark the device as attached now.  */
-    device->state =  UX_DEVICE_ATTACHED;
+  /* Mark the device as attached now.  */
+  device->state =  UX_DEVICE_ATTACHED;
 }
 
 void STM32::DCD::connect()
@@ -73,13 +68,20 @@ void STM32::DCD::connect()
 
 void STM32::DCD::disconnect()
 {
+  if (device->state == UX_DEVICE_RESET)
+    return;
+
+  for (auto t : endpoints) {
+    auto a = std::get<0>(t);
+
+    if (a & 0x7F) {
+      endpoints.erase(a);
+    }
+  }
+
   device->on_disconnected();
 
-  /* Check if the device is attached or configured.  */
-  if (device->state != UX_DEVICE_RESET)
-  {
-    device->disconnect();
-  }
+  device->disconnect();
 }
 
 void STM32::DCD::suspend()

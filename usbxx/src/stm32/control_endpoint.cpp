@@ -16,6 +16,7 @@ using namespace USBXX;
 
 STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
   STM32::Endpoint(_device, _dcd, 0),
+  state(ControlEndpointState::IDLE),
   ack_mode(AckMode::NONE)
 {
 
@@ -36,6 +37,21 @@ void STM32::ControlEndpoint::init()
   transfer.current_data_pointer = transfer.data;
 }
 
+UINT STM32::ControlEndpoint::destroy()
+{
+ reset_flags();
+
+ if ((get_addr() & 0x7F) != 0)
+   int a = 0;
+
+ {
+   auto g = dcd->guard();
+   deactivate();
+ }
+
+  /* This function never fails.  */
+ return 0;
+}
 
 void STM32::ControlEndpoint::ack_ctrl()
 {
@@ -46,11 +62,11 @@ void STM32::ControlEndpoint::ack_ctrl()
     break;
 
   case AckMode::SETUP:
-    state = STM32::EndpointState::STATUS_RX;
+    state = ControlEndpointState::STATUS_RX;
     break;
 
   case AckMode::DATA_OUT:
-    state = STM32::EndpointState::STATUS_TX;
+    state = ControlEndpointState::STATUS_TX;
     break;
 
   case AckMode::DATA_IN:
@@ -130,7 +146,7 @@ void STM32::ControlEndpoint::open()
     activate();
   }
 
-  state = EndpointState::RESET;
+  state = ControlEndpointState::RESET;
 
   /* Ensure the control endpoint is properly reset.  */
 
@@ -235,7 +251,7 @@ void STM32::ControlEndpoint::on_setup()
   if (*transfer.setup & UX_REQUEST_IN)
   {
     direction = UX_ENDPOINT_IN;
-    state = STM32::EndpointState::DATA_TX;
+    state = ControlEndpointState::DATA_TX;
     ack_mode = AckMode::DATA_IN;
 
     device->process_control_event(&transfer);
@@ -263,7 +279,7 @@ void STM32::ControlEndpoint::on_setup()
   {
     stall();
 
-    state =  EndpointState::IDLE;
+    state =  ControlEndpointState::IDLE;
 
     return;
   }
@@ -276,16 +292,14 @@ void STM32::ControlEndpoint::on_setup()
       transfer.requested_length);
 
               /* Set the state to RX.  */
-  state =  EndpointState::DATA_RX;
+  state =  ControlEndpointState::DATA_RX;
 }
 
 
 void STM32::ControlEndpoint::on_data_in()
 {
-  ULONG             transfer_length;
-
    /* Check if we need to send data again on control endpoint. */
-  if (state == EndpointState::DATA_TX)
+  if (state == ControlEndpointState::DATA_TX)
   {
     ll_receive(0, 0);
 
@@ -313,32 +327,23 @@ void STM32::ControlEndpoint::on_data_in()
             if (transfer.completion_function)
                 transfer.completion_function (&transfer);
 
-            state = EndpointState::STATUS_RX;
+            state = ControlEndpointState::STATUS_RX;
         }
     }
     else
     {
+      auto transfer_length = transfer. in_transfer_length - descriptor.wMaxPacketSize;
 
-        /* Get the size of the transfer.  */
-        transfer_length = transfer. in_transfer_length - descriptor.wMaxPacketSize;
+      if (transfer_length > descriptor.wMaxPacketSize)
+      {
+        transfer_length =  descriptor.wMaxPacketSize;
+      }
 
-        /* Check if the endpoint size is bigger that data requested. */
-        if (transfer_length > descriptor.wMaxPacketSize)
-        {
+      transfer.current_data_pointer += descriptor.wMaxPacketSize;
+      transfer.in_transfer_length -= transfer_length;
 
-            /* Adjust the transfer size.  */
-            transfer_length =  descriptor.wMaxPacketSize;
-        }
-
-        /* Adjust the data pointer.  */
-        transfer. current_data_pointer += descriptor.wMaxPacketSize;
-
-        /* Adjust the transfer length remaining.  */
-        transfer. in_transfer_length -= transfer_length;
-
-        /* Transmit data.  */
-        ll_transmit(transfer.current_data_pointer,
-                    transfer_length);
+      ll_transmit(transfer.current_data_pointer,
+                  transfer_length);
     }
   }
 
@@ -349,7 +354,7 @@ void STM32::ControlEndpoint::on_data_out()
   auto hpcd = dcd->get_hpcd();
 
   /* Check if we have received something on endpoint 0 during data phase .  */
-  if (state == EndpointState::DATA_RX)
+  if (state == ControlEndpointState::DATA_RX)
   {
     auto transfer_length = HAL_PCD_EP_GetRxCount(hpcd, 0);
 

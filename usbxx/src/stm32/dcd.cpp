@@ -35,7 +35,6 @@ uint32_t STM32::DCD::initialize()
 {
   pcd_handle = &hpcd;
 
-  hpcd.Instance = pcd;
   hpcd.Init.dev_endpoints = 8;
   hpcd.Init.speed = USBD_FS_SPEED;
   hpcd.Init.phy_itface = PCD_PHY_EMBEDDED;
@@ -79,20 +78,6 @@ uint32_t STM32::DCD::initialize()
 
   /* Disable the Interrupts */
   disable_interrupts();
-
-  /*Init the Core (common init.) */
-  if (USB_CoreInit(pcd, hpcd.Init) != HAL_OK)
-  {
-    hpcd.State = HAL_PCD_STATE_ERROR;
-    return HAL_ERROR;
-  }
-
-  /* Force Device Mode */
-  if (USB_SetCurrentMode(pcd, USB_DEVICE_MODE) != HAL_OK)
-  {
-    hpcd.State = HAL_PCD_STATE_ERROR;
-    return HAL_ERROR;
-  }
 
   int i;
 
@@ -147,13 +132,6 @@ uint32_t STM32::DCD::initialize()
 
   endpoints[0x00] = control_endpoint;
   endpoints[0x80] = control_endpoint;
-
-
-#if 0
-  HAL_PCDEx_PMAConfig(&hpcd, 0x81, PCD_SNG_BUF, 0x100);
-  HAL_PCDEx_PMAConfig(&hpcd, 0x82, PCD_SNG_BUF, 0x140);
-  HAL_PCDEx_PMAConfig(&hpcd, 0x03, PCD_SNG_BUF, 0xC0);
-#endif
 
   status =  UX_DCD_STATUS_OPERATIONAL;
 

@@ -7,3 +7,9 @@ Endpoint::Endpoint(USBXX::DeviceBase *_device) :
       interface(nullptr)
 {
 }
+
+Endpoint::~Endpoint()
+{
+  device = nullptr;
+  interface = nullptr;
+}

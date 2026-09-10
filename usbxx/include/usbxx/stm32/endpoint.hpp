@@ -12,15 +12,6 @@ namespace USBXX
   {
     class DCD;
 
-    enum class EndpointState
-    {
-      RESET,
-      IDLE,
-      DATA_TX,
-      DATA_RX,
-      STATUS_TX,
-      STATUS_RX
-    };
 
     class Endpoint : public USBXX::Endpoint
     {
@@ -39,7 +30,6 @@ namespace USBXX
       bool task_pending;
       STM32::Transfer transfer;
 
-      EndpointState  state;
       uint8_t        epaddr;
       uint8_t        direction;
       DCD            *dcd;
@@ -141,6 +131,16 @@ public:
       void stall() override;
     };
 
+    enum class ControlEndpointState
+    {
+      RESET,
+      IDLE,
+      DATA_TX,
+      DATA_RX,
+      STATUS_TX,
+      STATUS_RX
+    };
+
 
     class ControlEndpoint : public Endpoint
     {
@@ -153,6 +153,7 @@ public:
       };
 
       AckMode ack_mode;
+      ControlEndpointState state;
 
       PCD_EPTypeDef *get_epdata() override;
 
@@ -171,6 +172,7 @@ public:
 
       void open() override;
       UINT create() override;
+      UINT destroy() override;
 
       void stall() override;
       void abort_transfer();

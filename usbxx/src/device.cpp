@@ -363,7 +363,6 @@ uint32_t  DeviceBase::clear_feature(const ControlRequest &req)
                 continue;
 
               endpoint_target->reset();
-              endpoint_target -> state = UX_ENDPOINT_RESET;
               return 0;
             }
       }

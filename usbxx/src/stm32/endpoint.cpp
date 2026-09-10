@@ -17,7 +17,6 @@ using namespace USBXX;
 STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
   USBXX::Endpoint(_device),
   transfer(),
-  state(EndpointState::IDLE),
   epaddr(_epaddr),
   direction(0),
   dcd(_dcd)
@@ -129,6 +128,9 @@ UINT STM32::Endpoint::destroy()
    deactivate();
  }
 
+ interface =  nullptr;
+ device =  nullptr;
+
   /* This function never fails.  */
  return 0;
 }
@@ -148,8 +150,6 @@ UINT  STM32::Endpoint::reset()
   done = false;
   setup = false;
 
-  state =  EndpointState::IDLE;
-
   clear_stall();
 
   /* Flush buffer. Only OTG */
@@ -166,7 +166,6 @@ void STM32::Endpoint::on_data_in()
 {
   auto PCD = dcd->get_PCD();
   auto hpcd = dcd->get_hpcd();
-  auto wEPVal = (uint16_t)PCD_GET_ENDPOINT(PCD, epindex());
 
   auto ep = &hpcd->IN_ep[epindex()];
 
@@ -238,7 +237,7 @@ void STM32::Endpoint::on_data_out()
 
   if ((ep->xfer_len == 0U) || (count < ep->maxpacket))
   {
-    transfer.actual_length = HAL_PCD_EP_GetRxCount(hpcd, epindex());
+    transfer.actual_length = ep->xfer_count;
 
     transfer.complete(UX_SUCCESS);
   }

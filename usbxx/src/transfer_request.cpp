@@ -79,7 +79,7 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
 
         /* Check if the endpoint is STALLED. In this case, we must refuse the transaction until the endpoint
            has been reset by the host.  */
-        while (endpoint -> state == UX_ENDPOINT_HALTED)
+        while (endpoint->is_stalled())
 
             /* Wait for 100ms for endpoint to be reset by a CLEAR_FEATURE command.  */
         {

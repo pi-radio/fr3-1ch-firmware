@@ -104,12 +104,13 @@ namespace USBXX
   {
     using ptr = std::shared_ptr<Endpoint>;
 
-    ULONG                      state;
     EndpointDescriptor         descriptor;
     USBXX::DeviceBase          *device;
     std::shared_ptr<Interface> interface;
 
     Endpoint(USBXX::DeviceBase *_device);
+
+    virtual ~Endpoint();
 
     virtual void reset_flags()
     {

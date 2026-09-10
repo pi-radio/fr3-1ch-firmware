@@ -10,16 +10,6 @@
 
 using namespace USBXX;
 
-HAL_StatusTypeDef USB_DisableGlobalInt(USB_DRD_TypeDef *USBx)
-{
-  uint32_t winterruptmask;
-
-  /* Set winterruptmask variable */
-
-
-  return HAL_OK;
-}
-
 static constexpr uint32_t winterruptmask =
     USB_CNTR_CTRM  | USB_CNTR_WKUPM |
     USB_CNTR_SUSPM | USB_CNTR_ERRM |
@@ -91,7 +81,7 @@ void STM32::DCD::handle_IRQ()
 
   if ((wIstr & USB_ISTR_RESET) == USB_ISTR_RESET)
   {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_RESET);
+    pcd->ISTR &= ~USB_ISTR_RESET;
 
     reset();
 
@@ -154,7 +144,8 @@ void STM32::DCD::handle_IRQ()
   /* Handle LPM Interrupt */
   if ((wIstr & USB_ISTR_L1REQ) == USB_ISTR_L1REQ)
   {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_L1REQ);
+    pcd->ISTR &= ~USB_ISTR_L1REQ;
+
     if (hpcd.LPM_State == LPM_L0)
     {
       /* Force suspend and low-power mode before going to L1 state*/
@@ -177,7 +168,7 @@ void STM32::DCD::handle_IRQ()
 
   if ((wIstr & USB_ISTR_SOF) == USB_ISTR_SOF)
   {
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_SOF);
+    pcd->ISTR &= ~USB_ISTR_SOF;
 
     event_log.set_frame(get_frame_number());
 
@@ -190,9 +181,9 @@ void STM32::DCD::handle_IRQ()
 
   if ((wIstr & USB_ISTR_ESOF) == USB_ISTR_ESOF)
   {
-    event_log.push_event(UsbEvent::ESOF, (pcd->FNR >> 11) & 3);
+    pcd->ISTR &= ~USB_ISTR_ESOF;
 
-    __HAL_PCD_CLEAR_FLAG(&hpcd, USB_ISTR_ESOF);
+    event_log.push_event(UsbEvent::ESOF, (pcd->FNR >> 11) & 3);
 
     return;
   }
