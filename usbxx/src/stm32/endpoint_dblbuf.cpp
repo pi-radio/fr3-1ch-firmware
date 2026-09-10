@@ -17,7 +17,7 @@ using namespace USBXX;
 
 
 HAL_StatusTypeDef  HAL_PCDEx_PMAConfig(PCD_HandleTypeDef *hpcd, uint16_t ep_addr,
-                                       uint16_t ep_kind, uint32_t pmaadress)
+                                       uint16_t ep_kind, uint32_t pmaaddress)
 {
   PCD_EPTypeDef *ep;
 
@@ -37,15 +37,15 @@ HAL_StatusTypeDef  HAL_PCDEx_PMAConfig(PCD_HandleTypeDef *hpcd, uint16_t ep_addr
     /* Single Buffer */
     ep->doublebuffer = 0U;
     /* Configure the PMA */
-    ep->pmaadress = (uint16_t)pmaadress;
+    ep->pmaaddress = (uint16_t)pmaaddress;
   }
   else /* USB_DBL_BUF */
   {
     /* Double Buffer Endpoint */
     ep->doublebuffer = 1U;
     /* Configure the PMA */
-    ep->pmaaddr0 = (uint16_t)(pmaadress & 0xFFFFU);
-    ep->pmaaddr1 = (uint16_t)((pmaadress & 0xFFFF0000U) >> 16);
+    ep->pmaaddr0 = (uint16_t)(pmaaddress & 0xFFFFU);
+    ep->pmaaddr1 = (uint16_t)((pmaaddress & 0xFFFF0000U) >> 16);
   }
 
   return HAL_OK;
@@ -328,7 +328,7 @@ void STM32::Endpoint::on_interrupt()
 
       if (count != 0U)
       {
-        USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaadress, count);
+        USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaaddress, count);
       }
     }
     else
@@ -721,7 +721,7 @@ void STM32::Endpoint::start_transfer()
     /* configure and validate Tx endpoint */
     if (ep->doublebuffer == 0U)
     {
-      USB_WritePMA(USBx, ep->xfer_buff, ep->pmaadress, (uint16_t)len);
+      USB_WritePMA(USBx, ep->xfer_buff, ep->pmaaddress, (uint16_t)len);
 
       (USB_DRD_PMA_BUFF + (ep->num))->TXBD &= 0xFFFF;
       (USB_DRD_PMA_BUFF + (ep->num))->TXBD |= (uint32_t)((uint32_t)(len) << 16U);

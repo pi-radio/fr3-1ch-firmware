@@ -108,8 +108,8 @@ typedef struct
   PCD_EPTypeDef           OUT_ep[16];  /*!< OUT endpoint parameters           */
 #endif /* defined (USB_OTG_FS) || defined (USB_OTG_HS) */
 #if defined (USB_DRD_FS)
-  PCD_EPTypeDef           IN_ep[8];    /*!< IN endpoint parameters            */
-  PCD_EPTypeDef           OUT_ep[8];   /*!< OUT endpoint parameters           */
+  //PCD_EPTypeDef           IN_ep[8];    /*!< IN endpoint parameters            */
+  //PCD_EPTypeDef           OUT_ep[8];   /*!< OUT endpoint parameters           */
 #endif /* defined (USB_DRD_FS) */
   HAL_LockTypeDef         Lock;        /*!< PCD peripheral status             */
   __IO PCD_StateTypeDef   State;       /*!< PCD communication state           */

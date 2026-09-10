@@ -261,7 +261,7 @@ void STM32::Endpoint::on_data_out()
 
   if (count != 0U)
   {
-    USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaadress, count);
+    USB_ReadPMA(PCD, ep->xfer_buff, ep->pmaaddress, count);
   }
 
   /* multi-packet on the NON control OUT endpoint */

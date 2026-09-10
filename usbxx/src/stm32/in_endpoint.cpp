@@ -16,11 +16,17 @@ STM32::InEndpoint::InEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
     STM32::Endpoint(_device, _dcd, _epaddr)
 {
   assert((epaddr & 0x80));
-}
+  ep.is_in = 1U;
+  ep.num = 0;
+  ep.type = EP_TYPE_CTRL;
+  ep.maxpacket = 0U;
+  ep.xfer_buff = 0U;
+  ep.xfer_len = 0U;
+  ep.pmaaddress = 0x80;}
 
 PCD_EPTypeDef *STM32::InEndpoint::get_epdata()
 {
-  return &dcd->get_hpcd()->IN_ep[epindex()];
+  return &ep;
 }
 
 
@@ -61,10 +67,10 @@ void STM32::InEndpoint::activate()
 
   PCD_SET_EP_ADDRESS(PCD, epindex(), epindex()); // ??
 
-  assert(ep->pmaadress != 0);
+  assert(ep->pmaaddress != 0);
 
   /*Set the endpoint Transmit buffer address */
-  pcd_set_tx_address(ep->num, ep->pmaadress);
+  pcd_set_tx_address(ep->num, ep->pmaaddress);
   PCD_CLEAR_TX_DTOG(PCD, ep->num);
 
   if (ep->type != EP_TYPE_ISOC)
@@ -132,4 +138,69 @@ void STM32::InEndpoint::stall()
 
     PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_STALL);
   }
+}
+
+void STM32::InEndpoint::on_data_in()
+{
+  auto PCD = dcd->get_PCD();
+  auto hpcd = dcd->get_hpcd();
+
+  /* clear int flag */
+  PCD_CLEAR_TX_EP_CTR(PCD, epindex());
+
+  /* Multi-packet on the NON control IN endpoint */
+  auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, epindex());
+
+  if (ep.xfer_len > TxPctSize)
+  {
+    ep.xfer_len -= TxPctSize;
+  }
+  else
+  {
+    ep.xfer_len = 0U;
+  }
+
+  /* Zero Length Packet? */
+  if (ep.xfer_len == 0U)
+  {
+    /* Check if a ZLP should be armed.  */
+    if (transfer.force_zlp &&
+        transfer.requested_length)
+    {
+      transfer.force_zlp = UX_FALSE;
+      transfer.in_transfer_length = 0;
+
+      /* Arm a ZLP packet on IN.  */
+      ll_transmit(0, 0);
+    }
+    else
+    {
+      transfer.actual_length = transfer.requested_length;
+
+    /* Non control endpoint operation, use semaphore.  */
+      transfer.complete(UX_SUCCESS);
+    }
+  }
+  else
+  {
+    /* Transfer is not yet Done */
+    ep.xfer_buff += TxPctSize;
+    ep.xfer_count += TxPctSize;
+    start_transfer(&ep);
+  }
+}
+
+void STM32::InEndpoint::ll_transmit(uint8_t *buf, uint32_t len)
+{
+  ep.xfer_buff = buf;
+  ep.xfer_len = len;
+  ep.xfer_fill_db = 1U;
+  ep.xfer_len_db = len;
+  ep.xfer_count = 0U;
+  ep.is_in = 1U;
+  ep.num = epindex();
+
+  start_transfer(&ep);
+
+  event_log.push_event(UsbEvent::ENDPOINT_XMIT, epaddr);
 }

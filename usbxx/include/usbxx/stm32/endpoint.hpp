@@ -99,6 +99,8 @@ public:
 
     class InEndpoint : public Endpoint
     {
+      PCD_EPTypeDef ep;
+
     protected:
       PCD_EPTypeDef *get_epdata() override;
 
@@ -106,16 +108,22 @@ public:
       void deactivate() override;
 
       void clear_stall() override;
+
+      void ll_transmit(uint8_t *buf, uint32_t sz) override;
 
     public:
       InEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
       void abort_transfer();
       void stall() override;
+
+      virtual void on_data_in();
     };
 
     class OutEndpoint : public Endpoint
     {
+      PCD_EPTypeDef ep;
+
     protected:
       PCD_EPTypeDef *get_epdata() override;
 
@@ -124,11 +132,15 @@ public:
 
       void clear_stall() override;
 
+      void ll_receive(uint8_t *buf, uint32_t sz) override;
+
     public:
       OutEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
       void abort_transfer();
       void stall() override;
+
+      virtual void on_data_out();
     };
 
     enum class ControlEndpointState
@@ -152,8 +164,8 @@ public:
         DATA_OUT
       };
 
-      AckMode ack_mode;
       ControlEndpointState state;
+      AckMode ack_mode;
 
       PCD_EPTypeDef *get_epdata() override;
 
@@ -161,6 +173,13 @@ public:
       void deactivate() override;
 
       void clear_stall() override;
+
+      void ll_receive(uint8_t *buf, uint32_t sz) override;
+      void ll_transmit(uint8_t *buf, uint32_t sz) override;
+
+      PCD_EPTypeDef in_ep;
+      PCD_EPTypeDef out_ep;
+
 
     public:
       using ptr = std::shared_ptr<ControlEndpoint>;

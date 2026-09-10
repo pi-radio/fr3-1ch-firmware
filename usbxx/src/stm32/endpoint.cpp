@@ -35,18 +35,6 @@ void STM32::Endpoint::init()
 }
 
 
-PCD_EPTypeDef *STM32::Endpoint::get_epdata()
-{
-  auto hpcd = dcd->get_hpcd();
-
-  /* initialize ep structure*/
-  if (is_in())
-    return &hpcd->IN_ep[epindex()];
-
-  return &hpcd->OUT_ep[epindex()];
-}
-
-
 void STM32::Endpoint::open()
 {
   uint32_t pmaaddr = 0xC0 + 0x80 * epindex() + (is_in() ? 0x40 : 0x00);
@@ -54,7 +42,7 @@ void STM32::Endpoint::open()
   auto ep = get_epdata();
 
   ep->doublebuffer = 0;
-  ep->pmaadress = pmaaddr;
+  ep->pmaaddress = pmaaddr;
   ep->is_in = is_in();
   ep->num = epindex();
   ep->maxpacket = descriptor.wMaxPacketSize & 0x7FFU;
@@ -157,88 +145,12 @@ UINT  STM32::Endpoint::reset()
 
 void STM32::Endpoint::on_data_in()
 {
-  auto PCD = dcd->get_PCD();
-  auto hpcd = dcd->get_hpcd();
-
-  auto ep = &hpcd->IN_ep[epindex()];
-
-  /* clear int flag */
-  PCD_CLEAR_TX_EP_CTR(PCD, epindex());
-
-  /* Multi-packet on the NON control IN endpoint */
-  auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, ep->num);
-
-  if (ep->xfer_len > TxPctSize)
-  {
-    ep->xfer_len -= TxPctSize;
-  }
-  else
-  {
-    ep->xfer_len = 0U;
-  }
-
-  /* Zero Length Packet? */
-  if (ep->xfer_len == 0U)
-  {
-    /* Check if a ZLP should be armed.  */
-    if (transfer.force_zlp &&
-        transfer.requested_length)
-    {
-      transfer.force_zlp = UX_FALSE;
-      transfer.in_transfer_length = 0;
-
-      /* Arm a ZLP packet on IN.  */
-      ll_transmit(0, 0);
-    }
-    else
-    {
-      transfer.actual_length = transfer.requested_length;
-
-    /* Non control endpoint operation, use semaphore.  */
-      transfer.complete(UX_SUCCESS);
-    }
-  }
-  else
-  {
-    /* Transfer is not yet Done */
-    ep->xfer_buff += TxPctSize;
-    ep->xfer_count += TxPctSize;
-    start_transfer(ep);
-  }
+  throw USBXX::runtime_error("Improper data transfer (IN)");
 }
 
 void STM32::Endpoint::on_data_out()
 {
-  auto PCD = dcd->get_PCD();
-  auto hpcd = dcd->get_hpcd();
-
-  PCD_CLEAR_RX_EP_CTR(PCD, epindex());
-  auto ep = &hpcd->OUT_ep[epindex()];
-
-  /* OUT Single Buffering */
-  assert(ep->doublebuffer == 0U);
-
-  auto count = (uint16_t)PCD_GET_EP_RX_CNT(PCD, ep->num);
-
-  if (count != 0U)
-  {
-    read_pma(ep->xfer_buff, ep->pmaadress, count);
-  }
-
-  /* multi-packet on the NON control OUT endpoint */
-  ep->xfer_count += count;
-
-  if ((ep->xfer_len == 0U) || (count < ep->maxpacket))
-  {
-    transfer.actual_length = ep->xfer_count;
-
-    transfer.complete(UX_SUCCESS);
-  }
-  else
-  {
-     ep->xfer_buff += count;
-     start_transfer(ep);
-  }
+  throw USBXX::runtime_error("Improper data transfer (OUT)");
 }
 
 
@@ -556,37 +468,12 @@ void STM32::Endpoint::write_pma(uint32_t pmaaddr, const uint8_t *buf, uint32_t l
 
 void STM32::Endpoint::ll_receive(uint8_t *buf, uint32_t len)
 {
-  PCD_EPTypeDef *ep;
-
-  ep = &dcd->get_hpcd()->OUT_ep[epindex()];
-
-  /*setup and start the Xfer */
-  ep->xfer_buff = buf;
-  ep->xfer_len = len;
-  ep->xfer_count = 0U;
-  ep->is_in = 0U;
-  ep->num = epindex();
-
-  start_transfer(ep);
+  throw USBXX::runtime_error("Invalid transfer mode (RX)");
 }
 
 void STM32::Endpoint::ll_transmit(uint8_t *buf, uint32_t len)
 {
-  PCD_EPTypeDef *ep;
-
-  ep = &dcd->get_hpcd()->IN_ep[epindex()];
-
-  ep->xfer_buff = buf;
-  ep->xfer_len = len;
-  ep->xfer_fill_db = 1U;
-  ep->xfer_len_db = len;
-  ep->xfer_count = 0U;
-  ep->is_in = 1U;
-  ep->num = epindex();
-
-  start_transfer(ep);
-
-  event_log.push_event(UsbEvent::ENDPOINT_XMIT, epaddr);
+  throw USBXX::runtime_error("Invalid transfer mode (TX)");
 }
 
 void STM32::Endpoint::start_transfer(PCD_EPTypeDef *ep)
@@ -611,7 +498,7 @@ void STM32::Endpoint::start_transfer(PCD_EPTypeDef *ep)
       int a = 0;
     }
 
-    write_pma(ep->pmaadress, ep->xfer_buff,(uint16_t)len);
+    write_pma(ep->pmaaddress, ep->xfer_buff,(uint16_t)len);
 
     (USB_DRD_PMA_BUFF + (ep->num))->TXBD &= 0xFFFF;
     (USB_DRD_PMA_BUFF + (ep->num))->TXBD |= (uint32_t)((uint32_t)(len) << 16U);

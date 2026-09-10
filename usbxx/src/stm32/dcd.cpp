@@ -84,30 +84,6 @@ uint32_t STM32::DCD::initialize()
 
   int i;
 
-  /* Init endpoints structures */
-  for (i = 0U; i < NUM_ENDPOINTS; i++)
-  {
-    /* Init ep structure */
-    hpcd.IN_ep[i].is_in = 1U;
-    hpcd.IN_ep[i].num = i;
-    /* Control until ep is activated */
-    hpcd.IN_ep[i].type = EP_TYPE_CTRL;
-    hpcd.IN_ep[i].maxpacket = 0U;
-    hpcd.IN_ep[i].xfer_buff = 0U;
-    hpcd.IN_ep[i].xfer_len = 0U;
-  }
-
-  for (i = 0U; i < NUM_ENDPOINTS; i++)
-  {
-    hpcd.OUT_ep[i].is_in = 0U;
-    hpcd.OUT_ep[i].num = i;
-    /* Control until ep is activated */
-    hpcd.OUT_ep[i].type = EP_TYPE_CTRL;
-    hpcd.OUT_ep[i].maxpacket = 0U;
-    hpcd.OUT_ep[i].xfer_buff = 0U;
-    hpcd.OUT_ep[i].xfer_len = 0U;
-  }
-
   pcd->CNTR = USB_CNTR_USBRST;
 
   /* Release Reset */

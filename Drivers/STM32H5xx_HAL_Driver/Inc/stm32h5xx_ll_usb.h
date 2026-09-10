@@ -162,7 +162,7 @@ typedef struct
                                        This parameter must be a number between Min_Data = 0 and Max_Data = 1    */
 
 #if defined (USB_DRD_FS)
-  uint16_t  pmaadress;            /*!< PMA Address
+  uint16_t  pmaaddress;            /*!< PMA Address
                                        This parameter can be any value between Min_addr = 0 and Max_addr = 1K   */
 
   uint16_t  pmaaddr0;             /*!< PMA Address0
