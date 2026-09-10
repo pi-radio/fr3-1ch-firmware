@@ -104,7 +104,7 @@ typedef struct USBClass_CDC_ACM_PARAMETER_STRUCT
 
 
 #define UX_DEVICE_CLASS_CDC_ACM_ENDPOINT_BUFFER_SIZE_CALC_OVERFLOW              \
-        (UX_OVERFLOW_CHECK_ADD_ULONG(UX_DEVICE_CLASS_CDC_ACM_READ_BUFFER_SIZE, UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE))
+        (UX_OVERFLOW_CHECK_ADD_uint32_t(UX_DEVICE_CLASS_CDC_ACM_READ_BUFFER_SIZE, UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE))
 #define UX_DEVICE_CLASS_CDC_ACM_ENDPOINT_BUFFER_SIZE    (UX_DEVICE_CLASS_CDC_ACM_READ_BUFFER_SIZE + UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE)
 #define UX_DEVICE_CLASS_CDC_ACM_READ_BUFFER(acm)        ((acm) -> ux_device_class_cdc_acm_endpoint_buffer)
 #define UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER(acm)       (UX_DEVICE_CLASS_CDC_ACM_READ_BUFFER(acm) + UX_DEVICE_CLASS_CDC_ACM_READ_BUFFER_SIZE)
@@ -114,7 +114,7 @@ typedef struct USBClass_CDC_ACM_PARAMETER_STRUCT
 
 typedef struct USBClass_CDC_ACM_LINE_CODING_PARAMETER_STRUCT
 {
-    ULONG                               cdc_acm_parameter_baudrate;
+    uint32_t                               cdc_acm_parameter_baudrate;
     UCHAR                               cdc_acm_parameter_stop_bit;
     UCHAR                               cdc_acm_parameter_parity;
     UCHAR                               cdc_acm_parameter_data_bit;
@@ -130,8 +130,8 @@ typedef struct USBClass_CDC_ACM_LINE_STATE_PARAMETER_STRUCT
 
 typedef struct USBClass_CDC_ACM_CALLBACK_PARAMETER_STRUCT
 {
-    UINT                                (*ux_device_class_cdc_acm_parameter_write_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, UINT status, ULONG length);
-    UINT                                (*ux_device_class_cdc_acm_parameter_read_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, UINT status, UCHAR *data_pointer, ULONG length);
+    uint32_t                                (*ux_device_class_cdc_acm_parameter_write_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, uint32_t status, uint32_t length);
+    uint32_t                                (*ux_device_class_cdc_acm_parameter_read_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, uint32_t status, UCHAR *data_pointer, uint32_t length);
 
 } USBClass_CDC_ACM_CALLBACK_PARAMETER;
 
@@ -205,8 +205,8 @@ namespace USBXX
   {
     CDCACMClass::ptr cdcacm;
 
-    ULONG cdc_acm_interface_number;
-    ULONG cdc_acm_configuration_number;
+    uint32_t cdc_acm_interface_number;
+    uint32_t cdc_acm_configuration_number;
     USBClass_CDC_ACM_PARAMETER cdc_acm_parameter;
     //USBClass_CDC_ACM cdc_acm;
     TX_EVENT_FLAGS_GROUP flags;
@@ -215,7 +215,7 @@ namespace USBXX
     std::shared_ptr<Interface> cdc_acm_interface;
     TXX::Mutex ep_in_mutex;
     TXX::Mutex ep_out_mutex;
-    ULONG baudrate;
+    uint32_t baudrate;
     UCHAR stop_bit;
     UCHAR parity;
     UCHAR data_bit;
@@ -233,10 +233,10 @@ namespace USBXX
     
     static CDCACMDevice *stupid_global;
 
-    UINT ioctl(ULONG ioctl_function, VOID *parameter);
+    uint32_t ioctl(uint32_t ioctl_function, VOID *parameter);
 
-    UINT read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length);
-    UINT write(UCHAR *buffer, ULONG requested_length, ULONG *actual_length);
+    uint32_t read(UCHAR *buffer, uint32_t requested_length, uint32_t *actual_length);
+    uint32_t write(UCHAR *buffer, uint32_t requested_length, uint32_t *actual_length);
 
     static constexpr int RX_QUEUE_LEN = 64;
     static constexpr int TX_QUEUE_LEN = 64;

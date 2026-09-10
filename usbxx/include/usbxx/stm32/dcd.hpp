@@ -167,13 +167,13 @@ namespace USBXX
 
       USBXX::Endpoint::ptr allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) override;
       uint32_t get_frame_number() override;
-      UINT complete_initialization() override;
-      UINT uninitialize() override;
+      uint32_t complete_initialization() override;
+      uint32_t uninitialize() override;
 
       void activate_lpm(bool);
 
-      UINT transfer_out(Transfer *xfer);
-      UINT transfer_in(Transfer *xfer);
+      uint32_t transfer_out(Transfer *xfer);
+      uint32_t transfer_in(Transfer *xfer);
 
       void stop();
       void enable_pullup();

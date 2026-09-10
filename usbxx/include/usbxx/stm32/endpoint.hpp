@@ -84,10 +84,10 @@ public:
 
       virtual void open();
 
-      UINT create() override;
-      UINT destroy() override;
+      uint32_t create() override;
+      uint32_t destroy() override;
       bool is_stalled() override;
-      UINT reset() override;
+      uint32_t reset() override;
       //void stall() override;
       void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
       void ack_ctrl() override { throw USBXX::runtime_error("Incorrect endpoint for control acknowledgement"); };
@@ -195,8 +195,8 @@ public:
       void init() override;
 
       void open() override;
-      UINT create() override;
-      UINT destroy() override;
+      uint32_t create() override;
+      uint32_t destroy() override;
 
       void stall() override;
       void abort_transfer();

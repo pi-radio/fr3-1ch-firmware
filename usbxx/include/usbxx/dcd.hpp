@@ -15,16 +15,16 @@ namespace USBXX
     DeviceBase *device;
 
   public:
-    UINT            status;
-    UINT            controller_type;
-    UINT            otg_capabilities;
-    UINT            irq;
-    ULONG           io;
-    ULONG           device_address;
+    uint32_t            status;
+    uint32_t            controller_type;
+    uint32_t            otg_capabilities;
+    uint32_t            irq;
+    uint32_t           io;
+    uint32_t           device_address;
     void            *controller_hardware;
 
     virtual uint32_t initialize() = 0;
-    virtual UINT uninitialize() = 0;
+    virtual uint32_t uninitialize() = 0;
 
     virtual USBXX::Endpoint::ptr get_endpoint(uint8_t) = 0;
     virtual USBXX::Endpoint::ptr get_control_endpoint() = 0;
@@ -32,7 +32,7 @@ namespace USBXX
 
     virtual USBXX::Endpoint::ptr allocate_endpoint(std::shared_ptr<Interface>, const EndpointDescriptor &) = 0;
     virtual uint32_t get_frame_number() = 0;
-    virtual UINT complete_initialization() = 0;
+    virtual uint32_t complete_initialization() = 0;
 
     void set_device(DeviceBase *_dev) { device = _dev; }
 

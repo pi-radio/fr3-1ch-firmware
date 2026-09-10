@@ -37,7 +37,7 @@ void STM32::ControlEndpoint::init()
   transfer.current_data_pointer = transfer.data;
 }
 
-UINT STM32::ControlEndpoint::destroy()
+uint32_t STM32::ControlEndpoint::destroy()
 {
  reset_flags();
 
@@ -145,7 +145,7 @@ void STM32::ControlEndpoint::open()
   transfer.actual_length =  0;
 }
 
-UINT STM32::ControlEndpoint::create()
+uint32_t STM32::ControlEndpoint::create()
 {
   assert(descriptor.wMaxPacketSize != 0);
 

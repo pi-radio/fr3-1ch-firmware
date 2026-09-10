@@ -39,7 +39,7 @@ CDCACMDevice::CDCACMDevice() :
 
 void CDCACMDevice::wait_activated()
 {
-  ULONG actual;
+  uint32_t actual;
 
   tx_event_flags_get(&flags, FLAG_ACTIVATED, TX_AND, &actual, TX_WAIT_FOREVER);
 }
@@ -106,7 +106,7 @@ void CDCACMDevice::flush()
 
 int CDCACMDevice::getc()
 {
-  ULONG status;
+  uint32_t status;
 
   wait_activated();
   
@@ -146,8 +146,8 @@ void CDCACMDevice::flush_buffer()
   while (!tx_buf.empty()) {
     auto res = tx_buf.get_seg();
     UCHAR *p = (UCHAR *)res.first;
-    ULONG l = res.second;
-    ULONG result;
+    uint32_t l = res.second;
+    uint32_t result;
     
     while (l) {
       uint32_t tx_len;
@@ -172,8 +172,8 @@ void CDCACMDevice::flush_buffer()
 
 void CDCACMDevice::_tx_thread()
 {
-  ULONG c;
-  ULONG wait;
+  uint32_t c;
+  uint32_t wait;
 
   wait_activated();
 
@@ -270,10 +270,10 @@ uint32_t USBXX::CDCACMDevice::class_deactivate()
 uint32_t USBXX::CDCACMDevice::class_command_request()
 {
   Transfer *xfer;
-  ULONG    request;
-  ULONG    value;
-  ULONG    request_length;
-  ULONG    transmit_length;
+  uint32_t    request;
+  uint32_t    value;
+  uint32_t    request_length;
+  uint32_t    transmit_length;
 
 
   /* Get the pointer to the transfer request associated with the control endpoint.  */
@@ -353,10 +353,10 @@ uint32_t USBXX::CDCACMDevice::class_command_request()
   return 0;
 }
 
-UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *actual_length)
+uint32_t USBXX::CDCACMDevice::read(UCHAR *buffer, uint32_t requested_length, uint32_t *actual_length)
 {
-  UINT                        status= UX_SUCCESS;
-  ULONG                       local_requested_length;
+  uint32_t                        status= UX_SUCCESS;
+  uint32_t                       local_requested_length;
 
   /* As long as the device is in the CONFIGURED state.  */
   if (state != UX_DEVICE_CONFIGURED)
@@ -412,14 +412,14 @@ UINT USBXX::CDCACMDevice::read(UCHAR *buffer, ULONG requested_length, ULONG *act
 }
 
 
-UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
-                          ULONG requested_length,
-                          ULONG *actual_length)
+uint32_t USBXX::CDCACMDevice::write(UCHAR *buffer,
+                          uint32_t requested_length,
+                          uint32_t *actual_length)
 {
   Transfer           *xfer;
-  ULONG                       local_requested_length;
-  ULONG                       local_host_length;
-  UINT                        status = 0;
+  uint32_t                       local_requested_length;
+  uint32_t                       local_host_length;
+  uint32_t                        status = 0;
 
   /* Get the pointer to the device.  */
 
@@ -501,10 +501,10 @@ UINT USBXX::CDCACMDevice::write(UCHAR *buffer,
   return status;
 }
 
-UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
+uint32_t USBXX::CDCACMDevice::ioctl(uint32_t ioctl_function,
                           VOID *parameter)
 {
-  UINT status;
+  uint32_t status;
   USBClass_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
   USBClass_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint::ptr endpoint;
@@ -570,7 +570,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
     auto iface =  cdc_acm_interface;
 
     /* What direction ?  */
-    switch( (ULONG) (ALIGN_TYPE) parameter)
+    switch( (uint32_t) (ALIGN_TYPE) parameter)
     {
     case USBClass_CDC_ACM_ENDPOINT_XMIT :
       endpoint = in_endpoint;
@@ -605,7 +605,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
       if (xfer->is_pending())
         return UX_ERROR;
 
-      xfer->timeout = (ULONG) (ALIGN_TYPE) parameter;
+      xfer->timeout = (uint32_t) (ALIGN_TYPE) parameter;
     }
     break;
 
@@ -617,7 +617,7 @@ UINT USBXX::CDCACMDevice::ioctl(ULONG ioctl_function,
       if (xfer->is_pending())
         return UX_ERROR;
 
-      xfer->timeout = (ULONG) (ALIGN_TYPE) parameter;
+      xfer->timeout = (uint32_t) (ALIGN_TYPE) parameter;
     }
     break;
 

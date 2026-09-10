@@ -43,22 +43,22 @@ namespace USBXX
     uint32_t        begin_magic;
     TXX::Semaphore  semaphore;
     TransferStatus  status;
-    ULONG           completion_code;
+    uint32_t           completion_code;
 
     TransferType           type;
     std::shared_ptr<USBXX::Endpoint> endpoint;
     UCHAR           *data;
     UCHAR           *current_data_pointer;
-    ULONG           requested_length;
-    ULONG           actual_length;
-    ULONG           in_transfer_length;
-    ULONG           transfer_length;
+    uint32_t           requested_length;
+    uint32_t           actual_length;
+    uint32_t           in_transfer_length;
+    uint32_t           transfer_length;
     TransferPhase   phase;
     VOID            (*completion_function) (Transfer *);
-    ULONG           timeout;
-    ULONG           force_zlp;
+    uint32_t           timeout;
+    uint32_t           force_zlp;
     UCHAR           setup[8];
-    ULONG           status_phase_ignore;
+    uint32_t           status_phase_ignore;
     uint32_t        end_magic;
 
     Transfer();

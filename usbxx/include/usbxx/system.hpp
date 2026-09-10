@@ -14,15 +14,15 @@ namespace USBXX {
 #if 0
   class SystemDCD
   {
-    UINT   status;
-    UINT   controller_type;
-    UINT   otg_capabilities;
-    UINT   irq;
-    ULONG  io;
-    ULONG  device_address;
+    uint32_t   status;
+    uint32_t   controller_type;
+    uint32_t   otg_capabilities;
+    uint32_t   irq;
+    uint32_t  io;
+    uint32_t  device_address;
     void   *controller_hardware;
 
-    void   function(UINT, VOID*);
+    void   function(uint32_t, VOID*);
   };
 #endif
 
@@ -32,34 +32,34 @@ namespace USBXX {
     UX_SLAVE_DCD    dcd;
     UX_SLAVE_DEVICE device;
     UCHAR           *device_framework;
-    ULONG           device_framework_length;
+    uint32_t           device_framework_length;
     UCHAR           *device_framework_full_speed;
-    ULONG           device_framework_length_full_speed;
+    uint32_t           device_framework_length_full_speed;
     UCHAR           *device_framework_high_speed;
-    ULONG           device_framework_length_high_speed;
+    uint32_t           device_framework_length_high_speed;
     UCHAR           *string_framework;
-    ULONG           string_framework_length;
+    uint32_t           string_framework_length;
     UCHAR           *language_id_framework;
-    ULONG           language_id_framework_length;
+    uint32_t           language_id_framework_length;
     UCHAR           *dfu_framework;
-    ULONG           dfu_framework_length;
+    uint32_t           dfu_framework_length;
   #if UX_MAX_SLAVE_CLASS_DRIVER > 1
-    UINT            max_class;
+    uint32_t            max_class;
   #endif
     USBClass  *class_array;
     USBClass  *interface_class_array[UX_MAX_SLAVE_INTERFACES];
-    ULONG           speed;
-    ULONG           power_state;
-    ULONG           remote_wakeup_capability;
-    ULONG           remote_wakeup_enabled;
-    ULONG           device_dfu_capabilities;
-    ULONG           device_dfu_detach_timeout;
-    ULONG           device_dfu_transfer_size;
-    ULONG           device_dfu_state_machine;
-    ULONG           device_dfu_mode;
-    UINT            (*change_function) (ULONG);
-    ULONG           device_vendor_request;
-    UINT            (*device_vendor_request_function) (ULONG, ULONG, ULONG, ULONG, UCHAR *, ULONG *);
+    uint32_t           speed;
+    uint32_t           power_state;
+    uint32_t           remote_wakeup_capability;
+    uint32_t           remote_wakeup_enabled;
+    uint32_t           device_dfu_capabilities;
+    uint32_t           device_dfu_detach_timeout;
+    uint32_t           device_dfu_transfer_size;
+    uint32_t           device_dfu_state_machine;
+    uint32_t           device_dfu_mode;
+    uint32_t            (*change_function) (uint32_t);
+    uint32_t           device_vendor_request;
+    uint32_t            (*device_vendor_request_function) (uint32_t, uint32_t, uint32_t, uint32_t, UCHAR *, uint32_t *);
 #endif
 
 

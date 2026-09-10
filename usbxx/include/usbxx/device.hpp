@@ -30,16 +30,16 @@ namespace USBXX
 struct UX_SYSTEM_SLAVE
 {
     UCHAR           *ux_system_slave_dfu_framework;
-    ULONG           ux_system_slave_dfu_framework_length;
-    ULONG           ux_system_slave_power_state;
-    ULONG           ux_system_slave_remote_wakeup_capability;
-    ULONG           ux_system_slave_remote_wakeup_enabled;
-    ULONG           ux_system_slave_device_dfu_capabilities;
-    ULONG           ux_system_slave_device_dfu_detach_timeout;
-    ULONG           ux_system_slave_device_dfu_transfer_size;
-    ULONG           ux_system_slave_device_dfu_state_machine;
-    ULONG           ux_system_slave_device_dfu_mode;
-    ULONG           ux_system_slave_device_vendor_request;
+    uint32_t           ux_system_slave_dfu_framework_length;
+    uint32_t           ux_system_slave_power_state;
+    uint32_t           ux_system_slave_remote_wakeup_capability;
+    uint32_t           ux_system_slave_remote_wakeup_enabled;
+    uint32_t           ux_system_slave_device_dfu_capabilities;
+    uint32_t           ux_system_slave_device_dfu_detach_timeout;
+    uint32_t           ux_system_slave_device_dfu_transfer_size;
+    uint32_t           ux_system_slave_device_dfu_state_machine;
+    uint32_t           ux_system_slave_device_dfu_mode;
+    uint32_t           ux_system_slave_device_vendor_request;
 
 } ;
 
@@ -57,7 +57,7 @@ namespace USBXX
   {
     friend class ControlThread;
 
-    static UINT _usbxx_change_notification(ULONG);
+    static uint32_t _usbxx_change_notification(uint32_t);
 
     uint32_t on_change(uint32_t);
 
@@ -97,14 +97,14 @@ namespace USBXX
 
   public:
 
-    ULONG            state;
+    uint32_t            state;
     DeviceDescriptor descriptor;
-    ULONG            configuration_selected;
+    uint32_t            configuration_selected;
     ConfigurationDescriptor
                     configuration_descriptor;
 
     std::vector<std::shared_ptr<Interface> > interfaces;
-    ULONG           power_state;
+    uint32_t           power_state;
 
   protected:
     void thread_entry();
@@ -176,8 +176,8 @@ namespace USBXX
 
     void start();
     uint32_t transfer_request(Transfer *transfer_request,
-                                                ULONG slave_length,
-                                                ULONG host_length);
+                                                uint32_t slave_length,
+                                                uint32_t host_length);
 
     uint16_t get_interface_number(uint8_t class_type, uint8_t interface_type) {
       return fs_desc.get_interface_number(class_type, interface_type);
@@ -195,15 +195,15 @@ namespace USBXX
 
     const Descriptor &get_current_descriptor() { return fs_desc; }
 
-    UINT send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length);
-    UINT send_compound_descriptor(ULONG descriptor_type, ULONG descriptor_index, ULONG request_index, ULONG host_length);
-    UINT send_descriptor(const ControlRequest &);
+    uint32_t send_device_descriptor(uint32_t descriptor_type, uint32_t request_index, uint32_t host_length);
+    uint32_t send_compound_descriptor(uint32_t descriptor_type, uint32_t descriptor_index, uint32_t request_index, uint32_t host_length);
+    uint32_t send_descriptor(const ControlRequest &);
 
     void disconnect();
 
 
-    uint32_t on_get_alternate_setting(ULONG interface_value);
-    uint32_t on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value);
+    uint32_t on_get_alternate_setting(uint32_t interface_value);
+    uint32_t on_set_alternate_setting(uint32_t interface_value, uint32_t alternate_setting_value);
     uint32_t on_get_configuration();
     uint32_t on_set_configuration(uint32_t configuration_value);
 
@@ -211,7 +211,7 @@ namespace USBXX
     uint32_t set_interface(DescriptorIterator &,
         uint32_t alternate_setting_value);
 
-    UINT on_vendor_request(const ControlRequest &, UCHAR *, ULONG *) { return 0; };
+    uint32_t on_vendor_request(const ControlRequest &, UCHAR *, uint32_t *) { return 0; };
 
     uint32_t get_interface(uint8_t interface_value);
 
@@ -248,12 +248,12 @@ namespace USBXX
 
 
 
-  //UINT    ux_device_class_storage_entry(USBClass_COMMAND *command);
+  //uint32_t    ux_device_class_storage_entry(USBClass_COMMAND *command);
 
   /*
-  UINT    ux_device_stack_class_unregister(UCHAR *class_name,
-                                      UINT (*class_entry_function)(USBClass_COMMAND *));
-  UINT    _ux_device_stack_class_unregister(UCHAR *class_name, UINT (*class_entry_function)(USBClass_COMMAND *));
+  uint32_t    ux_device_stack_class_unregister(UCHAR *class_name,
+                                      uint32_t (*class_entry_function)(USBClass_COMMAND *));
+  uint32_t    _ux_device_stack_class_unregister(UCHAR *class_name, uint32_t (*class_entry_function)(USBClass_COMMAND *));
   */
 
 

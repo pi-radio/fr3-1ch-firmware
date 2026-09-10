@@ -44,8 +44,8 @@ namespace USBXX
       VOID            *instance;
       VOID            *client;
       VOID            *interface_parameter;
-      ULONG           interface_number;
-      ULONG           configuration_number;
+      uint32_t           interface_number;
+      uint32_t           configuration_number;
       std::shared_ptr<Interface>       interface;
 
       USBClass(const std::string &_name,
@@ -94,8 +94,8 @@ namespace USBXX
     //void *client;
     //UX_THREAD          thread;
     //VOID               *thread_stack;
-    //ULONG              interface_number;
-    //ULONG              configuration_number;
+    //uint32_t              interface_number;
+    //uint32_t              configuration_number;
     Interface *interface;
 
     DeviceClass(DeviceBase &_device,

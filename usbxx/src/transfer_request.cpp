@@ -36,10 +36,10 @@
 using namespace USBXX;
 
 uint32_t DeviceBase::transfer_request(Transfer *xfer,
-    ULONG slave_length,
-    ULONG host_length)
+    uint32_t slave_length,
+    uint32_t host_length)
 {
-  UINT                    status;
+  uint32_t                    status;
 
   /* Do we have to skip this transfer?  */
   if (xfer -> status_phase_ignore == UX_TRUE)
@@ -76,7 +76,7 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
         {
           auto ms_wait = 100;
           /* translate ms into ticks. */
-          auto ticks = (ULONG)(ms_wait * UX_PERIODIC_RATE) / 1000;
+          auto ticks = (uint32_t)(ms_wait * UX_PERIODIC_RATE) / 1000;
 
           /* For safety add 1 to ticks.  */
           ticks++;

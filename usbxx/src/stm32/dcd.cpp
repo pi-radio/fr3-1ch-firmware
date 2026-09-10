@@ -146,7 +146,7 @@ USBXX::Endpoint::ptr STM32::DCD::allocate_endpoint(Interface::ptr iface, const E
   return retval;
 }
 
-UINT  STM32::DCD::complete_initialization()
+uint32_t  STM32::DCD::complete_initialization()
 {
   device->descriptor = read_in_descriptor<DeviceDescriptor>(device->get_current_descriptor().get_desc());
 
@@ -169,7 +169,7 @@ UINT  STM32::DCD::complete_initialization()
   return 0;
 }
 
-UINT  STM32::DCD::uninitialize()
+uint32_t  STM32::DCD::uninitialize()
 {
     /* Set the state of the controller to HALTED now.  */
   status =  UX_DCD_STATUS_HALTED;

@@ -125,10 +125,10 @@ namespace USBXX
 
     virtual Transfer *get_transfer() = 0;
 
-    virtual UINT create() = 0;
-    virtual UINT destroy() = 0;
+    virtual uint32_t create() = 0;
+    virtual uint32_t destroy() = 0;
     virtual bool is_stalled() = 0;
-    virtual UINT reset() = 0;
+    virtual uint32_t reset() = 0;
     virtual void stall() = 0;
     virtual void abort_all_transfers(uint32_t) = 0;
     virtual void ack_ctrl() = 0;

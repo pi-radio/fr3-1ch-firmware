@@ -304,7 +304,7 @@ void USBXX::Strings::add_string(uint8_t idx, const std::string &s, uint16_t lang
   pos += s.size();
 }
 
-UINT DeviceBase::send_device_descriptor(ULONG descriptor_type, ULONG request_index, ULONG host_length)
+uint32_t DeviceBase::send_device_descriptor(uint32_t descriptor_type, uint32_t request_index, uint32_t host_length)
 {
   uint32_t length = host_length;
   auto xfer = get_control_transfer();
@@ -332,7 +332,7 @@ UINT DeviceBase::send_device_descriptor(ULONG descriptor_type, ULONG request_ind
 }
 
 
-UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descriptor_index, ULONG request_index, ULONG host_length)
+uint32_t DeviceBase::send_compound_descriptor(uint32_t descriptor_type, uint32_t descriptor_index, uint32_t request_index, uint32_t host_length)
 {
   BOSDescriptor               bos_descriptor;
   ConfigurationDescriptor     configuration_descriptor;
@@ -402,14 +402,14 @@ UINT DeviceBase::send_compound_descriptor(ULONG descriptor_type, ULONG descripto
 
 }
 
-UINT DeviceBase::send_descriptor(const ControlRequest &req)
+uint32_t DeviceBase::send_descriptor(const ControlRequest &req)
 {
   Transfer               *xfer;
-  UINT                            status =  UX_ERROR;
+  uint32_t                            status =  UX_ERROR;
   UCHAR                           *string_memory;
   UCHAR                           *string_framework;
-  ULONG                           string_framework_length;
-  ULONG                           string_length;
+  uint32_t                           string_framework_length;
+  uint32_t                           string_length;
 
   /* Get the pointer to the transfer request associated with the endpoint.  */
   xfer = get_control_transfer();
@@ -522,8 +522,8 @@ UINT DeviceBase::send_descriptor(const ControlRequest &req)
                 }
 
                 /* This is the wrong string descriptor, jump to the next.  */
-                string_framework_length -=  (ULONG) *(string_framework + 3) + 4;
-                string_framework +=  (ULONG) *(string_framework + 3) + 4;
+                string_framework_length -=  (uint32_t) *(string_framework + 3) + 4;
+                string_framework +=  (uint32_t) *(string_framework + 3) + 4;
             }
 
             /* Have we exhausted all the string descriptors?  */

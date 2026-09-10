@@ -160,7 +160,7 @@ STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _index) :
 }
 
 
-UINT STM32::Endpoint::create()
+uint32_t STM32::Endpoint::create()
 {
   assert(descriptor.wMaxPacketSize != 0);
 
@@ -211,7 +211,7 @@ UINT STM32::Endpoint::create()
   return 0;
 }
 
-UINT STM32::Endpoint::destroy()
+uint32_t STM32::Endpoint::destroy()
 {
  reset_flags();
 
@@ -236,7 +236,7 @@ bool STM32::Endpoint::is_stalled()
   return stalled;
 }
 
-UINT  STM32::Endpoint::reset()
+uint32_t  STM32::Endpoint::reset()
 {
   UX_INTERRUPT_SAVE_AREA
 

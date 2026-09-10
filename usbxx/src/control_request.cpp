@@ -204,8 +204,8 @@ void DeviceBase::process_control_event(Transfer *xfer)
 uint32_t DeviceBase::get_entity_status(const ControlRequest &req)
 {
 Transfer       *xfer;
-UINT                    status;
-ULONG                   data_length;
+uint32_t                    status;
+uint32_t                   data_length;
 
     /* Get the control endpoint for the device.  */
     auto endpoint = get_control_endpoint();

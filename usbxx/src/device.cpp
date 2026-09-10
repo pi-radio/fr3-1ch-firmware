@@ -122,7 +122,7 @@ uint32_t DeviceBase::register_class(USBClass::ptr p_class,
                         uint32_t interface_number,
                         void *parameter)
 {
-  UINT     status;
+  uint32_t     status;
 
   p_class->interface_parameter =  parameter;
   p_class->configuration_number =  configuration_number;
@@ -269,7 +269,7 @@ uint32_t DeviceBase::set_feature(const ControlRequest &req)
 uint32_t DeviceBase::set_interface(DescriptorIterator &di,
     uint32_t alternate_setting_value)
 {
-  UINT  status;
+  uint32_t  status;
 
   interfaces.push_back(std::make_shared<Interface>(this));
 

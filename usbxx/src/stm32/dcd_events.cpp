@@ -89,7 +89,7 @@ void STM32::DCD::on_sof()
 
 void STM32::DCD::on_state_change(uint32_t state)
 {
-  if ((ULONG) state == UX_DEVICE_FORCE_DISCONNECT)
+  if ((uint32_t) state == UX_DEVICE_FORCE_DISCONNECT)
   {
     stop();
   }

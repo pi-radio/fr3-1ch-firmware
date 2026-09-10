@@ -6,10 +6,10 @@
 
 using namespace USBXX;
 
-uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
+uint32_t DeviceBase::on_get_alternate_setting(uint32_t interface_value)
 {
   Transfer       *xfer;
-  UINT                    status;
+  uint32_t                    status;
 
     /* If the device was in the configured state, there may be interfaces
        attached to the configuration.  */
@@ -36,16 +36,16 @@ uint32_t DeviceBase::on_get_alternate_setting(ULONG interface_value)
     return(status);
 }
 
-uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alternate_setting_value)
+uint32_t  DeviceBase::on_set_alternate_setting(uint32_t interface_value, uint32_t alternate_setting_value)
 {
   const UCHAR                           *device_framework;
-  ULONG                           device_framework_length;
-  ULONG                           descriptor_length;
+  uint32_t                           device_framework_length;
+  uint32_t                           descriptor_length;
   UCHAR                           descriptor_type;
   ConfigurationDescriptor     configuration_descriptor;
   InterfaceDescriptor         interface_descriptor;
   USBClass                  *class_ptr;
-  UINT                            status;
+  uint32_t                            status;
 
     /* Protocol error must be reported when it's unconfigured */
     if (state != UX_DEVICE_CONFIGURED)
@@ -74,7 +74,7 @@ uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alte
     {
 
         /* Get the length of the current descriptor.  */
-        descriptor_length =  (ULONG) *device_framework;
+        descriptor_length =  (uint32_t) *device_framework;
 
         /* And its length.  */
         descriptor_type = *(device_framework + 1);
@@ -100,7 +100,7 @@ uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alte
                 {
 
                     /* Get the length of the current descriptor.  */
-                    descriptor_length =  (ULONG) *device_framework;
+                    descriptor_length =  (uint32_t) *device_framework;
 
                     /* And its type.  */
                     descriptor_type = *(device_framework + 1);
@@ -127,15 +127,15 @@ uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alte
                           }
 
                             /* Point beyond the interface descriptor.  */
-                            device_framework_length -=  (ULONG) *device_framework;
-                            device_framework +=  (ULONG) *device_framework;
+                            device_framework_length -=  (uint32_t) *device_framework;
+                            device_framework +=  (uint32_t) *device_framework;
 
                             /* Parse the device framework and locate endpoint descriptor(s).  */
                             while (device_framework_length != 0)
                             {
 
                                 /* Get the length of the current descriptor.  */
-                                descriptor_length =  (ULONG) *device_framework;
+                                descriptor_length =  (uint32_t) *device_framework;
 
                                 /* And its type.  */
                                 descriptor_type =  *(device_framework + 1);

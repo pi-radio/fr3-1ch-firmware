@@ -8,7 +8,7 @@ using namespace USBXX;
 uint32_t Interface::start()
 {
   USBClass::ptr class_ptr;
-  UINT                        status;
+  uint32_t                        status;
 
     /* Get the class for the interface.  */
     class_ptr =  device->get_interface_class(descriptor.bInterfaceNumber);
