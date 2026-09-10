@@ -31,7 +31,7 @@ STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
 void STM32::ControlEndpoint::init()
 {
   transfer.endpoint = shared_from_this();
-  transfer.timeout =  UX_MS_TO_TICK(UX_CONTROL_TRANSFER_TIMEOUT);
+  transfer.timeout =  ms_to_ticks(UX_CONTROL_TRANSFER_TIMEOUT);
 
   /* Adjust the current data pointer as well.  */
   transfer.current_data_pointer = transfer.data;
@@ -278,7 +278,7 @@ void STM32::ControlEndpoint::on_setup()
 
   transfer.requested_length = usb_get_short(transfer.setup + 6);
 
-  if (transfer.requested_length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+  if (transfer.requested_length > transfer.buffer_size)
   {
     stall();
 

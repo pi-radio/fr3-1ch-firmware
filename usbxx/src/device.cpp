@@ -159,7 +159,7 @@ uint32_t                    retval;
 
         /* Set the value of the alternate setting in the buffer.  */
         *xfer -> data =
-            (UCHAR) iface -> descriptor.bAlternateSetting;
+            (uint8_t) iface -> descriptor.bAlternateSetting;
 
         /* Setup the length appropriately.  */
         xfer -> requested_length =  1;

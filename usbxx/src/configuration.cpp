@@ -26,7 +26,7 @@ uint32_t DeviceBase::on_get_alternate_setting(uint32_t interface_value)
 
     xfer =  get_control_transfer();
     *xfer -> data =
-                (UCHAR) iface -> descriptor.bAlternateSetting;
+                (uint8_t) iface -> descriptor.bAlternateSetting;
 
     xfer -> requested_length =  1;
 
@@ -38,10 +38,10 @@ uint32_t DeviceBase::on_get_alternate_setting(uint32_t interface_value)
 
 uint32_t  DeviceBase::on_set_alternate_setting(uint32_t interface_value, uint32_t alternate_setting_value)
 {
-  const UCHAR                           *device_framework;
+  const uint8_t                           *device_framework;
   uint32_t                           device_framework_length;
   uint32_t                           descriptor_length;
-  UCHAR                           descriptor_type;
+  uint8_t                           descriptor_type;
   ConfigurationDescriptor     configuration_descriptor;
   InterfaceDescriptor         interface_descriptor;
   USBClass                  *class_ptr;
@@ -249,7 +249,7 @@ uint32_t DeviceBase::on_get_configuration()
   xfer = get_control_transfer();
 
   /* Set the value of the configuration in the buffer.  */
-  *xfer->data = (UCHAR) configuration_selected;
+  *xfer->data = (uint8_t) configuration_selected;
 
   /* Set the phase of the transfer to data out.  */
   xfer->phase =  TransferPhase::DATA_OUT;

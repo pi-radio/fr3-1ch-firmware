@@ -41,9 +41,9 @@ namespace USBXX
       std::string  name; /* "+1" for string null-terminator */
       DeviceBase   *device;
 
-      VOID            *instance;
-      VOID            *client;
-      VOID            *interface_parameter;
+      void            *instance;
+      void            *client;
+      void            *interface_parameter;
       uint32_t           interface_number;
       uint32_t           configuration_number;
       std::shared_ptr<Interface>       interface;

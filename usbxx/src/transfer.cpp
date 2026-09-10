@@ -8,7 +8,8 @@ Transfer::Transfer() :
   begin_magic(MAGIC),
   end_magic(MAGIC)
 {
-  data = (UCHAR *)::malloc(2048);
+  buffer_size = 2048;
+  data = (uint8_t *)::malloc(buffer_size);
   current_data_pointer = data;
   requested_length = 0;
   actual_length = 0;

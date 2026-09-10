@@ -9,18 +9,18 @@
 using namespace USBXX;
 
 #if 0
-UCHAR _ux_system_slave_class_storage_name[] =                               "storage";
-UCHAR _ux_system_slave_class_dpump_name[] =                                 "dpump";
-UCHAR _ux_system_slave_class_pima_name[] =                                  "pima";
-UCHAR _ux_system_slave_class_hid_name[] =                                   "hid";
-UCHAR _ux_system_slave_class_rndis_name[] =                                 "rndis";
-UCHAR _ux_system_slave_class_cdc_ecm_name[] =                               "cdc_ecm";
-UCHAR _ux_system_slave_class_dfu_name[] =                                   "dfu";
-UCHAR _ux_system_slave_class_audio_name[] =                                 "audio";
+uint8_t _ux_system_slave_class_storage_name[] =                               "storage";
+uint8_t _ux_system_slave_class_dpump_name[] =                                 "dpump";
+uint8_t _ux_system_slave_class_pima_name[] =                                  "pima";
+uint8_t _ux_system_slave_class_hid_name[] =                                   "hid";
+uint8_t _ux_system_slave_class_rndis_name[] =                                 "rndis";
+uint8_t _ux_system_slave_class_cdc_ecm_name[] =                               "cdc_ecm";
+uint8_t _ux_system_slave_class_dfu_name[] =                                   "dfu";
+uint8_t _ux_system_slave_class_audio_name[] =                                 "audio";
 
-UCHAR _ux_system_device_class_printer_name[] =                              "ux_device_class_printer";
-UCHAR _ux_system_device_class_ccid_name[] =                                 "ux_device_class_ccid";
-UCHAR _ux_system_device_class_video_name[] =                                "ux_device_class_video";
+uint8_t _ux_system_device_class_printer_name[] =                              "ux_device_class_printer";
+uint8_t _ux_system_device_class_ccid_name[] =                                 "ux_device_class_ccid";
+uint8_t _ux_system_device_class_video_name[] =                                "ux_device_class_video";
 #endif
 
 void DeviceBase::handle_control_request(const ControlRequest &req)
@@ -31,8 +31,8 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
      is VENDOR and the request match, pass the request to the application.  */
   if (req.type == RequestType::VENDOR)
   {
-    uint32_t application_data_length = UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH;
     auto xfer = get_control_transfer();
+    uint32_t application_data_length = xfer->buffer_size;
 
     if (on_vendor_request(req, xfer->data, &application_data_length))
     {

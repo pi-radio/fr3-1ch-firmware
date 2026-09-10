@@ -115,23 +115,23 @@ typedef struct USBClass_CDC_ACM_PARAMETER_STRUCT
 typedef struct USBClass_CDC_ACM_LINE_CODING_PARAMETER_STRUCT
 {
     uint32_t                               cdc_acm_parameter_baudrate;
-    UCHAR                               cdc_acm_parameter_stop_bit;
-    UCHAR                               cdc_acm_parameter_parity;
-    UCHAR                               cdc_acm_parameter_data_bit;
+    uint8_t                               cdc_acm_parameter_stop_bit;
+    uint8_t                               cdc_acm_parameter_parity;
+    uint8_t                               cdc_acm_parameter_data_bit;
 
 } USBClass_CDC_ACM_LINE_CODING_PARAMETER;
 
 typedef struct USBClass_CDC_ACM_LINE_STATE_PARAMETER_STRUCT
 {
-    UCHAR                               cdc_acm_parameter_rts;
-    UCHAR                               cdc_acm_parameter_dtr;
+    uint8_t                               cdc_acm_parameter_rts;
+    uint8_t                               cdc_acm_parameter_dtr;
 
 } USBClass_CDC_ACM_LINE_STATE_PARAMETER;
 
 typedef struct USBClass_CDC_ACM_CALLBACK_PARAMETER_STRUCT
 {
     uint32_t                                (*ux_device_class_cdc_acm_parameter_write_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, uint32_t status, uint32_t length);
-    uint32_t                                (*ux_device_class_cdc_acm_parameter_read_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, uint32_t status, UCHAR *data_pointer, uint32_t length);
+    uint32_t                                (*ux_device_class_cdc_acm_parameter_read_callback)(struct USBClass_CDC_ACM_STRUCT *cdc_acm, uint32_t status, uint8_t *data_pointer, uint32_t length);
 
 } USBClass_CDC_ACM_CALLBACK_PARAMETER;
 
@@ -186,7 +186,7 @@ extern "C" VOID USBD_CDC_ACM_ParameterChange(VOID *cdc_acm_instance);
 namespace USBXX
 {
 #define USBClass_CDC_ACM_CLASS                                    10
-#define UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE                       UX_SLAVE_REQUEST_DATA_MAX_LENGTH
+//#define UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE                       UX_SLAVE_REQUEST_DATA_MAX_LENGTH
 
   class CDCACMClass : public USBClass
   {
@@ -216,11 +216,11 @@ namespace USBXX
     TXX::Mutex ep_in_mutex;
     TXX::Mutex ep_out_mutex;
     uint32_t baudrate;
-    UCHAR stop_bit;
-    UCHAR parity;
-    UCHAR data_bit;
-    UCHAR dtr_state;
-    UCHAR rts_state;
+    uint8_t stop_bit;
+    uint8_t parity;
+    uint8_t data_bit;
+    uint8_t dtr_state;
+    uint8_t rts_state;
 
     USBXX::Endpoint::ptr in_endpoint;
     USBXX::Endpoint::ptr out_endpoint;
@@ -235,8 +235,8 @@ namespace USBXX
 
     uint32_t ioctl(uint32_t ioctl_function, VOID *parameter);
 
-    uint32_t read(UCHAR *buffer, uint32_t requested_length, uint32_t *actual_length);
-    uint32_t write(UCHAR *buffer, uint32_t requested_length, uint32_t *actual_length);
+    uint32_t read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length);
+    uint32_t write(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length);
 
     static constexpr int RX_QUEUE_LEN = 64;
     static constexpr int TX_QUEUE_LEN = 64;

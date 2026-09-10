@@ -381,14 +381,16 @@ uint32_t DeviceBase::send_compound_descriptor(uint32_t descriptor_type, uint32_t
 
   uint32_t length = std::min(target_descriptor_length, host_length);
 
+
+  auto xfer = get_control_transfer();
+
   /* Check buffer length, since total descriptors length may exceed buffer...  */
-  if (length > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+  if (length > xfer->buffer_size)
   {
     get_control_endpoint()->stall();
     throw USBXX::runtime_error("Control request length too long");
   }
 
-  auto xfer = get_control_transfer();
 
   /* Copy the device descriptor into the transfer request memory.  */
   ::memcpy(xfer->data, d.buffer, length); /* Use case of memcpy is verified. */
@@ -406,8 +408,8 @@ uint32_t DeviceBase::send_descriptor(const ControlRequest &req)
 {
   Transfer               *xfer;
   uint32_t                            status =  UX_ERROR;
-  UCHAR                           *string_memory;
-  UCHAR                           *string_framework;
+  uint8_t                           *string_memory;
+  uint8_t                           *string_framework;
   uint32_t                           string_framework_length;
   uint32_t                           string_length;
 
@@ -418,7 +420,7 @@ uint32_t DeviceBase::send_descriptor(const ControlRequest &req)
   xfer->phase = TransferPhase::DATA_OUT;
 
   auto descriptor_index = req.value & 0xff;
-  auto descriptor_type =  (UCHAR) ((req.value >> 8) & 0xff);
+  auto descriptor_type =  (uint8_t) ((req.value >> 8) & 0xff);
 
   /* Default descriptor length is host length.  */
   //length =  host_length;
@@ -443,13 +445,13 @@ uint32_t DeviceBase::send_descriptor(const ControlRequest &req)
         {
 
             /* We need to check request buffer size in case it's possible exceed. */
-            if (lang_ids.get_buffer_len() + 2 > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+            if (lang_ids.get_buffer_len() + 2 > xfer->buffer_size)
             {
               get_control_endpoint()->stall();
               throw USBXX::runtime_error("Invalid language id framework length");
             }
 
-            xfer->data[0] = (UCHAR)(lang_ids.get_buffer_len() + 2);
+            xfer->data[0] = (uint8_t)(lang_ids.get_buffer_len() + 2);
             xfer->data[1] =  UX_STRING_DESCRIPTOR_ITEM;
 
             /* Store the language ID into the buffer.  */
@@ -482,7 +484,7 @@ uint32_t DeviceBase::send_descriptor(const ControlRequest &req)
                     {
 
                         /* We need to check request buffer size in case it's possible exceed. */
-                        if (((*(string_framework + 3)*2) + 2) > UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH)
+                        if (((*(string_framework + 3)*2) + 2) > xfer->buffer_size)
                         {
                             get_control_endpoint()->stall();
                             throw USBXX::runtime_error("String request invalid");
@@ -497,7 +499,7 @@ uint32_t DeviceBase::send_descriptor(const ControlRequest &req)
                            unicode, hence the '*2'. The length includes the size
                            of the length itself as well as the descriptor type,
                            hence the ' + 2'.  */
-                        *string_memory =  (UCHAR)((*(string_framework + 3)*2) + 2);
+                        *string_memory =  (uint8_t)((*(string_framework + 3)*2) + 2);
 
                         /* Store the Descriptor type. */
                         *(string_memory + 1) =  UX_STRING_DESCRIPTOR_ITEM;

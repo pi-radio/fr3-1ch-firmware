@@ -145,7 +145,7 @@ void CDCACMDevice::flush_buffer()
   
   while (!tx_buf.empty()) {
     auto res = tx_buf.get_seg();
-    UCHAR *p = (UCHAR *)res.first;
+    uint8_t *p = (uint8_t *)res.first;
     uint32_t l = res.second;
     uint32_t result;
     
@@ -353,7 +353,7 @@ uint32_t USBXX::CDCACMDevice::class_command_request()
   return 0;
 }
 
-uint32_t USBXX::CDCACMDevice::read(UCHAR *buffer, uint32_t requested_length, uint32_t *actual_length)
+uint32_t USBXX::CDCACMDevice::read(uint8_t *buffer, uint32_t requested_length, uint32_t *actual_length)
 {
   uint32_t                        status= UX_SUCCESS;
   uint32_t                       local_requested_length;
@@ -412,7 +412,7 @@ uint32_t USBXX::CDCACMDevice::read(UCHAR *buffer, uint32_t requested_length, uin
 }
 
 
-uint32_t USBXX::CDCACMDevice::write(UCHAR *buffer,
+uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
                           uint32_t requested_length,
                           uint32_t *actual_length)
 {
@@ -450,16 +450,16 @@ uint32_t USBXX::CDCACMDevice::write(UCHAR *buffer,
 
 
     /* Check if we need more transactions.  */
-    local_host_length = UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE;
+    local_host_length = xfer->buffer_size;
 
     while (state == UX_DEVICE_CONFIGURED && requested_length != 0)
     {
       wait_activated();
 
       /* Check if we have enough in the local buffer.  */
-      if (requested_length > UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE)
+      if (requested_length > xfer->buffer_size)
           /* We have too much to transfer.  */
-          local_requested_length = UX_DEVICE_CLASS_CDC_ACM_WRITE_BUFFER_SIZE;
+          local_requested_length = xfer->buffer_size;
       else
       {
           local_requested_length = requested_length;

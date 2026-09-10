@@ -76,10 +76,7 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
         {
           auto ms_wait = 100;
           /* translate ms into ticks. */
-          auto ticks = (uint32_t)(ms_wait * UX_PERIODIC_RATE) / 1000;
-
-          /* For safety add 1 to ticks.  */
-          ticks++;
+          auto ticks = ms_to_ticks(ms_wait);
 
           /* Call ThreadX sleep function.  */
           tx_thread_sleep(ticks);

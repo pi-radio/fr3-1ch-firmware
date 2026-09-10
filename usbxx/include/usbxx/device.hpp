@@ -29,7 +29,7 @@ namespace USBXX
 
 struct UX_SYSTEM_SLAVE
 {
-    UCHAR           *ux_system_slave_dfu_framework;
+    uint8_t           *ux_system_slave_dfu_framework;
     uint32_t           ux_system_slave_dfu_framework_length;
     uint32_t           ux_system_slave_power_state;
     uint32_t           ux_system_slave_remote_wakeup_capability;
@@ -52,6 +52,13 @@ namespace USBXX
     L0,
     L1
   };
+
+  static constexpr uint32_t PERIODIC_RATE = 100;
+
+  static inline uint32_t ms_to_ticks(uint32_t ms)
+  {
+    return (ms * PERIODIC_RATE) / 1000 + 1;
+  }
 
   class DeviceBase
   {
@@ -211,7 +218,7 @@ namespace USBXX
     uint32_t set_interface(DescriptorIterator &,
         uint32_t alternate_setting_value);
 
-    uint32_t on_vendor_request(const ControlRequest &, UCHAR *, uint32_t *) { return 0; };
+    uint32_t on_vendor_request(const ControlRequest &, uint8_t *, uint32_t *) { return 0; };
 
     uint32_t get_interface(uint8_t interface_value);
 
@@ -251,9 +258,9 @@ namespace USBXX
   //uint32_t    ux_device_class_storage_entry(USBClass_COMMAND *command);
 
   /*
-  uint32_t    ux_device_stack_class_unregister(UCHAR *class_name,
+  uint32_t    ux_device_stack_class_unregister(uint8_t *class_name,
                                       uint32_t (*class_entry_function)(USBClass_COMMAND *));
-  uint32_t    _ux_device_stack_class_unregister(UCHAR *class_name, uint32_t (*class_entry_function)(USBClass_COMMAND *));
+  uint32_t    _ux_device_stack_class_unregister(uint8_t *class_name, uint32_t (*class_entry_function)(USBClass_COMMAND *));
   */
 
 

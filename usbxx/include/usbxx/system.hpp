@@ -31,17 +31,17 @@ namespace USBXX {
 #if 0
     UX_SLAVE_DCD    dcd;
     UX_SLAVE_DEVICE device;
-    UCHAR           *device_framework;
+    uint8_t           *device_framework;
     uint32_t           device_framework_length;
-    UCHAR           *device_framework_full_speed;
+    uint8_t           *device_framework_full_speed;
     uint32_t           device_framework_length_full_speed;
-    UCHAR           *device_framework_high_speed;
+    uint8_t           *device_framework_high_speed;
     uint32_t           device_framework_length_high_speed;
-    UCHAR           *string_framework;
+    uint8_t           *string_framework;
     uint32_t           string_framework_length;
-    UCHAR           *language_id_framework;
+    uint8_t           *language_id_framework;
     uint32_t           language_id_framework_length;
-    UCHAR           *dfu_framework;
+    uint8_t           *dfu_framework;
     uint32_t           dfu_framework_length;
   #if UX_MAX_SLAVE_CLASS_DRIVER > 1
     uint32_t            max_class;
@@ -59,7 +59,7 @@ namespace USBXX {
     uint32_t           device_dfu_mode;
     uint32_t            (*change_function) (uint32_t);
     uint32_t           device_vendor_request;
-    uint32_t            (*device_vendor_request_function) (uint32_t, uint32_t, uint32_t, uint32_t, UCHAR *, uint32_t *);
+    uint32_t            (*device_vendor_request_function) (uint32_t, uint32_t, uint32_t, uint32_t, uint8_t *, uint32_t *);
 #endif
 
 

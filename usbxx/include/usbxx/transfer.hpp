@@ -47,8 +47,9 @@ namespace USBXX
 
     TransferType           type;
     std::shared_ptr<USBXX::Endpoint> endpoint;
-    UCHAR           *data;
-    UCHAR           *current_data_pointer;
+    uint32_t          buffer_size;
+    uint8_t           *data;
+    uint8_t           *current_data_pointer;
     uint32_t           requested_length;
     uint32_t           actual_length;
     uint32_t           in_transfer_length;
@@ -57,7 +58,7 @@ namespace USBXX
     VOID            (*completion_function) (Transfer *);
     uint32_t           timeout;
     uint32_t           force_zlp;
-    UCHAR           setup[8];
+    uint8_t           setup[8];
     uint32_t           status_phase_ignore;
     uint32_t        end_magic;
 
