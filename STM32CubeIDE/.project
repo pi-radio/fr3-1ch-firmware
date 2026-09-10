@@ -1250,26 +1250,6 @@
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/tx_trace_user_event_insert.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/ThreadX/TraceX_Support/ux_trace_event_insert.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_trace_event_insert.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/ThreadX/TraceX_Support/ux_trace_event_update.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_trace_event_update.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/ThreadX/TraceX_Support/ux_trace_object_register.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_trace_object_register.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/ThreadX/TraceX_Support/ux_trace_object_unregister.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/usbx/common/core/src/ux_trace_object_unregister.c</locationURI>
-		</link>
-		<link>
 			<name>Application/User/USBPD/App/usbpd.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/USBPD/App/usbpd.c</locationURI>
