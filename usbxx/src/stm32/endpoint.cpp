@@ -19,7 +19,6 @@ STM32::Endpoint::Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr) :
   USBXX::Endpoint(_device),
   transfer(),
   epaddr(_epaddr),
-  direction(0),
   dcd(_dcd)
 {
   if (epaddr != 0) {
@@ -32,7 +31,6 @@ void STM32::Endpoint::init()
 {
   transfer.endpoint = shared_from_this();
   device = device;
-  direction = (epaddr & 0x80) ? true : false;
 }
 
 
@@ -69,8 +67,6 @@ uint32_t STM32::Endpoint::create()
   transfer.transfer_length = max_transfer_length;
   transfer.endpoint = shared_from_this();
   transfer.timeout = TX_WAIT_FOREVER;
-
-  direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
 
   open();
 

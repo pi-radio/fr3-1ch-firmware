@@ -66,7 +66,7 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
       if ((req.index & 0xFF) != iface->descriptor.bInterfaceNumber)
         continue;
 
-      status = /*class_ptr ->*/ this->class_command_request();
+      status = /*class_ptr ->*/ this->class_command_request(req);
 
       /* The status simply tells us if the registered class handled the
            command - if there was an issue processing the command, it would've
@@ -80,36 +80,36 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
 
   switch (req.code)
   {
-  case UX_GET_STATUS:
+  case StdControlRequest::GET_STATUS:
     status = get_entity_status(req);
     break;
 
-  case UX_CLEAR_FEATURE:
+  case StdControlRequest::CLEAR_FEATURE:
     status = clear_feature(req);
     break;
 
-  case UX_SET_FEATURE:
+  case StdControlRequest::SET_FEATURE:
     status = set_feature(req);
     break;
 
-  case UX_SET_ADDRESS:
+  case StdControlRequest::SET_ADDRESS:
     status = UX_SUCCESS;
     dcd->set_device_address(req.value);
     break;
 
-  case UX_GET_DESCRIPTOR:
+  case StdControlRequest::GET_DESCRIPTOR:
     status = send_descriptor(req); //request_value, request_index, request_length);
     break;
 
-  case UX_SET_DESCRIPTOR:
+  case StdControlRequest::SET_DESCRIPTOR:
     status = UX_FUNCTION_NOT_SUPPORTED;
     break;
 
-  case UX_GET_CONFIGURATION:
+  case StdControlRequest::GET_CONFIGURATION:
     status = on_get_configuration();
     break;
 
-  case UX_SET_CONFIGURATION:
+  case StdControlRequest::SET_CONFIGURATION:
     event_log.push_event(UsbEvent::SET_CONFIGURATION_START);
     status = on_set_configuration(req.value);
     event_log.push_event(UsbEvent::SET_CONFIGURATION_END);
@@ -117,15 +117,15 @@ void DeviceBase::handle_control_request(const ControlRequest &req)
       int a = 0;
     break;
 
-  case UX_GET_INTERFACE:
+  case StdControlRequest::GET_INTERFACE:
     status = on_get_alternate_setting(req.index);
     break;
 
-  case UX_SET_INTERFACE:
+  case StdControlRequest::SET_INTERFACE:
     status = on_set_alternate_setting(req.index, req.value);
     break;
 
-  case UX_SYNCH_FRAME:
+  case StdControlRequest::SYNCH_FRAME:
     status = UX_SUCCESS;
     break;
 
@@ -170,9 +170,9 @@ void DeviceBase::control_thread_main()
 
       /* Filter for GET_DESCRIPTOR/SET_DESCRIPTOR commands. If the descriptor to be returned is not a standard descriptor,
          treat the command as a CLASS command.  */
-      if ((req.code == UX_GET_DESCRIPTOR ||
-          req.code == UX_SET_DESCRIPTOR) &&
-          (((req.value >> 8) & UX_REQUEST_TYPE) != UX_REQUEST_TYPE_STANDARD))
+      if ((req.code == StdControlRequest::GET_DESCRIPTOR ||
+          req.code == StdControlRequest::SET_DESCRIPTOR) &&
+          (((req.value >> 8) & ControlRequestType::MASK) != ControlRequestType::STANDARD))
         req.type = RequestType::CLASS;
 
 

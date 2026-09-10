@@ -249,7 +249,7 @@ namespace USBXX
     virtual uint32_t class_activate(Interface::ptr) = 0;
     virtual uint32_t class_deactivate() = 0;
     virtual bool class_query(Interface::ptr) = 0;
-    virtual uint32_t class_command_request() = 0;
+    virtual uint32_t class_command_request(const ControlRequest &) = 0;
     virtual uint32_t class_on_change() { return 0; }
   };
 

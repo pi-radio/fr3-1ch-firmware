@@ -83,7 +83,7 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
         }
 
         /* Isolate the direction from the endpoint address.  */
-        if ((endpoint -> descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) == UX_ENDPOINT_IN)
+        if (endpoint->is_in())
             xfer -> phase =  TransferPhase::DATA_OUT;
         else    
             xfer -> phase =  TransferPhase::DATA_IN;

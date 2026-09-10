@@ -38,14 +38,12 @@ namespace USBXX
       STM32::Transfer transfer;
 
       uint8_t        epaddr;
-      uint8_t        direction;
       DCD            *dcd;
 
       Endpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr);
 
       void reset_flags() override {
         USBXX::Endpoint::reset_flags();
-        direction = 0;
         in_transfer = false; // NB -- this is not being used properly
         stalled = false;
         done = false;
@@ -92,7 +90,6 @@ public:
       void abort_all_transfers(uint32_t code) override { transfer.abort(code); };
       void ack_ctrl() override { throw USBXX::runtime_error("Incorrect endpoint for control acknowledgement"); };
 
-      bool is_in() { return (descriptor.bEndpointAddress & 0x80) ? true : false; }
       uint32_t epindex() { return descriptor.bEndpointAddress & 0xF; }
       virtual HAL_StatusTypeDef transmit(PCD_EPTypeDef *ep, uint16_t wEPVal);
       virtual uint16_t receive(PCD_EPTypeDef *ep, uint16_t wEPVal);
@@ -171,8 +168,15 @@ public:
         DATA_OUT
       };
 
+      enum class Direction {
+        OUT,
+        IN
+      };
+
       ControlEndpointState state;
       AckMode ack_mode;
+      Direction direction;
+
 
       void activate() override;
       void deactivate() override;

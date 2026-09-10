@@ -17,7 +17,8 @@ using namespace USBXX;
 STM32::ControlEndpoint::ControlEndpoint(DeviceBase *_device, DCD *_dcd):
   STM32::Endpoint(_device, _dcd, 0),
   state(ControlEndpointState::IDLE),
-  ack_mode(AckMode::NONE)
+  ack_mode(AckMode::NONE),
+  direction(Direction::OUT)
 {
   in_ep.xfer_buff = 0U;
   in_ep.xfer_len = 0U;
@@ -138,8 +139,8 @@ void STM32::ControlEndpoint::open()
   transfer.set_pending();
 
   /* Ask for 8 bytes of the SETUP packet.  */
-  transfer.requested_length =    UX_SETUP_SIZE;
-  transfer.in_transfer_length =  UX_SETUP_SIZE;
+  transfer.requested_length =    ControlRequest::SETUP_SIZE;
+  transfer.in_transfer_length =  ControlRequest::SETUP_SIZE;
 
   /* Reset the number of bytes sent/received.  */
   transfer.actual_length =  0;
@@ -179,7 +180,7 @@ uint32_t STM32::ControlEndpoint::create()
   /* By default the timeout is infinite on request.  */
   transfer.timeout = TX_WAIT_FOREVER;
 
-  direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
+  direction = Direction::OUT;
 
   /* Return successful completion.  */
   return 0;
@@ -253,7 +254,7 @@ void STM32::ControlEndpoint::on_setup()
   /* Check if the transaction is IN.  */
   if (*transfer.setup & UX_REQUEST_IN)
   {
-    direction = UX_ENDPOINT_IN;
+    direction = Direction::IN;
     state = ControlEndpointState::DATA_TX;
     ack_mode = AckMode::DATA_IN;
 
@@ -265,7 +266,7 @@ void STM32::ControlEndpoint::on_setup()
   if (*(transfer.setup + 6) == 0 &&
       *(transfer.setup + 7) == 0)
   {
-    direction = UX_ENDPOINT_IN;
+    direction = Direction::IN;
 
     ack_mode = AckMode::SETUP;
 
@@ -274,7 +275,7 @@ void STM32::ControlEndpoint::on_setup()
     return;
   }
 
-  direction  = UX_ENDPOINT_OUT;
+  direction  = Direction::OUT;
 
   transfer.requested_length = usb_get_short(transfer.setup + 6);
 
@@ -369,7 +370,7 @@ void STM32::ControlEndpoint::on_data_out()
               (transfer_length != descriptor.wMaxPacketSize))
           {
             transfer.complete(UX_SUCCESS);
-            direction = UX_ENDPOINT_IN;
+            direction = Direction::IN;
             ack_mode = AckMode::DATA_OUT;
 
             device->process_control_event(&transfer);

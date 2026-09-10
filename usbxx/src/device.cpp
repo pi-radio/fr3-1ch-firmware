@@ -208,7 +208,7 @@ uint32_t DeviceBase::set_feature(const ControlRequest &req)
   case RequestRecipient::DEVICE:
 
     /* Check if we have a DEVICE_REMOTE_WAKEUP Feature.  */
-    if (req.value == UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP)
+    if (req.value == DeviceFeatures::REMOTE_WAKEUP)
     {
       if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
       {
@@ -324,62 +324,48 @@ uint32_t DeviceBase::set_interface(DescriptorIterator &di,
 
 uint32_t  DeviceBase::clear_feature(const ControlRequest &req)
 {
-    /* Get the control endpoint for the device.  */
-    auto endpoint = get_control_endpoint();
+  /* Get the control endpoint for the device.  */
+  auto endpoint = get_control_endpoint();
 
-    /* The request can be for either the device or the endpoint.  */
-    switch (req.recipient)
+  /* The request can be for either the device or the endpoint.  */
+  switch (req.recipient)
+  {
+  case RequestRecipient::DEVICE:
+    if (req.value == DeviceFeatures::REMOTE_WAKEUP)
     {
-    case RequestRecipient::DEVICE:
-
-        /* Check if we have a DEVICE_REMOTE_WAKEUP Feature.  */
-        if (req.value == UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP)
-        {
-
-            /* Check if we have the capability. */
-            if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
-            {
-
-                /* Disable the feature. */
-                _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_FALSE;
-            }
-
-            else
-
-                /* Protocol error. */
-                return (UX_FUNCTION_NOT_SUPPORTED);
-        }
-
-        break;
-
-    case RequestRecipient::ENDPOINT:
-
-        /* The only clear feature for endpoint is ENDPOINT_STALL. This clears
-           the endpoint of the stall situation and resets its data toggle.
-           We need to find the endpoint through the interface(s). */
-      for(auto iface : interfaces) {
-          for (auto endpoint_target : iface->endpoints) {
-              if (endpoint_target -> descriptor.bEndpointAddress != req.index)
-                continue;
-
-              endpoint_target->reset();
-              return 0;
-            }
+      if (_ux_system_slave -> ux_system_slave_remote_wakeup_capability)
+      {
+        _ux_system_slave -> ux_system_slave_remote_wakeup_enabled = UX_FALSE;
       }
+      else
+        return (UX_FUNCTION_NOT_SUPPORTED);
+    }
 
-        /* Intentional fallthrough and go into the default case. */
-        /* fall through */
+    break;
+
+  case RequestRecipient::ENDPOINT:
+
+    /* The only clear feature for endpoint is ENDPOINT_STALL. This clears
+       the endpoint of the stall situation and resets its data toggle.
+       We need to find the endpoint through the interface(s). */
+    for(auto iface : interfaces) {
+      for (auto endpoint_target : iface->endpoints) {
+        if (endpoint_target -> descriptor.bEndpointAddress != req.index)
+          continue;
+
+        endpoint_target->reset();
+        return 0;
+      }
+    }
+
+    /* Intentional fallthrough and go into the default case. */
+    /* fall through */
 
     /* We get here when the endpoint is wrong. Should not happen though.  */
     default:
-
-        /* We stall the command.  */
       endpoint->stall();
+      return 0;
+  }
 
-        /* No more work to do here.  The command failed but the upper layer does not depend on it.  */
-        return 0;
-    }
-
-    /* Return the function status.  */
-    return 0;
+  return 0;
 }

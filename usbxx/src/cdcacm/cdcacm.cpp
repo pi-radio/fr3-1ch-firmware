@@ -237,10 +237,10 @@ uint32_t USBXX::CDCACMDevice::class_activate(std::shared_ptr<Interface> iface)
   cdc_acm_interface = iface;
 
   for (auto endpoint : iface->endpoints) {
-    if ((endpoint->descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION) != UX_ENDPOINT_IN)
-      out_endpoint = endpoint;
-    else
+    if (endpoint->is_in())
       in_endpoint = endpoint;
+    else
+      out_endpoint = endpoint;
   }
 
   tx_event_flags_set(&flags, FLAG_ACTIVATED, TX_OR);
@@ -267,33 +267,24 @@ uint32_t USBXX::CDCACMDevice::class_deactivate()
   return 0;
 }
 
-uint32_t USBXX::CDCACMDevice::class_command_request()
+uint32_t USBXX::CDCACMDevice::class_command_request(const ControlRequest &req)
 {
   Transfer *xfer;
-  uint32_t    request;
-  uint32_t    value;
-  uint32_t    request_length;
   uint32_t    transmit_length;
 
 
   /* Get the pointer to the transfer request associated with the control endpoint.  */
   xfer = get_control_transfer();
 
-  /* Extract all necessary fields of the request.  */
-  request =  *(xfer -> setup + UX_SETUP_REQUEST);
-
-  event_log.push_event(UsbEvent::CDCACM_COMMAND, request);
+  event_log.push_event(UsbEvent::CDCACM_COMMAND, req.code);
 
   /* Extract all necessary fields of the value.  */
-  value =  usb_get_short(xfer -> setup + UX_SETUP_VALUE);
+  //value =  usb_get_short(xfer -> setup + UX_SETUP_VALUE);
 
-  /* Pickup the request length.  */
-  request_length =   usb_get_short(xfer -> setup + UX_SETUP_LENGTH);
-
-  transmit_length = request_length ;
+  transmit_length = req.length ;
 
   /* Here we proceed only the standard request we know of at the device level.  */
-  switch (request)
+  switch (req.code)
   {
 
       case USBClass_CDC_ACM_SET_CONTROL_LINE_STATE:
@@ -301,11 +292,11 @@ uint32_t USBXX::CDCACMDevice::class_command_request()
           rts_state = 0;
 
           /* Get the line state parameters from the host.  DTR signal. */
-          if (value & USBClass_CDC_ACM_LINE_STATE_DTR)
+          if (req.value & USBClass_CDC_ACM_LINE_STATE_DTR)
               dtr_state = UX_TRUE;
 
           /* Get the line state parameters from the host.  RTS signal. */
-          if (value & USBClass_CDC_ACM_LINE_STATE_RTS)
+          if (req.value & USBClass_CDC_ACM_LINE_STATE_RTS)
               rts_state = UX_TRUE;
 
           break ;
@@ -313,7 +304,7 @@ uint32_t USBXX::CDCACMDevice::class_command_request()
       case USBClass_CDC_ACM_GET_LINE_CODING:
 
           /* Setup the length appropriately.  */
-          if (request_length >  USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
+          if (req.length >  USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
               transmit_length = USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
 
           /* Send the line coding default parameters back to the host.  */
@@ -327,7 +318,7 @@ uint32_t USBXX::CDCACMDevice::class_command_request()
           xfer -> phase =  TransferPhase::DATA_OUT;
 
           /* Perform the data transfer.  */
-          transfer_request(xfer, transmit_length, request_length);
+          transfer_request(xfer, transmit_length, req.length);
           break;
 
       case USBClass_CDC_ACM_SET_LINE_CODING:
@@ -468,8 +459,7 @@ uint32_t USBXX::CDCACMDevice::write(uint8_t *buffer,
 
       /* On a out, we copy the buffer to the caller. Not very efficient but it makes the API
          easier.  */
-      ::memcpy(xfer -> data,
-                          buffer, local_requested_length); /* Use case of memcpy is verified. */
+      ::memcpy(xfer->data, buffer, local_requested_length); /* Use case of memcpy is verified. */
 
       /* Send the request to the device controller.  */
       status = transfer_request(xfer, local_requested_length, local_host_length);

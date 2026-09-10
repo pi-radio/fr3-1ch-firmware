@@ -207,6 +207,7 @@ typedef signed char               SCHAR;
 
 /* Define USBX command request constants.  */
 
+#if 0
 #define UX_SETUP_REQUEST_TYPE                                           0u
 #define UX_SETUP_REQUEST                                                1u
 #define UX_SETUP_VALUE                                                  2u
@@ -215,62 +216,14 @@ typedef signed char               SCHAR;
 #define UX_SETUP_SIZE                                                   8u
 
 
-/* Define USBX standard commands.  */
-
-#define UX_GET_STATUS                                                   0u
-#define UX_CLEAR_FEATURE                                                1u
-#define UX_SET_FEATURE                                                  3u
-#define UX_SET_ADDRESS                                                  5u
-#define UX_GET_DESCRIPTOR                                               6u
-#define UX_SET_DESCRIPTOR                                               7u
-#define UX_GET_CONFIGURATION                                            8u
-#define UX_SET_CONFIGURATION                                            9u
-#define UX_GET_INTERFACE                                                10u
-#define UX_SET_INTERFACE                                                11u
-#define UX_SYNCH_FRAME                                                  12u
-
-
-/* Define USBX command sub constants.  */
-
-#define UX_ENDPOINT_HALT                                                0u
-
-/* Define USBX feature selector constants.  */
-#define UX_REQUEST_FEATURE_ENDPOINT_HALT                                0u
-#define UX_REQUEST_FEATURE_DEVICE_REMOTE_WAKEUP                         1u
-#define UX_REQUEST_FEATURE_TEST_MODE                                    2u
-
-/* Define Generic USBX constants.  */
-
-#define UX_UNUSED                                                       0
-#define UX_USED                                                         1
-
-#define UX_MEMORY_UNUSED                                                0x00000000u
-#define UX_MEMORY_USED                                                  0x80000000u
-#define UX_REGULAR_MEMORY                                               0
-#define UX_CACHE_SAFE_MEMORY                                            1
-
-#define UX_NO_ALIGN                                                     0u
-#define UX_ALIGN_8                                                      0x07u
-#define UX_ALIGN_16                                                     0x0fu
-#define UX_ALIGN_32                                                     0x1fu
-#define UX_ALIGN_64                                                     0x3fu
-#define UX_ALIGN_128                                                    0x7fu
-#define UX_ALIGN_256                                                    0xffu
-#define UX_ALIGN_512                                                    0x1ffu
-#define UX_ALIGN_1024                                                   0x3ffu
-#define UX_ALIGN_2048                                                   0x7ffu
-#define UX_ALIGN_4096                                                   0xfffu
-#define UX_SAFE_ALIGN                                                   0xffffffffu
-#define UX_MAX_SCATTER_GATHER_ALIGNMENT                                 4096
-#ifndef UX_ALIGN_MIN
-#define UX_ALIGN_MIN                                                    UX_ALIGN_8
-#endif
 
 #define UX_MAX_USB_DEVICES                                              127
 
 #define UX_ENDPOINT_DIRECTION                                           0x80u
 #define UX_ENDPOINT_IN                                                  0x80u
 #define UX_ENDPOINT_OUT                                                 0x00u
+#endif
+
 
 #define UX_MASK_ENDPOINT_TYPE                                           3u
 #define UX_CONTROL_ENDPOINT                                             0u

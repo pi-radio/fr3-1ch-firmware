@@ -272,7 +272,7 @@ namespace USBXX
     uint32_t class_activate(std::shared_ptr<Interface>) override;
     uint32_t class_deactivate() override;
     bool class_query(Interface::ptr) override;
-    uint32_t class_command_request() override;
+    uint32_t class_command_request(const ControlRequest &) override;
     
   public:
 

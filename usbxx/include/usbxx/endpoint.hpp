@@ -43,7 +43,8 @@ namespace USBXX
     static constexpr uint32_t REQUEST_VALUE = 2;
     static constexpr uint32_t REQUEST_INDEX = 4;
     static constexpr uint32_t REQUEST_LENGTH = 6;
-    //static constexpr uint32_t UX_SETUP_SIZE = 8;
+
+    static constexpr uint32_t SETUP_SIZE = 8;
 
 
     ControlRequest(const uint8_t *buffer) {
@@ -121,6 +122,7 @@ namespace USBXX
 
     }
 
+    bool is_in() { return (descriptor.bEndpointAddress & 0x80) ? true : false; }
     bool is_control() { return (descriptor.bEndpointAddress & 0x7F) == 0; }
 
     virtual Transfer *get_transfer() = 0;
