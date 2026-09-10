@@ -24,7 +24,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <usbxx/ux_api.h>
-#include <usbxx/ux_device_descriptors.h>
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 

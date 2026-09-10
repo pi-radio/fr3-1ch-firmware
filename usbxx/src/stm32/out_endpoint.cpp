@@ -8,7 +8,7 @@
 #include <usbxx/stm32/endpoint.hpp>
 #include <usbxx/device.hpp>
 #include <usbxx/event_log.hpp>
-#include <usbxx/ux_device_stack.h>
+//#include <usbxx/ux_device_stack.h>
 
 using namespace USBXX;
 

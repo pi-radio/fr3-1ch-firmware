@@ -25,8 +25,9 @@
 
 /* Include necessary system files.  */
 
+#include <threadxx/intr.hpp>
+
 #include <usbxx/ux_api.h>
-#include <usbxx/ux_device_stack.h>
 
 #include <usbxx/stm32/dcd.hpp>
 
@@ -38,37 +39,27 @@ uint32_t DeviceBase::transfer_request(Transfer *xfer,
     ULONG slave_length,
     ULONG host_length)
 {
-  UX_INTERRUPT_SAVE_AREA
-
   UINT                    status;
 
+  /* Do we have to skip this transfer?  */
+  if (xfer -> status_phase_ignore == UX_TRUE)
+    return 0;
 
-    /* Do we have to skip this transfer?  */
-    if (xfer -> status_phase_ignore == UX_TRUE)
-        return 0;
-
-    /* Disable interrupts to prevent the disconnection ISR from preempting us
-       while we check the device state and set the transfer status.  */
-    UX_DISABLE
-
+  /* Disable interrupts to prevent the disconnection ISR from preempting us
+   while we check the device state and set the transfer status.  */
+  {
+    TXX::lock_intr l;
     /* We can only transfer when the device is ATTACHED, ADDRESSED OR CONFIGURED.  */
     if ((state == UX_DEVICE_ATTACHED) ||
         (state == UX_DEVICE_ADDRESSED) ||
         (state == UX_DEVICE_CONFIGURED))
-
-        /* Set the transfer to pending.  */
-        xfer->set_pending();
+      xfer->set_pending();
 
     else
     {
-
-        /* The device is in an invalid state. Restore interrupts and return error.  */
-        UX_RESTORE
-        return(UX_TRANSFER_NOT_READY);
+      return(UX_TRANSFER_NOT_READY);
     }
-
-    /* Restore interrupts.  */
-    UX_RESTORE
+  }
                     
     /* Get the endpoint associated with this transaction.  */
     auto endpoint =  xfer -> endpoint;

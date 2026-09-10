@@ -1,7 +1,6 @@
 #include <cassert>
 
 #include <usbxx/ux_api.h>
-#include <usbxx/ux_device_stack.h>
 
 #include <usbxx/device.hpp>
 
@@ -198,7 +197,7 @@ uint32_t  DeviceBase::on_set_alternate_setting(ULONG interface_value, ULONG alte
                             }
 
                             /* The interface descriptor in the current class must be changed to the new alternate setting.  */
-                            ::memcpy(&iface -> descriptor, &interface_descriptor, sizeof(UX_INTERFACE_DESCRIPTOR)); /* Use case of memcpy is verified. */
+                            iface->descriptor = interface_descriptor;
 
                             /* Get the class for the interface.  */
                             auto class_ptr = iface_to_class[iface -> descriptor.bInterfaceNumber];

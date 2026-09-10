@@ -16,10 +16,7 @@
 #include <usb.h>
 
 /* Includes ------------------------------------------------------------------*/
-#include <usbxx/ux_device_descriptors.h>
 
-UX_SYSTEM ux_system;
-UX_SYSTEM *_ux_system = &ux_system;
 
 using namespace USBXX;
 
@@ -27,6 +24,9 @@ using namespace USBXX;
 UX_SYSTEM_SLAVE ux_system_slave;
 UX_SYSTEM_SLAVE *_ux_system_slave = &ux_system_slave;
 
+#define USBD_IDX_MFC_STR                              0x01U
+#define USBD_IDX_PRODUCT_STR                          0x02U
+#define USBD_IDX_SERIAL_STR                           0x03U
 
 void DeviceBase::thread_entry()
 {

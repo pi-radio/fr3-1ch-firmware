@@ -53,6 +53,8 @@
 /*                                                                        */
 /**************************************************************************/
 
+#if 1
+
 #ifndef UX_PORT_H
 #define UX_PORT_H
 
@@ -264,3 +266,4 @@ extern  CHAR                    _ux_version_id[];
 
 #endif
 
+#endif

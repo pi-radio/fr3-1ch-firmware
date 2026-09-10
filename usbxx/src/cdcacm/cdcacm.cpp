@@ -211,7 +211,6 @@ void CDCACMDevice::_tx_thread()
 
 #include <usbxx/descriptor.hpp>
 #include <usb.h>
-#include <usbxx/ux_device_descriptors.h>
 
 
 uint32_t USBXX::CDCACMDevice::class_initialize()

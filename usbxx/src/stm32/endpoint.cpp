@@ -3,12 +3,13 @@
 
 /* Include necessary system files.  */
 
+#include <threadxx/intr.hpp>
+
 #include <usbxx/ux_api.h>
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/stm32/endpoint.hpp>
 #include <usbxx/device.hpp>
 #include <usbxx/event_log.hpp>
-#include <usbxx/ux_device_stack.h>
 
 using namespace USBXX;
 
@@ -67,7 +68,7 @@ UINT STM32::Endpoint::create()
   UX_ASSERT(max_transfer_length <= UX_SLAVE_REQUEST_DATA_MAX_LENGTH);
   transfer.transfer_length = max_transfer_length;
   transfer.endpoint = shared_from_this();
-  transfer.timeout = UX_WAIT_FOREVER;
+  transfer.timeout = TX_WAIT_FOREVER;
 
   direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
 
@@ -103,9 +104,7 @@ bool STM32::Endpoint::is_stalled()
 
 UINT  STM32::Endpoint::reset()
 {
-  UX_INTERRUPT_SAVE_AREA
-
-  UX_DISABLE
+  TXX::lock_intr l;
 
   stalled = false;
   done = false;
@@ -117,9 +116,6 @@ UINT  STM32::Endpoint::reset()
 
   transfer.reset();
 
-  UX_RESTORE
-
-  /* This function never fails.  */
   return 0;
 }
 
@@ -456,7 +452,7 @@ void STM32::Endpoint::ll_transmit(uint8_t *buf, uint32_t len)
   throw USBXX::runtime_error("Invalid transfer mode (TX)");
 }
 
-void STM32::Endpoint::start_transfer_in(EPTypeDef *ep)
+void STM32::Endpoint::start_transfer_in(XferState *ep)
 {
   auto PCD = dcd->get_PCD();
   uint32_t len;
@@ -482,7 +478,7 @@ void STM32::Endpoint::start_transfer_in(EPTypeDef *ep)
   PCD_SET_EP_TX_STATUS(PCD, epindex(), USB_EP_TX_VALID);
 }
 
-void STM32::Endpoint::start_transfer_out(EPTypeDef *ep)
+void STM32::Endpoint::start_transfer_out(XferState *ep)
 {
   auto PCD = dcd->get_PCD();
 

@@ -9,7 +9,7 @@
 
 #include <usbxx/ux_api.h>
 #include <usbxx/stm32/dcd.hpp>
-#include <usbxx/ux_device_stack.h>
+//#include <usbxx/ux_device_stack.h>
 
 #include <usbxx/device.hpp>
 #include <usbxx/event_log.hpp>

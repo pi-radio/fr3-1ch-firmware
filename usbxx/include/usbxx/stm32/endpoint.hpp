@@ -4,28 +4,20 @@
 #include <usbxx/stm32/transfer.hpp>
 #include <usbxx/stm32/pcd.hpp>
 
-#include <usbxx/ux_stm32_config.h>
-
 namespace USBXX
 {
   namespace STM32
   {
     class DCD;
 
-    struct EPTypeDef
+    struct XferState
     {
-      uint16_t  pmaaddress;            /*!< PMA Address
-                                           This parameter can be any value between Min_addr = 0 and Max_addr = 1K   */
-
-      uint8_t   *xfer_buff;           /*!< Pointer to transfer buffer                                               */
-
-      uint32_t  xfer_len;             /*!< Current transfer length                                                  */
-
-      uint32_t  xfer_count;           /*!< Partial transfer length in case of multi packet transfer                 */
-
-      uint32_t  xfer_len_db;          /*!< double buffer transfer length used with bulk double buffer in            */
-
-      uint8_t   xfer_fill_db;         /*!< double buffer Need to Fill new buffer  used with bulk_in                 */
+      uint16_t  pmaaddress;
+      uint8_t   *xfer_buff;
+      uint32_t  xfer_len;
+      uint32_t  xfer_count;
+      uint32_t  xfer_len_db;
+      uint8_t   xfer_fill_db;
     } ;
 
     class Endpoint : public USBXX::Endpoint
@@ -87,8 +79,8 @@ public:
       virtual void abort_transfer() = 0;
 
 
-      void start_transfer_in(EPTypeDef *);
-      void start_transfer_out(EPTypeDef *);
+      void start_transfer_in(XferState *);
+      void start_transfer_out(XferState *);
 
       virtual void open();
 
@@ -118,7 +110,7 @@ public:
 
     class InEndpoint : public Endpoint
     {
-      EPTypeDef ep;
+      XferState ep;
 
     protected:
       void activate() override;
@@ -139,7 +131,7 @@ public:
 
     class OutEndpoint : public Endpoint
     {
-      EPTypeDef ep;
+      XferState ep;
 
     protected:
       void activate() override;
@@ -190,8 +182,8 @@ public:
       void ll_receive(uint8_t *buf, uint32_t sz) override;
       void ll_transmit(uint8_t *buf, uint32_t sz) override;
 
-      EPTypeDef in_ep;
-      EPTypeDef out_ep;
+      XferState in_ep;
+      XferState out_ep;
 
 
     public:

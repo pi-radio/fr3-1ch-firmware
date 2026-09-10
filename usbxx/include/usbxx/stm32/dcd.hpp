@@ -4,8 +4,6 @@
 
 #include <usbxx/dcd.hpp>
 
-#include <usbxx/ux_stm32_config.h>
-
 #include <usbxx/stm32/endpoint.hpp>
 
 /* Define STM32 generic equivalences.  */

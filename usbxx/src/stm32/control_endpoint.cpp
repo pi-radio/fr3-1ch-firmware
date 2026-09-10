@@ -11,7 +11,6 @@
 #include <usbxx/stm32/endpoint.hpp>
 #include <usbxx/device.hpp>
 #include <usbxx/event_log.hpp>
-#include <usbxx/ux_device_stack.h>
 
 using namespace USBXX;
 
@@ -178,7 +177,7 @@ UINT STM32::ControlEndpoint::create()
   transfer.endpoint = shared_from_this();
 
   /* By default the timeout is infinite on request.  */
-  transfer.timeout = UX_WAIT_FOREVER;
+  transfer.timeout = TX_WAIT_FOREVER;
 
   direction = descriptor.bEndpointAddress & UX_ENDPOINT_DIRECTION;
 
