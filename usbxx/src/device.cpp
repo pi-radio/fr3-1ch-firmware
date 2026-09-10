@@ -10,7 +10,6 @@
 
 #include <usbxx/usbxx.hpp>
 
-#include <usbxx/ux_api.h>
 #include <usbxx/stm32/dcd.hpp>
 
 #include <usb.h>

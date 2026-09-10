@@ -8,10 +8,6 @@
 
 #include <usbxx/usbxx.hpp>
 
-#include <ux_api.h>
-
-#include <usb.h>
-
 USBXX::SystemBase::SystemBase()
 {
 }

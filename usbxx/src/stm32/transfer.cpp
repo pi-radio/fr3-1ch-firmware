@@ -1,6 +1,5 @@
 #include <threadxx/intr.hpp>
 
-#include <usbxx/ux_api.h>
 #include <usbxx/stm32/transfer.hpp>
 #include <usbxx/stm32/dcd.hpp>
 

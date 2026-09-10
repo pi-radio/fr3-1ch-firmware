@@ -1,27 +1,10 @@
 #include <threadxx/intr.hpp>
 
-#include <usbxx/ux_api.h>
-
 #include <usbxx/device.hpp>
 
 #include <usbxx/event_log.hpp>
 
 using namespace USBXX;
-
-#if 0
-uint8_t _ux_system_slave_class_storage_name[] =                               "storage";
-uint8_t _ux_system_slave_class_dpump_name[] =                                 "dpump";
-uint8_t _ux_system_slave_class_pima_name[] =                                  "pima";
-uint8_t _ux_system_slave_class_hid_name[] =                                   "hid";
-uint8_t _ux_system_slave_class_rndis_name[] =                                 "rndis";
-uint8_t _ux_system_slave_class_cdc_ecm_name[] =                               "cdc_ecm";
-uint8_t _ux_system_slave_class_dfu_name[] =                                   "dfu";
-uint8_t _ux_system_slave_class_audio_name[] =                                 "audio";
-
-uint8_t _ux_system_device_class_printer_name[] =                              "ux_device_class_printer";
-uint8_t _ux_system_device_class_ccid_name[] =                                 "ux_device_class_ccid";
-uint8_t _ux_system_device_class_video_name[] =                                "ux_device_class_video";
-#endif
 
 void DeviceBase::handle_control_request(const ControlRequest &req)
 {

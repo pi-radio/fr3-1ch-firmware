@@ -7,7 +7,6 @@
 
 #include <threadxx/dbgstream.hpp>
 #include <usbxx/cdcacm.hpp>
-#include <usbxx/ux_api.h>
 #include <usbxx/event_log.hpp>
 
 #include <cassert>

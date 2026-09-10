@@ -5,7 +5,6 @@
 
 #include <threadxx/intr.hpp>
 
-#include <usbxx/ux_api.h>
 #include <usbxx/stm32/dcd.hpp>
 #include <usbxx/stm32/endpoint.hpp>
 #include <usbxx/device.hpp>

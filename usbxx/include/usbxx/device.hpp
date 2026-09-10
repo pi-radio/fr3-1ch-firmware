@@ -11,8 +11,6 @@
 #include <usbxx/system.hpp>
 #include <usbxx/descriptor.hpp>
 
-#include <usbxx/ux_api.h>
-
 #include <usbxx/dcd.hpp>
 #include <usbxx/endpoint.hpp>
 #include <usbxx/interface.hpp>

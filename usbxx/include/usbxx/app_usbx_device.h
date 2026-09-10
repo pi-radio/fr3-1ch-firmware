@@ -21,10 +21,7 @@
 #ifndef __APP_USBX_DEVICE_H__
 #define __APP_USBX_DEVICE_H__
 
-
-/* Includes ------------------------------------------------------------------*/
-#include <usbxx/ux_api.h>
-/* Private includes ----------------------------------------------------------*/
+#if 0
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -79,5 +76,6 @@
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+#endif
 
 #endif /* __APP_USBX_DEVICE_H__ */

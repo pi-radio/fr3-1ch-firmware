@@ -1,7 +1,5 @@
 #include <cassert>
 
-#include <usbxx/ux_api.h>
-
 #include <usbxx/device.hpp>
 
 using namespace USBXX;

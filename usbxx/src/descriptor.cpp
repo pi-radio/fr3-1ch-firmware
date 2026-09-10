@@ -14,7 +14,6 @@
 #include <usbxx/class.hpp>
 #include <usbxx/descriptor.hpp>
 #include <usbxx/device.hpp>
-#include <usbxx/ux_api.h>
 
 using namespace USBXX;
 

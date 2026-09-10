@@ -4,12 +4,10 @@
 #include <cstdint>
 #include <memory>
 
-#include <usbxx/ux_api.h>
-
 //#include <usbxx/control.hpp>
 
-#define USBD_MAX_CLASS_ENDPOINTS                       9U
-#define USBD_MAX_CLASS_INTERFACES                      11U
+//#define USBD_MAX_CLASS_ENDPOINTS                       9U
+//#define USBD_MAX_CLASS_INTERFACES                      11U
 
 namespace USBXX
 {
