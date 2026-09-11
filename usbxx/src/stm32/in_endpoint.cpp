@@ -131,45 +131,42 @@ void STM32::InEndpoint::on_data_in()
   PCD_CLEAR_TX_EP_CTR(PCD, epindex());
 
   /* Multi-packet on the NON control IN endpoint */
-  auto TxPctSize = (uint16_t)PCD_GET_EP_TX_CNT(PCD, epindex());
+  auto tx_len = (uint16_t)PCD_GET_EP_TX_CNT(PCD, epindex());
 
-  if (ep.xfer_len > TxPctSize)
+  if (ep.xfer_len > tx_len)
   {
-    ep.xfer_len -= TxPctSize;
+    ep.xfer_len -= tx_len;
   }
   else
   {
     ep.xfer_len = 0U;
   }
 
-  /* Zero Length Packet? */
-  if (ep.xfer_len == 0U)
-  {
-    /* Check if a ZLP should be armed.  */
-    if (transfer.force_zlp &&
-        transfer.requested_length)
-    {
-      transfer.force_zlp = false;
-      transfer.in_transfer_length = 0;
-
-      /* Arm a ZLP packet on IN.  */
-      ll_transmit(0, 0);
-    }
-    else
-    {
-      transfer.actual_length = transfer.requested_length;
-
-    /* Non control endpoint operation, use semaphore.  */
-      transfer.complete(0);
-    }
-  }
-  else
+  if (ep.xfer_len)
   {
     /* Transfer is not yet Done */
-    ep.xfer_buff += TxPctSize;
-    ep.xfer_count += TxPctSize;
+    ep.xfer_buff += tx_len;
+    ep.xfer_count += tx_len;
     start_transfer_in(&ep);
+
+    return;
   }
+
+  /* Check if a ZLP should be armed.  */
+  if (transfer.force_zlp &&
+      transfer.requested_length)
+  {
+    transfer.force_zlp = false;
+    transfer.in_transfer_length = 0;
+
+    /* Arm a ZLP packet on IN.  */
+    ll_transmit(0, 0);
+    return;
+  }
+
+
+  transfer.actual_length = transfer.requested_length;
+  transfer.complete(0);
 }
 
 void STM32::InEndpoint::ll_transmit(uint8_t *buf, uint32_t len)

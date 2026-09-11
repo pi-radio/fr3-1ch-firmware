@@ -892,302 +892,302 @@
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_block_allocate.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_block_allocate.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_block_allocate.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_block_pool_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_block_pool_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_block_pool_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_block_pool_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_block_pool_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_block_pool_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_block_pool_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_block_pool_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_block_pool_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_block_pool_prioritize.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_block_pool_prioritize.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_block_pool_prioritize.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_block_release.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_block_release.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_block_release.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_byte_allocate.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_byte_allocate.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_byte_allocate.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_byte_pool_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_byte_pool_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_byte_pool_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_byte_pool_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_byte_pool_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_byte_pool_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_byte_pool_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_byte_pool_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_byte_pool_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_byte_pool_prioritize.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_byte_pool_prioritize.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_byte_pool_prioritize.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_byte_release.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_byte_release.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_byte_release.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_event_flags_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_event_flags_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_event_flags_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_event_flags_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_event_flags_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_event_flags_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_event_flags_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_event_flags_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_event_flags_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_event_flags_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_event_flags_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_event_flags_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_event_flags_set.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_event_flags_set.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_event_flags_set.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_event_flags_set_notify.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_event_flags_set_notify.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_event_flags_set_notify.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_mutex_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_mutex_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_mutex_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_mutex_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_mutex_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_mutex_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_mutex_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_mutex_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_mutex_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_mutex_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_mutex_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_mutex_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_mutex_prioritize.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_mutex_prioritize.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_mutex_prioritize.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_mutex_put.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_mutex_put.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_mutex_put.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_flush.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_flush.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_flush.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_front_send.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_front_send.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_front_send.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_prioritize.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_prioritize.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_prioritize.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_receive.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_receive.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_receive.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_send.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_send.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_send.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_queue_send_notify.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_queue_send_notify.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_queue_send_notify.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_ceiling_put.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_ceiling_put.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_ceiling_put.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_prioritize.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_prioritize.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_prioritize.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_put.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_put.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_put.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_semaphore_put_notify.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_semaphore_put_notify.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_semaphore_put_notify.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_entry_exit_notify.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_entry_exit_notify.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_entry_exit_notify.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_preemption_change.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_preemption_change.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_preemption_change.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_priority_change.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_priority_change.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_priority_change.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_relinquish.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_relinquish.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_relinquish.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_reset.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_reset.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_reset.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_resume.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_resume.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_resume.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_suspend.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_suspend.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_suspend.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_terminate.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_terminate.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_terminate.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_time_slice_change.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_time_slice_change.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_time_slice_change.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_thread_wait_abort.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_thread_wait_abort.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_thread_wait_abort.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_timer_activate.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_timer_activate.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_timer_activate.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_timer_change.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_timer_change.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_timer_change.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_timer_create.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_timer_create.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_timer_create.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_timer_deactivate.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_timer_deactivate.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_timer_deactivate.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_timer_delete.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_timer_delete.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_timer_delete.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/Core/txe_timer_info_get.c</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/threadx/common/src/txe_timer_info_get.c</locationURI>
+			<location>/home/zapman/piradio/fr3-1ch-firmware/Middlewares/ST/threadx/common/src/txe_timer_info_get.c</location>
 		</link>
 		<link>
 			<name>Middlewares/ThreadX/TraceX_Support/tx_trace_buffer_full_notify.c</name>

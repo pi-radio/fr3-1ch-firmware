@@ -56,12 +56,18 @@ void STM32::DCD::disconnect()
   if (device->get_state() == DeviceState::RESET)
     return;
 
+  std::vector<uint8_t> eps;
+
   for (auto t : endpoints) {
     auto a = std::get<0>(t);
 
     if (a & 0x7F) {
-      endpoints.erase(a);
+      eps.push_back(a);
     }
+  }
+
+  for (auto a : eps) {
+    endpoints.erase(a);
   }
 
   device->on_disconnected();

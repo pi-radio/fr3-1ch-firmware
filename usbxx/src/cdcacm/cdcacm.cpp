@@ -15,6 +15,7 @@ using namespace USBXX;
 
 CDCACMClass::CDCACMClass(DeviceBase *_dev) :
     USBClass("CDC ACM", _dev),
+    flags("CDC ACM Flags"),
     ep_in_mutex("CDC ACM EP In Mutex"),
     ep_out_mutex("CDC ACM EP Out Mutex"),
     tx_queue("CDC ACM TX Queue"),
@@ -22,14 +23,10 @@ CDCACMClass::CDCACMClass(DeviceBase *_dev) :
     rx_mutex("CDC ACM RX Mutex"),
     rx_cur(0), rx_len(0),
     tx_mutex("CDC ACM TX Mutex"),
+    flush_sema("CDC ACM Flush Semaphore"),
     tx_count(0), rx_count(0)
 {
-  tx_event_flags_create(&flags, (char *)"CDCACM flags");
-
-  tx_semaphore_create(&flush_sema, (char *)"Terminal Flush Semaphore", 0);
-
   tx_queue.create();
-
 }
 
 
@@ -39,7 +36,7 @@ void CDCACMClass::wait_activated()
 {
   uint32_t actual;
 
-  tx_event_flags_get(&flags, FLAG_ACTIVATED, TX_AND, &actual, TX_WAIT_FOREVER);
+  flags[FLAG_ACTIVATED].get();
 }
 
 
@@ -53,9 +50,9 @@ void CDCACMClass::set_dtr(bool dtr)
 {
   dtr_state = dtr;
   if (dtr) {
-    tx_event_flags_set(&flags, ~FLAG_DTR, TX_AND);
+    flags[FLAG_DTR].clear();
   } else {
-    tx_event_flags_set(&flags, FLAG_DTR, TX_OR);
+    flags[FLAG_DTR].set();
   }
 }
 
@@ -63,9 +60,9 @@ void CDCACMClass::set_rts(bool rts)
 {
   rts_state = rts;
   if (rts) {
-    tx_event_flags_set(&flags, ~FLAG_RTS, TX_AND);
+    flags[FLAG_RTS].clear();
   } else {
-    tx_event_flags_set(&flags, FLAG_RTS, TX_OR);
+    flags[FLAG_RTS].set();
   }
 }
 
@@ -81,7 +78,7 @@ bool CDCACMClass::query(Interface::ptr iface)
 void CDCACMClass::flush()
 {
   putc(FLUSH);
-  tx_semaphore_get(&flush_sema, TX_WAIT_FOREVER);
+  flush_sema.get();
 }
 
 int CDCACMClass::getc()
@@ -135,11 +132,9 @@ void CDCACMClass::flush_buffer()
       result = write(p, l, &tx_len);
       
       while (result != TX_SUCCESS) {
-        uint32_t _flags;
-        if (tx_event_flags_get(&flags, FLAG_ACTIVATED, TX_AND, &_flags, TX_WAIT_FOREVER) != 0) {
-          tx_thread_sleep(10);
-          // Maybe clear tx_buf??
-        }
+        tx_thread_sleep(10);
+
+        flags[FLAG_ACTIVATED].get();
 
         result = write(p, l, &tx_len);
       }
@@ -174,7 +169,7 @@ void CDCACMClass::_tx_thread()
 
     if (c == FLUSH) {
       flush_buffer();
-      tx_semaphore_put(&flush_sema);
+      flush_sema.put();
       wait = TX_WAIT_FOREVER;
       continue;
     }
@@ -196,10 +191,10 @@ void CDCACMClass::_tx_thread()
 uint32_t CDCACMClass::initialize()
 {
   /* Update the line coding fields with default values.  */
-  baudrate  =  USBClass_CDC_ACM_LINE_CODING_BAUDRATE;
-  stop_bit  =  USBClass_CDC_ACM_LINE_CODING_STOP_BIT;
-  parity    =  USBClass_CDC_ACM_LINE_CODING_PARITY;
-  data_bit  =  USBClass_CDC_ACM_LINE_CODING_DATA_BIT;
+  baudrate  =  115200;
+  stop_bit  =  1;
+  parity    =  0;
+  data_bit  =  8;
 
   return 0;
 }
@@ -214,11 +209,8 @@ uint32_t CDCACMClass::activate(std::shared_ptr<Interface> iface)
 {
   iface->class_instance = (VOID *)this;
 
-  if (iface->descriptor.bInterfaceClass == 2)
+  if (iface->descriptor.bInterfaceClass != DATA_INTERFACE_CLASS)
     return 0;
-
-
-  cdc_acm_interface = iface;
 
   for (auto endpoint : iface->endpoints) {
     if (endpoint->is_in())
@@ -227,21 +219,21 @@ uint32_t CDCACMClass::activate(std::shared_ptr<Interface> iface)
       out_endpoint = endpoint;
   }
 
-  tx_event_flags_set(&flags, FLAG_ACTIVATED, TX_OR);
+  flags[FLAG_ACTIVATED].set();
 
   return 0;
 }
 
 uint32_t CDCACMClass::deactivate()
 {
-  tx_event_flags_set(&flags, ~FLAG_ACTIVATED, TX_AND);
+  flags[FLAG_ACTIVATED].clear();
 
   /* Terminate the transactions pending on the endpoints.  */
   in_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
   out_endpoint->abort_all_transfers(UX_TRANSFER_BUS_RESET);
 
   /* Terminate transmission and free resources.  */
-  ioctl(USBClass_CDC_ACM_IOCTL_TRANSMISSION_STOP, nullptr);
+  stop_transmission();
 
   /* We need to reset the DTR and RTS values so they do not carry over to the
      next connection.  */
@@ -270,55 +262,57 @@ uint32_t CDCACMClass::command_request(const ControlRequest &req)
   /* Here we proceed only the standard request we know of at the device level.  */
   switch (req.code)
   {
+  case Commands::SET_CONTROL_LINE_STATE:
+      dtr_state = 0;
+      rts_state = 0;
 
-      case USBClass_CDC_ACM_SET_CONTROL_LINE_STATE:
-          dtr_state = 0;
-          rts_state = 0;
+      /* Get the line state parameters from the host.  DTR signal. */
+      if (req.value & LineState::DTR)
+          dtr_state = true;
 
-          /* Get the line state parameters from the host.  DTR signal. */
-          if (req.value & USBClass_CDC_ACM_LINE_STATE_DTR)
-              dtr_state = true;
+      /* Get the line state parameters from the host.  RTS signal. */
+      if (req.value & LineState::RTS)
+          rts_state = true;
 
-          /* Get the line state parameters from the host.  RTS signal. */
-          if (req.value & USBClass_CDC_ACM_LINE_STATE_RTS)
-              rts_state = true;
+      break ;
 
-          break ;
+  case Commands::GET_LINE_CODING:
+  {
+    auto coding = (line_coding *)xfer->data;
 
-      case USBClass_CDC_ACM_GET_LINE_CODING:
+    /* Setup the length appropriately.  */
+    if (req.length > sizeof(line_coding))
+        transmit_length = sizeof(line_coding);
 
-          /* Setup the length appropriately.  */
-          if (req.length >  USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE)
-              transmit_length = USBClass_CDC_ACM_LINE_CODING_RESPONSE_SIZE;
+    coding->baudrate = to_usb32(baudrate);
+    coding->stop_bit = stop_bit;
+    coding->parity = parity;
+    coding->data_bit = data_bit;
 
-          /* Send the line coding default parameters back to the host.  */
-          usb_put_long(xfer->data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT,
-                               baudrate);
-          *(xfer->data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT) = stop_bit;
-          *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT) = parity;
-          *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT) = data_bit;
+    /* Set the phase of the transfer to data out.  */
+    xfer->phase =  TransferPhase::DATA_OUT;
 
-          /* Set the phase of the transfer to data out.  */
-          xfer -> phase =  TransferPhase::DATA_OUT;
+    /* Perform the data transfer.  */
+    device->transfer_request(xfer, transmit_length, req.length);
+    break;
+  }
 
-          /* Perform the data transfer.  */
-          device->transfer_request(xfer, transmit_length, req.length);
-          break;
+  case Commands::SET_LINE_CODING:
+  {
+    auto coding = (line_coding *)xfer->data;
 
-      case USBClass_CDC_ACM_SET_LINE_CODING:
+    /* Get the line coding parameters from the host.  */
+    baudrate  = from_usb32(coding->baudrate);
+    stop_bit  = coding->stop_bit;
+    parity    = coding->parity;
+    data_bit  = coding->data_bit;
 
-          /* Get the line coding parameters from the host.  */
-          baudrate  = usb_get_long(xfer -> data + USBClass_CDC_ACM_LINE_CODING_BAUDRATE_STRUCT);
-          stop_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_STOP_BIT_STRUCT);
-          parity    = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_PARITY_STRUCT);
-          data_bit  = *(xfer -> data + USBClass_CDC_ACM_LINE_CODING_DATA_BIT_STRUCT);
+    break ;
+  }
 
-          break ;
-
-      default:
-
-          /* Unknown function. It's not handled.  */
-          return(UX_ERROR);
+  default:
+      /* Unknown function. It's not handled.  */
+      return(UX_ERROR);
   }
 
   set_dtr(dtr_state);
@@ -404,9 +398,6 @@ uint32_t CDCACMClass::write(uint8_t *buffer,
     return UX_CONFIGURATION_HANDLE_UNKNOWN;
   }
 
-  /* We need the interface to the class.  */
-  auto iface = cdc_acm_interface;
-
   /* Locate the endpoints.  */
   auto endpoint = in_endpoint;
 
@@ -475,12 +466,11 @@ uint32_t CDCACMClass::write(uint8_t *buffer,
   return status;
 }
 
+#if 0
 uint32_t CDCACMClass::ioctl(uint32_t ioctl_function,
                           void *parameter)
 {
   uint32_t status;
-  USBClass_CDC_ACM_LINE_CODING_PARAMETER *line_coding;
-  USBClass_CDC_ACM_LINE_STATE_PARAMETER *line_state;
   Endpoint::ptr endpoint;
   Transfer *xfer;
 
@@ -491,51 +481,54 @@ uint32_t CDCACMClass::ioctl(uint32_t ioctl_function,
   switch (ioctl_function)
   {
   case USBClass_CDC_ACM_IOCTL_SET_LINE_CODING:
-    line_coding = (USBClass_CDC_ACM_LINE_CODING_PARAMETER *) parameter;
+  {
+    auto coding = (line_coding *) parameter;
 
-    baudrate  =  line_coding -> cdc_acm_parameter_baudrate;
-    stop_bit  =  line_coding -> cdc_acm_parameter_stop_bit;
-    parity    =  line_coding -> cdc_acm_parameter_parity;
-    data_bit  =  line_coding -> cdc_acm_parameter_data_bit;
+    baudrate  =  coding -> baudrate;
+    stop_bit  =  coding -> stop_bit;
+    parity    =  coding -> parity;
+    data_bit  =  coding -> data_bit;
 
     break;
+  }
 
   case USBClass_CDC_ACM_IOCTL_GET_LINE_CODING:
-
+  {
     /* Properly cast the parameter pointer.  */
-    line_coding = (USBClass_CDC_ACM_LINE_CODING_PARAMETER *) parameter;
+    auto coding = (line_coding *) parameter;
 
     /* Save the parameters in the cdc_acm function.  */
-    line_coding->cdc_acm_parameter_baudrate = baudrate;
-    line_coding->cdc_acm_parameter_stop_bit = stop_bit;
-    line_coding->cdc_acm_parameter_parity   = parity;
-    line_coding->cdc_acm_parameter_data_bit = data_bit;
+    coding->baudrate = baudrate;
+    coding->stop_bit = stop_bit;
+    coding->parity   = parity;
+    coding->data_bit = data_bit;
 
     break;
-
+  }
 
   case USBClass_CDC_ACM_IOCTL_GET_LINE_STATE:
-
+  {
             /* Properly cast the parameter pointer.  */
-    line_state = (USBClass_CDC_ACM_LINE_STATE_PARAMETER *) parameter;
+    auto state = (line_state *) parameter;
 
     /* Return the DTR/RTS signals.  */
-    line_state -> cdc_acm_parameter_rts = rts_state;
-    line_state -> cdc_acm_parameter_dtr = dtr_state;
+    state -> rts = rts_state;
+    state -> dtr = dtr_state;
 
     break;
+  }
 
   case USBClass_CDC_ACM_IOCTL_SET_LINE_STATE:
-
+  {
     /* Properly cast the parameter pointer.  */
-    line_state = (USBClass_CDC_ACM_LINE_STATE_PARAMETER *) parameter;
+    auto state = (line_state *)parameter;
 
     /* Set the DTR/RTS signals.  */
-    rts_state = line_state -> cdc_acm_parameter_rts;
-    dtr_state = line_state -> cdc_acm_parameter_dtr;
+    rts_state = state->rts;
+    dtr_state = state->dtr;
 
     break;
-
+  }
 
   case USBClass_CDC_ACM_IOCTL_ABORT_PIPE:
   {
@@ -606,7 +599,7 @@ uint32_t CDCACMClass::ioctl(uint32_t ioctl_function,
   /* Return status to caller.  */
   return status;
 }
-
+#endif
 
 CDCACMDevice::CDCACMDevice()
 {

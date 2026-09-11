@@ -135,43 +135,42 @@ uint32_t DeviceBase::register_class(USBClass::ptr p_class,
 
 uint32_t DeviceBase::get_interface(uint8_t interface_value)
 {
+  Transfer       *xfer;
+  uint32_t                    retval;
 
-Transfer       *xfer;
-uint32_t                    retval;
+  auto endpoint = get_control_endpoint();
 
-    auto endpoint = get_control_endpoint();
+  /* If the device was in the configured state, there may be interfaces
+     attached to the configuration.  */
+  if (state == DeviceState::CONFIGURED)
+  {
+    for (auto iface : interfaces) {
+      if (iface -> descriptor.bInterfaceNumber == interface_value)
+        xfer = get_control_transfer();
 
-    /* If the device was in the configured state, there may be interfaces
-       attached to the configuration.  */
-    if (state == DeviceState::CONFIGURED)
-    {
-      for (auto iface : interfaces) {
-        if (iface -> descriptor.bInterfaceNumber == interface_value)
-          xfer = get_control_transfer();
+      /* Set the value of the alternate setting in the buffer.  */
+      *xfer->data =
+          (uint8_t) iface -> descriptor.bAlternateSetting;
 
-        /* Set the value of the alternate setting in the buffer.  */
-        *xfer -> data =
-            (uint8_t) iface -> descriptor.bAlternateSetting;
+      /* Setup the length appropriately.  */
+      xfer->requested_length =  1;
 
-        /* Setup the length appropriately.  */
-        xfer -> requested_length =  1;
+      /* Set the phase of the transfer to data out.  */
+      xfer->phase =  TransferPhase::DATA_OUT;
 
-        /* Set the phase of the transfer to data out.  */
-        xfer -> phase =  TransferPhase::DATA_OUT;
+      /* Send the descriptor with the appropriate length to the host.  */
+      retval = xfer->transfer();
 
-        /* Send the descriptor with the appropriate length to the host.  */
-        retval = xfer->transfer();
-
-        /* Return the function status code.  */
-        return(retval);
-      }
+      /* Return the function status code.  */
+      return(retval);
     }
+  }
 
-    /* The alternate setting value was not found, so we return a stall error.  */
-    endpoint->stall();
+  /* The alternate setting value was not found, so we return a stall error.  */
+  endpoint->stall();
 
-    /* Return the status to the caller.  */
-    return(UX_ERROR);
+  /* Return the status to the caller.  */
+  return(UX_ERROR);
 }
 
 void DeviceBase::uninitialize(void)
