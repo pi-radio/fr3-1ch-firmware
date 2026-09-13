@@ -13,10 +13,9 @@ namespace TXX
   {
     TX_SEMAPHORE sema;
 
-    void create() { tx_semaphore_create(&sema, (char *)name.c_str(), 0); }
-
   public:
-    Semaphore(const std::string &_name) : object(_name) { create(); }
+    Semaphore(const std::string &_name) : object(_name) { tx_semaphore_create(&sema, (char *)name.c_str(), 0); }
+    ~Semaphore() { tx_semaphore_delete(&sema); }
 
     uint32_t get_suspended_count() { return sema.tx_semaphore_suspended_count; }
 

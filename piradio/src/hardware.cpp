@@ -245,7 +245,6 @@ void OctoLOHardware::power_down()
 void OctoLOHardware::setup_gpios()
 {
   std::vector<uint32_t> a_pins, b_pins, c_pins, d_pins, e_pins;
-  std::vector<uint32_t> a_set, e_set;
 
   a_pins = { 0, 1, 2, 3 };
 
@@ -255,18 +254,17 @@ void OctoLOHardware::setup_gpios()
 
   e_pins = { 2, 5, 9, 13 };
 
-  setup_bank(GPIOA, a_pins, a_set);
+  setup_bank(GPIOA, a_pins, { });
   setup_bank(GPIOB, b_pins, { });
   setup_bank(GPIOC, c_pins, { });
   setup_bank(GPIOD, d_pins, { });
-  setup_bank(GPIOE, e_pins, e_set);
+  setup_bank(GPIOE, e_pins, { });
 }
 
 void OctoLOHardware::restore_settings()
 {
-  printf("Programming LMX...\r\n");
-  lmx.setup();
+  //lmx.setup();
 
-  lmx.program();
+  //lmx.program();
 }
 

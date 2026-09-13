@@ -215,8 +215,6 @@ void STM32::ControlEndpoint::ll_transmit(uint8_t *buf, uint32_t len)
 {
   in_ep.xfer_buff = buf;
   in_ep.xfer_len = len;
-  in_ep.xfer_fill_db = 1U;
-  in_ep.xfer_len_db = len;
   in_ep.xfer_count = 0U;
 
   start_transfer_in(&in_ep);

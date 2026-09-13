@@ -310,11 +310,17 @@ void PiRadioApp::app_main()
 {
   parser::Parser p;
 
+  usb_serial.start();
+
   hardware->power_up();
 
-  hardware->restore_settings();
-
-  usb_serial.start();
+  try {
+    hardware->restore_settings();
+  } catch (const std::runtime_error &e) {
+    std::cout << "Runtime error in restoring settings: " << e.what() << std::endl;
+  } catch (...) {
+    std::cout << "Unknown exception" << std::endl;
+  }
 
   while (true) {
     auto cmd = cmd_queue.pop();

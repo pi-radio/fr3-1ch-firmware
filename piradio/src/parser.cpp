@@ -188,6 +188,8 @@ void Parser::parse_lmx_statement() {
     parse_lmx_drive();
   } else if (cur_tok == keywords::TUNE) {
     parse_lmx_tune();
+  } else if (cur_tok == keywords::SETUP) {
+    main_app.get_hardware()->setup_lmx();
   } else {
     throw SyntaxError();
   }
@@ -271,6 +273,8 @@ void Parser::parse_get_statement() {
     std::cout << std::format("Flash size: {:04x} Package: {:04x}", devinfo.get_flash_size(), devinfo.get_package()) << std::endl;
 
     return;
+  } else if (cur_tok == keywords::CRASHDUMP) {
+    halxx::fault::analyzer analyzer(std::cout);
   } else {
     throw SyntaxError();
   }

@@ -48,6 +48,8 @@
   MAKE_KEYWORD(FAULT);      \
   MAKE_KEYWORD(CRASH);      \
   MAKE_KEYWORD(PROCINFO);   \
+  MAKE_KEYWORD(CRASHDUMP);  \
+  MAKE_KEYWORD(SETUP);      \
 
 
 namespace parser

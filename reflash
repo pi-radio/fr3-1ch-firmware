@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+DIR="STM32CubeIDE/Debug 2/"
+
+sudo dfu-util --device 0483:df11 --alt 0 --dfuse-address 0x08000000 --download "${DIR}/fr31chfw.bin"

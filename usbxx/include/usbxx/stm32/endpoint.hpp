@@ -16,8 +16,6 @@ namespace USBXX
       uint8_t   *xfer_buff;
       uint32_t  xfer_len;
       uint32_t  xfer_count;
-      uint32_t  xfer_len_db;
-      uint8_t   xfer_fill_db;
     } ;
 
     class Endpoint : public USBXX::Endpoint

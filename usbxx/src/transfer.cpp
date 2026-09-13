@@ -50,6 +50,8 @@ uint32_t Transfer::wait()
 
 
 void Transfer::reset() {
+  completion_code = UX_TRANSFER_BUS_RESET;
+
   if (semaphore.get_suspended_count())
     semaphore.put();
 }

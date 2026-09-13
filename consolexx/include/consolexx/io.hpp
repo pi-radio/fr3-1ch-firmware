@@ -38,6 +38,9 @@ namespace consolexx
     {
       auto cdcacm = acm.get_cdcacm();
 
+      if (!acm.is_started())
+        return;
+
       cdcacm->putc(c);
     };
 

@@ -16,6 +16,10 @@ STM32::OutEndpoint::OutEndpoint(DeviceBase *_device, DCD *_dcd, uint8_t _epaddr)
 {
   assert(!(epaddr & 0x80));
 
+  ep.xfer_buff = nullptr;
+  ep.xfer_len = 0;
+  ep.xfer_count = 0U;
+
   ep.pmaaddress = pmaaddr();
 }
 
@@ -99,6 +103,10 @@ void STM32::OutEndpoint::on_data_out()
 {
   auto PCD = dcd->get_PCD();
 
+  if (ep.xfer_buff == NULL) {
+    return;
+  }
+
   PCD_CLEAR_RX_EP_CTR(PCD, epindex());
 
   auto count = (uint16_t)PCD_GET_EP_RX_CNT(PCD, epindex());
@@ -114,6 +122,10 @@ void STM32::OutEndpoint::on_data_out()
   if ((ep.xfer_len == 0U) || (count < max_packet_size()))
   {
     transfer.actual_length = ep.xfer_count;
+
+    ep.xfer_buff = nullptr;
+    ep.xfer_count = 0;
+    ep.xfer_len = 0;
 
     transfer.complete(0);
   }

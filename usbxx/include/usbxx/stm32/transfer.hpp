@@ -10,8 +10,12 @@ namespace USBXX
 {
   namespace STM32
   {
+    class Endpoint;
+
     class Transfer : public USBXX::Transfer
     {
+      friend class Endpoint;
+
       uint32_t transfer_in();
       uint32_t transfer_out();
 

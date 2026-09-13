@@ -86,6 +86,7 @@ namespace USBXX
     std::vector<USBClass::ptr> classes;
     std::map<uint8_t, USBClass::ptr> iface_to_class;
 
+    bool        started;
     Descriptor  fs_desc;
     Descriptor  hs_desc;
     Strings     strings;
@@ -134,6 +135,8 @@ namespace USBXX
 
   public:
     DeviceBase();
+
+    bool is_started() { return started; }
 
     void set_dcd(DCD *_dcd)
     {

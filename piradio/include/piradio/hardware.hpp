@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <threadxx/dllist.hpp>
 #include <threadxx/thread.hpp>
 #include <threadxx/mutex.hpp>
@@ -28,25 +30,71 @@ namespace piradio
 
     class Request
     {
-      TXX::list::DLListEntry<Request> list_entry;
+      friend class DeviceThread;
+
+    protected:
+      TXX::Semaphore sema;
+      int result;
 
       virtual int process() = 0;
 
+      void do_process()
+      {
+        result = process();
+
+        sema.put();
+      }
+
     public:
-      Request() {}
+      using ptr = std::shared_ptr<Request>;
+
+      Request() : sema("request sem"), result(0) {}
     };
 
     class DeviceThread : public TXX::Thread<8192>
     {
-      TXX::queue<Request> request_queue;
+      TXX::queue<Request::ptr> request_queue;
 
     public:
       DeviceThread();
 
       virtual void main();
+
+      int process(Request::ptr);
+
+      static DeviceThread hw_thread;
     };
 
+    enum class SPITarget
+    {
+      LMX,
+      LTC2668
+    };
 
+    class SPIRequest : public Request
+    {
+      SPITarget target;
+      int len;
+      uint32_t v;
+
+      int process() override;
+
+    public:
+      using ptr = std::shared_ptr<SPIRequest>;
+
+      SPIRequest(SPITarget _target, size_t _len, uint32_t _v);
+
+      static int transfer(SPITarget _target, size_t _len, uint32_t &_v)
+      {
+        auto r = std::make_shared<SPIRequest>(_target, _len, _v);
+
+        auto retval = DeviceThread::hw_thread.process(r);
+
+        _v = r->v;
+
+        return retval;
+      }
+    };
 
     class PiRadioHardware
     {
@@ -65,6 +113,7 @@ namespace piradio
 
       virtual void set_lmx_drive(uint8_t v) { throw unsupported_error(); }
       virtual void set_lmx_powerdown(bool) { throw unsupported_error(); }
+      virtual void setup_lmx() { throw unsupported_error(); }
       virtual void reprogram_lmx() { throw unsupported_error(); }
       virtual uint16_t lmx_read_reg(uint16_t) { throw unsupported_error(); }
       virtual void lmx_write_reg(uint16_t, uint16_t) { throw unsupported_error(); }
@@ -107,6 +156,7 @@ namespace piradio
       void tune_lmx(float freq) override { lmx.tune(freq); };
       void set_lmx_drive(uint8_t v) override { lmx.set_drive(v); };
       void set_lmx_powerdown(bool b) override { lmx.set_powerdown(b); }
+      void setup_lmx() override { lmx.setup(); }
       void reprogram_lmx() override { lmx.reprogram(); }
       uint16_t lmx_read_reg(uint16_t r) override { uint16_t retval; return lmx.read_reg(r, &retval); return retval; }
       void lmx_write_reg(uint16_t r, uint16_t v) override { lmx.write_reg(r, v); }

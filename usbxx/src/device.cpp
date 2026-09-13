@@ -39,6 +39,7 @@ void DeviceBase::thread_entry()
 
 
 DeviceBase::DeviceBase() :
+    started(false),
     fs_desc(USBD_FULL_SPEED),
     hs_desc(USBD_HIGH_SPEED),
     control_thread(this),
@@ -77,6 +78,8 @@ void DeviceBase::start()
     dcd->initialize();
 
     start_app();
+
+    started = true;
   } catch(USBXX::runtime_error &e) {
     what = e.what();
     dbg::dbgout << "Exception in starting USB device: " << e.what() << std::endl;

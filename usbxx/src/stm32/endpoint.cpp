@@ -78,6 +78,7 @@ uint32_t STM32::Endpoint::destroy()
  {
    auto g = dcd->guard();
    deactivate();
+   transfer.reset();
  }
 
  interface =  nullptr;
